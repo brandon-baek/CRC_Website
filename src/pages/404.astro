@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import { ui } from '../i18n';
+
+// Single 404 page served for both languages (Cloudflare Pages serves /404.html).
+const en = ui.en;
+const ko = ui.ko;
+---
+<Base locale="en" title={en.notFound.title} description={en.notFound.body} path="/">
+  <section class="section center">
+    <div class="container">
+      <div aria-hidden="true" style="width:120px;margin-inline:auto;margin-bottom:2rem;">
+        <div class="sq-motif">
+          <span style="background:var(--red)"></span>
+          <span style="background:var(--yellow)"></span>
+          <span style="background:#fff;border:1px solid var(--line)"></span>
+          <span style="background:var(--lime)"></span>
+        </div>
+      </div>
+      <h1>{en.notFound.title}</h1>
+      <p class="muted mt-2" style="margin-inline:auto;">{en.notFound.body}</p>
+      <p lang="ko" class="mt-3" style="margin-inline:auto;">
+        <strong>{ko.notFound.title}</strong><br />
+        {ko.notFound.body}
+      </p>
+      <div class="mt-4" style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;">
+        <a class="btn dark" href="/">{en.notFound.cta}</a>
+        <a class="btn outline" href="/ko/" lang="ko">{ko.notFound.cta}</a>
+      </div>
+    </div>
+  </section>
+</Base>

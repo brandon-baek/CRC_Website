@@ -1,0 +1,131 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import AgencyCard from '../components/AgencyCard.astro';
+import { t, localePath, type Locale } from '../i18n';
+import { agencies, type CategoryId } from '../data/agencies';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const dict = t(locale);
+
+/* Only the categories that actually appear in the data, in first-seen order. */
+const cats: CategoryId[] = [];
+for (const agency of agencies) {
+  for (const cat of agency.categories) {
+    if (!cats.includes(cat)) cats.push(cat);
+  }
+}
+---
+<Base
+  locale={locale}
+  title={dict.directory.pageTitle}
+  description={dict.directory.pageLede}
+  path="/directory"
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h1>{dict.directory.pageTitle}</h1>
+        <p class="sub">{dict.directory.pageLede}</p>
+      </div>
+
+      <div class="dir-tools">
+        <div class="dir-search">
+          <label class="visually-hidden" for="dir-q">{dict.directory.searchLabel}</label>
+          <Icon name="search" size={18} />
+          <input
+            class="input"
+            id="dir-q"
+            type="search"
+            placeholder={dict.directory.searchPlaceholder}
+            autocomplete="off"
+          />
+        </div>
+        <div class="dir-chips" role="group" aria-label={dict.directory.filterLabel}>
+          <button type="button" class="chip" data-cat="" aria-pressed="true">
+            {dict.directory.all}
+          </button>
+          {cats.map((cat) => (
+            <button type="button" class="chip" data-cat={cat} aria-pressed="false">
+              {dict.categories[cat]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="dir-grid" id="dir-grid">
+        {agencies.map((agency) => (
+          <div
+            data-cats={agency.categories.join(' ')}
+            data-text={`${agency.name[locale]} ${agency.bestFor[locale]} ${agency.intake[locale]}`.toLowerCase()}
+          >
+            <AgencyCard agency={agency} locale={locale} />
+          </div>
+        ))}
+      </div>
+
+      <p class="visually-hidden" id="dir-count" aria-live="polite"></p>
+
+      <div class="dir-empty" id="dir-empty" hidden>
+        <p>{dict.directory.empty}</p>
+        <p class="mt-2">
+          <a class="btn primary" href={localePath(locale, '/get-help')}>
+            {dict.directory.emptyCta}
+            <Icon name="arrow-right" size={18} />
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section tight">
+    <div class="container">
+      <div class="notice">
+        <Icon name="check" size={20} />
+        <p>{dict.directory.official}</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const input = document.getElementById('dir-q') as HTMLInputElement | null;
+    const grid = document.getElementById('dir-grid');
+    const emptyEl = document.getElementById('dir-empty');
+    const countEl = document.getElementById('dir-count');
+    if (input && grid && emptyEl && countEl) {
+      const chips = Array.from(document.querySelectorAll('.dir-chips .chip'));
+      const items = Array.from(grid.querySelectorAll<HTMLElement>('[data-cats]'));
+      let activeCat = '';
+
+      const apply = () => {
+        const query = input.value.trim().toLowerCase();
+        let shown = 0;
+        for (const item of items) {
+          const catsAttr = item.getAttribute('data-cats') || '';
+          const text = item.getAttribute('data-text') || '';
+          const catOk = !activeCat || catsAttr.split(' ').indexOf(activeCat) !== -1;
+          const textOk = !query || text.indexOf(query) !== -1;
+          const show = catOk && textOk;
+          item.hidden = !show;
+          if (show) shown++;
+        }
+        emptyEl.hidden = shown > 0;
+        countEl.textContent = `${shown}`;
+      };
+
+      input.addEventListener('input', apply);
+      chips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          activeCat = chip.getAttribute('data-cat') || '';
+          chips.forEach((c) => c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'));
+          apply();
+        });
+      });
+
+      apply();
+    }
+  </script>
+</Base>

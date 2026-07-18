@@ -1,0 +1,51 @@
+---
+import { t, localePath, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const dict = t(locale);
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="container">
+    <div class="cols">
+      <div>
+        <img src="/favicon.svg" alt="" width="52" height="52" style="border-radius:10px; margin-bottom:0.9rem;" />
+        <h4>{dict.siteName} · {dict.siteNameKo}</h4>
+        <p>{dict.footer.blurb}</p>
+      </div>
+      <nav aria-label={dict.footer.quickLinks}>
+        <h4>{dict.footer.quickLinks}</h4>
+        <ul>
+          <li><a href={localePath(locale, '/get-help')}>{dict.nav.getHelp}</a></li>
+          <li><a href={localePath(locale, '/directory')}>{dict.nav.directory}</a></li>
+          <li><a href={localePath(locale, '/learn')}>{dict.nav.learn}</a></li>
+        </ul>
+      </nav>
+      <nav aria-label={dict.footer.resources}>
+        <h4>{dict.footer.resources}</h4>
+        <ul>
+          <li><a href={localePath(locale, '/about')}>{dict.nav.about}</a></li>
+          <li><a href={localePath(locale, '/contact')}>{dict.nav.contact}</a></li>
+          <li><a href="https://reportfraud.ftc.gov" rel="noopener">ReportFraud.gov</a></li>
+        </ul>
+      </nav>
+      <div>
+        <h4>{dict.footer.contact}</h4>
+        <!-- PLACEHOLDER: replace with the real address, phone, and email -->
+        <p>
+          <span class="placeholder-tag">123 Main Street, Suite 200</span><br />
+          <span class="placeholder-tag">Los Angeles, CA 90005</span><br />
+          <span class="placeholder-tag">(213) 555-0100</span><br />
+          <span class="placeholder-tag">help@crcenter.org</span>
+        </p>
+      </div>
+    </div>
+    <div class="legal">
+      <p>{dict.footer.disclaimer}</p>
+      <p class="mt-1">© {year} {dict.footer.rights}</p>
+    </div>
+  </div>
+</footer>

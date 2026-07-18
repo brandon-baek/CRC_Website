@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="Consumer Resource Center — 한인 시민센터 logo">
+  <rect width="400" height="500" rx="28" fill="#CDF07A"/>
+  <rect x="30" y="30" width="160" height="160" fill="#E8493A"/>
+  <rect x="210" y="30" width="160" height="160" fill="#FFFFFF"/>
+  <text x="232" y="96" font-family="'Noto Sans KR','Apple SD Gothic Neo',sans-serif" font-size="36" font-weight="800" fill="#191D23">한인</text>
+  <text x="232" y="146" font-family="'Noto Sans KR','Apple SD Gothic Neo',sans-serif" font-size="36" font-weight="800" fill="#191D23">시민센터</text>
+  <rect x="30" y="210" width="160" height="160" fill="#F4B942"/>
+  <rect x="210" y="210" width="160" height="160" fill="#E8493A"/>
+  <text x="200" y="432" text-anchor="middle" font-family="'Noto Sans KR','Helvetica Neue',Arial,sans-serif" font-size="38" font-weight="800" fill="#191D23">Consumer</text>
+  <text x="200" y="476" text-anchor="middle" font-family="'Noto Sans KR','Helvetica Neue',Arial,sans-serif" font-size="38" font-weight="800" fill="#191D23">Resource Center</text>
+</svg>

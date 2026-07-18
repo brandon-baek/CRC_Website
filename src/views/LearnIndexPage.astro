@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { t, localePath, type Locale } from '../i18n';
+import { scamGuides } from '../data/scams';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const dict = t(locale);
+
+const accents = ['accent-red', 'accent-yellow', 'accent-lime'] as const;
+---
+<Base
+  locale={locale}
+  title={dict.learn.pageTitle}
+  description={dict.learn.pageLede}
+  path="/learn"
+>
+  <header class="guide-hero">
+    <div class="container inner">
+      <p class="eyebrow">{dict.nav.learn}</p>
+      <h1>{dict.learn.pageTitle}</h1>
+      <p class="tagline">{dict.learn.pageLede}</p>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="grid cols-2">
+        {
+          scamGuides.map((guide, i) => (
+            <a class="card-hover" href={localePath(locale, `/learn/${guide.slug}`)}>
+              <article class:list={['card', accents[i % accents.length]]}>
+                <h3>{guide.title[locale]}</h3>
+                <p class="muted">{guide.tagline[locale]}</p>
+                <p class="mt-2">
+                  <span class="btn ghost">
+                    {dict.learn.readGuide}
+                    <Icon name="arrow-right" size={18} />
+                  </span>
+                </p>
+              </article>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Base>

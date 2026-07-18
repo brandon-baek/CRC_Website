@@ -1,0 +1,82 @@
+---
+import Icon from './Icon.astro';
+import { t, localePath, otherLocalePath, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+  /** Locale-less path of the current page, e.g. '/', '/directory', '/learn/phishing'. */
+  path: string;
+}
+const { locale, path } = Astro.props;
+const dict = t(locale);
+
+const links = [
+  { href: '/', label: dict.nav.home, exact: true },
+  { href: '/directory', label: dict.nav.directory },
+  { href: '/learn', label: dict.nav.learn },
+  { href: '/about', label: dict.nav.about },
+  { href: '/contact', label: dict.nav.contact },
+];
+
+function isCurrent(href: string, exact = false): boolean {
+  return exact ? path === href : path === href || path.startsWith(href + '/');
+}
+---
+<header class="site-header">
+  <div class="container bar">
+    <a class="brand" href={localePath(locale, '/')}>
+      <img class="mark" src="/favicon.svg" alt="" width="44" height="44" />
+      <span class="name">
+        {dict.siteName}
+        <small>{dict.siteNameKo}</small>
+      </span>
+    </a>
+
+    <button
+      class="nav-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="site-nav"
+      aria-label={locale === 'ko' ? '메뉴 열기' : 'Open menu'}
+      data-nav-toggle
+    >
+      <span data-icon-menu><Icon name="menu" size={24} /></span>
+      <span data-icon-close hidden><Icon name="close" size={24} /></span>
+    </button>
+
+    <nav id="site-nav" class="site-nav" aria-label={locale === 'ko' ? '주 메뉴' : 'Main menu'}>
+      {links.map((l) => (
+        <a
+          href={localePath(locale, l.href)}
+          aria-current={isCurrent(l.href, l.exact) ? 'page' : undefined}
+        >
+          {l.label}
+        </a>
+      ))}
+      <a
+        class="nav-cta"
+        href={localePath(locale, '/get-help')}
+        aria-current={isCurrent('/get-help') ? 'page' : undefined}
+      >
+        {dict.nav.getHelp}
+      </a>
+      <a class="lang-switch" href={otherLocalePath(locale, path)} lang={locale === 'en' ? 'ko' : 'en'}>
+        <Icon name="globe" size={16} />
+        {dict.langSwitch}
+      </a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.querySelector('[data-nav-toggle]');
+  const nav = document.getElementById('site-nav');
+  const iconMenu = document.querySelector('[data-icon-menu]');
+  const iconClose = document.querySelector('[data-icon-close]');
+  toggle?.addEventListener('click', () => {
+    const open = nav?.classList.toggle('open') ?? false;
+    toggle.setAttribute('aria-expanded', String(open));
+    if (iconMenu instanceof HTMLElement) iconMenu.hidden = open;
+    if (iconClose instanceof HTMLElement) iconClose.hidden = !open;
+  });
+</script>

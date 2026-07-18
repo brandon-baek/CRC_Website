@@ -1,0 +1,14 @@
+---
+import ScamGuidePage from '../../../views/ScamGuidePage.astro';
+import { scamGuides } from '../../../data/scams';
+
+export function getStaticPaths() {
+  return scamGuides.map((guide) => ({
+    params: { slug: guide.slug },
+    props: { guide },
+  }));
+}
+
+const { guide } = Astro.props;
+---
+<ScamGuidePage locale="ko" guide={guide} />

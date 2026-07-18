@@ -1,0 +1,263 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { t, localePath, type Locale } from '../i18n';
+import { agencyById } from '../data/agencies';
+import { wizardNodes, wizardStart } from '../data/wizard';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const dict = t(locale);
+
+/* Resolve all locale-keyed strings server-side so the JSON payload is small. */
+const nodes = Object.fromEntries(
+  wizardNodes.map((node) => [
+    node.id,
+    {
+      question: node.question[locale],
+      options: node.options.map((opt) => ({
+        label: opt.label[locale],
+        ...(opt.next ? { next: opt.next } : {}),
+        ...(opt.result
+          ? { result: { agencies: opt.result.agencies, note: opt.result.note[locale] } }
+          : {}),
+      })),
+    },
+  ]),
+);
+
+/* Minimal agency map — only the agencies the wizard can actually recommend. */
+const usedIds = new Set<string>();
+for (const node of wizardNodes) {
+  for (const opt of node.options) {
+    opt.result?.agencies.forEach((id) => usedIds.add(id));
+  }
+}
+const agenciesPayload = Object.fromEntries(
+  [...usedIds].map((id) => {
+    const a = agencyById.get(id)!;
+    return [id, { name: a.name[locale], bestFor: a.bestFor[locale], intake: a.intake[locale], url: a.url }];
+  }),
+);
+
+const payload = {
+  start: wizardStart,
+  nodes,
+  agencies: agenciesPayload,
+  strings: dict.wizard,
+  links: {
+    directory: localePath(locale, '/directory'),
+    contact: localePath(locale, '/contact'),
+  },
+};
+const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
+---
+<Base
+  locale={locale}
+  title={dict.wizard.pageTitle}
+  description={dict.wizard.pageLede}
+  path="/get-help"
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h1>{dict.wizard.pageTitle}</h1>
+        <p class="sub">{dict.wizard.pageLede}</p>
+      </div>
+
+      <div class="notice">
+        <Icon name="chat" size={20} />
+        <p>{dict.wizard.aiSoon}</p>
+      </div>
+
+      <div class="wizard-shell mt-4">
+        <div class="wizard-card">
+          <div id="wizard-mount"></div>
+          <noscript>
+            <p>{dict.wizard.noscript}</p>
+            <p class="mt-2">
+              <a class="btn lime" href={localePath(locale, '/directory')}>
+                {dict.wizard.seeAll}
+                <Icon name="arrow-right" size={18} />
+              </a>
+            </p>
+          </noscript>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="application/json" id="wizard-data" set:html={payloadJson} />
+
+  <script>
+    const dataEl = document.getElementById('wizard-data');
+    const mount = document.getElementById('wizard-mount');
+    if (dataEl && mount) {
+      const data = JSON.parse(dataEl.textContent || '{}');
+      const S = data.strings;
+
+      const SVG_WRAP =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="{s}" height="{s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{p}</svg>';
+      const svg = (paths: string, size: number) =>
+        SVG_WRAP.replace(/\{s\}/g, String(size)).replace('{p}', paths);
+      const CHEVRON = svg('<path d="m9 18 6-6-6-6"/>', 18);
+      const EXTERNAL = svg(
+        '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+        17,
+      );
+      const ALERT = svg(
+        '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+        20,
+      );
+      const ARROW = svg('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', 18);
+
+      /** Create an element with class and text content. */
+      const el = (tag: string, cls?: string | null, text?: string | null): HTMLElement => {
+        const node = document.createElement(tag);
+        if (cls) node.className = cls;
+        if (text != null) node.textContent = text;
+        return node;
+      };
+
+      let current: string = data.start;
+      let result: { agencies: string[]; note: string } | null = null;
+      const history: string[] = [];
+      const trail: string[] = [];
+      let firstRender = true;
+
+      const choose = (opt: { label: string; next?: string; result?: typeof result }) => {
+        history.push(current);
+        trail.push(opt.label);
+        if (opt.result) {
+          result = opt.result;
+        } else if (opt.next) {
+          current = opt.next;
+        }
+        render();
+      };
+
+      const goBack = () => {
+        if (!history.length) return;
+        result = null;
+        trail.pop();
+        current = history.pop() as string;
+        render();
+      };
+
+      const startOver = () => {
+        current = data.start;
+        result = null;
+        history.length = 0;
+        trail.length = 0;
+        render();
+      };
+
+      const buildCard = (id: string, isPrimary: boolean) => {
+        const agency = data.agencies[id];
+        if (!agency) return null;
+        const card = el('article', 'agency-card' + (isPrimary ? ' primary' : ''));
+        card.setAttribute('data-agency', id);
+
+        const top = el('div', 'top');
+        top.appendChild(el('h3', null, agency.name));
+        top.appendChild(el('span', isPrimary ? 'badge primary' : 'badge', isPrimary ? S.recommended : S.also));
+        card.appendChild(top);
+
+        card.appendChild(el('p', 'best', agency.bestFor));
+
+        const details = el('details');
+        details.appendChild(el('summary', null, S.whatToExpect));
+        details.appendChild(el('p', null, agency.intake));
+        card.appendChild(details);
+
+        const go = el('p', 'go');
+        const link = el('a', 'btn dark', S.visit) as HTMLAnchorElement;
+        link.href = agency.url;
+        link.rel = 'noopener';
+        link.insertAdjacentHTML('beforeend', EXTERNAL);
+        go.appendChild(link);
+        card.appendChild(go);
+        return card;
+      };
+
+      const render = () => {
+        mount.textContent = '';
+
+        if (trail.length) {
+          const trailEl = el('div', 'wizard-trail');
+          trailEl.setAttribute('aria-label', S.trailLabel);
+          trail.forEach((label) => trailEl.appendChild(el('span', 'crumb', label)));
+          mount.appendChild(trailEl);
+        }
+
+        const heading = el('h2', 'wizard-q');
+        heading.setAttribute('tabindex', '-1');
+        mount.appendChild(heading);
+
+        if (result) {
+          heading.textContent = S.resultTitle;
+          mount.appendChild(el('p', 'result-intro', S.resultIntro));
+
+          const list = el('div', 'result-list');
+          result.agencies.forEach((id, i) => {
+            const card = buildCard(id, i === 0);
+            if (card) list.appendChild(card);
+          });
+          mount.appendChild(list);
+
+          const note = el('div', 'notice mt-3');
+          note.insertAdjacentHTML('afterbegin', ALERT);
+          note.appendChild(el('p', null, result.note));
+          mount.appendChild(note);
+
+          const seeAllP = el('p', 'mt-3');
+          const seeAll = el('a', 'btn lime', S.seeAll) as HTMLAnchorElement;
+          seeAll.href = data.links.directory;
+          seeAll.insertAdjacentHTML('beforeend', ARROW);
+          seeAllP.appendChild(seeAll);
+          mount.appendChild(seeAllP);
+
+          const help = el('p', 'muted mt-2', S.needHelp + ' ');
+          const contact = el('a', null, S.contactCta) as HTMLAnchorElement;
+          contact.href = data.links.contact;
+          help.appendChild(contact);
+          mount.appendChild(help);
+        } else {
+          const node = data.nodes[current];
+          heading.textContent = node.question;
+
+          const opts = el('div', 'wizard-opts');
+          node.options.forEach((opt: { label: string; next?: string; result?: typeof result }) => {
+            const btn = el('button', 'wizard-opt') as HTMLButtonElement;
+            btn.type = 'button';
+            btn.appendChild(el('span', null, opt.label));
+            btn.insertAdjacentHTML('beforeend', CHEVRON);
+            btn.addEventListener('click', () => choose(opt));
+            opts.appendChild(btn);
+          });
+          mount.appendChild(opts);
+        }
+
+        if (history.length || result) {
+          const controls = el('div', 'wizard-controls');
+          const back = el('button', 'btn outline', S.back) as HTMLButtonElement;
+          back.type = 'button';
+          back.addEventListener('click', goBack);
+          const restart = el('button', 'btn ghost', S.startOver) as HTMLButtonElement;
+          restart.type = 'button';
+          restart.addEventListener('click', startOver);
+          controls.appendChild(back);
+          controls.appendChild(restart);
+          mount.appendChild(controls);
+        }
+
+        if (!firstRender) heading.focus();
+        firstRender = false;
+      };
+
+      render();
+    }
+  </script>
+</Base>

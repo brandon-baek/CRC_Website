@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+import AgencyCard from '../components/AgencyCard.astro';
+import { t, localePath, type Locale } from '../i18n';
+import { agencyById } from '../data/agencies';
+import type { ScamGuide } from '../data/scams';
+
+interface Props {
+  locale: Locale;
+  guide: ScamGuide;
+}
+const { locale, guide } = Astro.props;
+const dict = t(locale);
+
+const reportAgencies = guide.reportTo
+  .map((id) => agencyById.get(id))
+  .filter((a): a is NonNullable<typeof a> => a != null);
+---
+<Base
+  locale={locale}
+  title={guide.title[locale]}
+  description={guide.tagline[locale]}
+  path={`/learn/${guide.slug}`}
+>
+  <header class="guide-hero">
+    <div class="container inner">
+      <p class="eyebrow">
+        <a href={localePath(locale, '/learn')}>{dict.nav.learn}</a>
+      </p>
+      <h1>{guide.title[locale]}</h1>
+      <p class="tagline">{guide.tagline[locale]}</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="guide-body">
+      <div>
+        <p>{guide.what[locale]}</p>
+
+        <section class="guide-section mt-3">
+          <h2>{dict.learn.warning}</h2>
+          <ul>
+            {guide.warningSigns[locale].map((item) => <li>{item}</li>)}
+          </ul>
+        </section>
+
+        <section class="guide-section">
+          <h2>{dict.learn.protect}</h2>
+          <ul>
+            {guide.protect[locale].map((item) => <li>{item}</li>)}
+          </ul>
+        </section>
+
+        <section class="guide-section">
+          <h2>{dict.learn.ifHappened}</h2>
+          <ol>
+            {guide.ifHappened[locale].map((item) => <li>{item}</li>)}
+          </ol>
+        </section>
+
+        <p class="mt-3">
+          <a class="btn outline" href={localePath(locale, '/learn')}>
+            {dict.learn.backToAll}
+          </a>
+        </p>
+      </div>
+
+      <aside class="guide-aside">
+        <section class="guide-section">
+          <h2>{dict.learn.whereReport}</h2>
+          <ul class="result-list">
+            {
+              reportAgencies.map((agency, i) => (
+                <li>
+                  <AgencyCard
+                    agency={agency}
+                    locale={locale}
+                    primary={i === 0}
+                    badge={i === 0 ? 'primary' : 'also'}
+                  />
+                </li>
+              ))
+            }
+          </ul>
+          <p class="mt-2">
+            <a href={localePath(locale, '/get-help')}>{dict.nav.getHelp}</a>
+          </p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</Base>

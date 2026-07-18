@@ -1,0 +1,34 @@
+---
+import Icon from './Icon.astro';
+import { t, type Locale } from '../i18n';
+import type { Agency } from '../data/agencies';
+
+interface Props {
+  agency: Agency;
+  locale: Locale;
+  /** Highlight as the "start here" recommendation. */
+  primary?: boolean;
+  /** Show the recommended/also badge (used on wizard results). */
+  badge?: 'primary' | 'also' | null;
+}
+const { agency, locale, primary = false, badge = null } = Astro.props;
+const dict = t(locale);
+---
+<article class:list={['agency-card', { primary }]} data-agency={agency.id}>
+  <div class="top">
+    <h3>{agency.name[locale]}</h3>
+    {badge === 'primary' && <span class="badge primary">{dict.wizard.recommended}</span>}
+    {badge === 'also' && <span class="badge">{dict.wizard.also}</span>}
+  </div>
+  <p class="best">{agency.bestFor[locale]}</p>
+  <details>
+    <summary>{dict.wizard.whatToExpect}</summary>
+    <p>{agency.intake[locale]}</p>
+  </details>
+  <p class="go">
+    <a class="btn dark" href={agency.url} rel="noopener">
+      {dict.wizard.visit}
+      <Icon name="external" size={17} />
+    </a>
+  </p>
+</article>
