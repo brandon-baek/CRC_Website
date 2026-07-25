@@ -10,7 +10,7 @@ interface Props {
 const { locale } = Astro.props;
 const dict = t(locale);
 
-const accents = ['accent-red', 'accent-yellow', 'accent-lime'] as const;
+const chipColors = ['red', 'yellow', '', 'yellow', '', 'red'] as const;
 ---
 <Base
   locale={locale}
@@ -20,7 +20,6 @@ const accents = ['accent-red', 'accent-yellow', 'accent-lime'] as const;
 >
   <header class="guide-hero">
     <div class="container inner">
-      <p class="eyebrow">{dict.nav.learn}</p>
       <h1>{dict.learn.pageTitle}</h1>
       <p class="tagline">{dict.learn.pageLede}</p>
     </div>
@@ -28,18 +27,24 @@ const accents = ['accent-red', 'accent-yellow', 'accent-lime'] as const;
 
   <section class="section">
     <div class="container">
+      <h2 class="visually-hidden">{dict.learn.pageTitle}</h2>
       <div class="grid cols-2">
         {
           scamGuides.map((guide, i) => (
             <a class="card-hover" href={localePath(locale, `/learn/${guide.slug}`)}>
-              <article class:list={['card', accents[i % accents.length]]}>
-                <h3>{guide.title[locale]}</h3>
-                <p class="muted">{guide.tagline[locale]}</p>
-                <p class="mt-2">
-                  <span class="btn ghost">
-                    {dict.learn.readGuide}
-                    <Icon name="arrow-right" size={18} />
-                  </span>
+              <article class="card">
+                <div class="guide-card-head">
+                  <div class:list={['icon-chip', chipColors[i % chipColors.length]]} aria-hidden="true">
+                    <Icon name={guide.icon as any} size={26} />
+                  </div>
+                  <div>
+                    <h3>{guide.title[locale]}</h3>
+                    <p class="muted">{guide.tagline[locale]}</p>
+                  </div>
+                </div>
+                <p class="mt-2" style="font-weight:700;display:inline-flex;align-items:center;gap:0.4em;">
+                  {dict.learn.readGuide}
+                  <Icon name="arrow-right" size={18} />
                 </p>
               </article>
             </a>

@@ -11,10 +11,7 @@ const { locale } = Astro.props;
 const dict = t(locale);
 
 const featuredGuides = scamGuides.slice(0, 4);
-const cardAccents = ['accent-red', 'accent-yellow', 'accent-lime', 'accent-red'];
-
-const iconBoxStyle =
-  'width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:1rem;';
+const chipColors = ['red', 'yellow', '', 'red'];
 ---
 <Base locale={locale} title={dict.siteName} description={dict.hero.lede} path="/">
   <!-- 1. Hero -->
@@ -44,7 +41,7 @@ const iconBoxStyle =
         <div class="art" aria-hidden="true">
           <div class="sq-motif">
             <span style="background:var(--red)"></span>
-            <span style="background:#fff;border:1px solid var(--line)"></span>
+            <span class="label">한인<br />시민센터</span>
             <span style="background:var(--yellow)"></span>
             <span style="background:var(--red)"></span>
           </div>
@@ -53,92 +50,107 @@ const iconBoxStyle =
     </div>
   </section>
 
-  <!-- 2. What we do -->
+  <!-- 2. What we do (asymmetric split) -->
   <section class="section">
     <div class="container">
       <div class="section-head">
-        <p class="eyebrow">{dict.home.whatEyebrow}</p>
         <h2>{dict.home.whatTitle}</h2>
       </div>
-      <div class="grid cols-3">
-        <div class="card accent-red">
-          <div style={`${iconBoxStyle}background:#fdeae8;`} aria-hidden="true">
-            <Icon name="search" size={28} />
-          </div>
+      <div class="feature-lead">
+        <div class="major">
           <h3>{dict.home.what1Title}</h3>
           <p>{dict.home.what1Body}</p>
+          <a class="btn lime" href={localePath(locale, '/get-help')}>
+            {dict.hero.ctaPrimary}
+            <Icon name="arrow-right" size={18} />
+          </a>
         </div>
-        <div class="card accent-yellow">
-          <div style={`${iconBoxStyle}background:var(--yellow-soft);`} aria-hidden="true">
-            <Icon name="book" size={28} />
+        <div class="minors">
+          <div class="card">
+            <div class="icon-chip yellow" aria-hidden="true">
+              <Icon name="book" size={26} />
+            </div>
+            <h3>{dict.home.what2Title}</h3>
+            <p>{dict.home.what2Body}</p>
           </div>
-          <h3>{dict.home.what2Title}</h3>
-          <p>{dict.home.what2Body}</p>
-        </div>
-        <div class="card accent-lime">
-          <div style={`${iconBoxStyle}background:var(--lime-soft);`} aria-hidden="true">
-            <Icon name="chat" size={28} />
+          <div class="card">
+            <div class="icon-chip" aria-hidden="true">
+              <Icon name="chat" size={26} />
+            </div>
+            <h3>{dict.home.what3Title}</h3>
+            <p>{dict.home.what3Body}</p>
           </div>
-          <h3>{dict.home.what3Title}</h3>
-          <p>{dict.home.what3Body}</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 3. How it works -->
+  <!-- 3. Three rules -->
   <section class="section warm">
     <div class="container">
       <div class="section-head">
-        <p class="eyebrow yellow">{dict.home.howEyebrow}</p>
-        <h2>{dict.home.howTitle}</h2>
+        <h2>{dict.home.rulesTitle}</h2>
+        <p class="sub">{dict.home.rulesSub}</p>
       </div>
-      <ol class="steps">
+      <ol class="rules">
         <li>
-          <strong>{dict.home.how1Title}</strong>
-          <p>{dict.home.how1Body}</p>
+          <strong>{dict.home.rule1Title}</strong>
+          <p>{dict.home.rule1Body}</p>
         </li>
         <li>
-          <strong>{dict.home.how2Title}</strong>
-          <p>{dict.home.how2Body}</p>
+          <strong>{dict.home.rule2Title}</strong>
+          <p>{dict.home.rule2Body}</p>
         </li>
         <li>
-          <strong>{dict.home.how3Title}</strong>
-          <p>{dict.home.how3Body}</p>
+          <strong>{dict.home.rule3Title}</strong>
+          <p>{dict.home.rule3Body}</p>
         </li>
       </ol>
-      <div class="center mt-3">
-        <a class="btn primary big" href={localePath(locale, '/get-help')}>
-          {dict.hero.ctaPrimary}
-          <Icon name="arrow-right" />
-        </a>
-      </div>
     </div>
   </section>
 
-  <!-- 4. Stats -->
+  <!-- 4. How it works (vertical rail) + stats -->
   <section class="section">
     <div class="container">
-      <div class="section-head">
-        <p class="eyebrow">{dict.home.statsEyebrow}</p>
-        <h2>{dict.home.statsTitle}</h2>
-      </div>
-      <div class="grid cols-4">
-        <div class="stat">
-          <div class="num">{dict.home.stat1Num}</div>
-          <div class="lbl">{dict.home.stat1Lbl}</div>
+      <div class="grid cols-2" style="gap:3rem;align-items:start;">
+        <div>
+          <div class="section-head">
+            <h2>{dict.home.howTitle}</h2>
+          </div>
+          <ol class="steps">
+            <li>
+              <strong>{dict.home.how1Title}</strong>
+              <p>{dict.home.how1Body}</p>
+            </li>
+            <li>
+              <strong>{dict.home.how2Title}</strong>
+              <p>{dict.home.how2Body}</p>
+            </li>
+            <li>
+              <strong>{dict.home.how3Title}</strong>
+              <p>{dict.home.how3Body}</p>
+            </li>
+          </ol>
         </div>
-        <div class="stat">
-          <div class="num">{dict.home.stat2Num}</div>
-          <div class="lbl">{dict.home.stat2Lbl}</div>
-        </div>
-        <div class="stat">
-          <div class="num">{dict.home.stat3Num}</div>
-          <div class="lbl">{dict.home.stat3Lbl}</div>
-        </div>
-        <div class="stat">
-          <div class="num">{dict.home.stat4Num}</div>
-          <div class="lbl">{dict.home.stat4Lbl}</div>
+        <div>
+          <div class="section-head">
+            <h2>{dict.home.statsTitle}</h2>
+          </div>
+          <div style="display:grid;gap:1.6rem;">
+            <div class="stat">
+              <div class="num">{dict.home.stat1Num}</div>
+              <div class="lbl">{dict.home.stat1Lbl}</div>
+            </div>
+            <div class="stat">
+              <div class="num">{dict.home.stat2Num}</div>
+              <div class="lbl">{dict.home.stat2Lbl}</div>
+            </div>
+            <div class="stat">
+              <div class="num">{dict.home.stat3Num}</div>
+              <div class="lbl">{dict.home.stat3Lbl}</div>
+            </div>
+          </div>
+          <p class="stats-src">{dict.home.statsSrc}</p>
         </div>
       </div>
     </div>
@@ -148,13 +160,15 @@ const iconBoxStyle =
   <section class="section lime">
     <div class="container">
       <div class="section-head">
-        <p class="eyebrow lime">{dict.home.learnEyebrow}</p>
         <h2>{dict.home.learnTitle}</h2>
       </div>
       <div class="grid cols-2">
         {featuredGuides.map((guide, i) => (
           <a class="card-hover" href={localePath(locale, `/learn/${guide.slug}`)}>
-            <article class={`card ${cardAccents[i % cardAccents.length]}`}>
+            <article class="card">
+              <div class:list={['icon-chip', chipColors[i % chipColors.length]]} aria-hidden="true">
+                <Icon name={guide.icon as any} size={26} />
+              </div>
               <h3>{guide.title[locale]}</h3>
               <p>{guide.tagline[locale]}</p>
               <span style="font-weight:700;display:inline-flex;align-items:center;gap:0.4em;" class="mt-2">
@@ -177,20 +191,19 @@ const iconBoxStyle =
       <div class="grid cols-2" style="align-items:center;">
         <div>
           <div class="section-head" style="margin-bottom:0;">
-            <p class="eyebrow">{dict.home.dirEyebrow}</p>
             <h2>{dict.home.dirTitle}</h2>
           </div>
           <p class="mt-2">{dict.home.dirBody}</p>
-          <div class="mt-2">
+          <div class="mt-3">
             <a class="btn outline" href={localePath(locale, '/directory')}>{dict.home.dirCta}</a>
           </div>
         </div>
-        <div aria-hidden="true" style="justify-self:center;width:min(260px,60vw);transform:rotate(3deg);">
+        <div aria-hidden="true" style="justify-self:center;width:min(240px,55vw);transform:rotate(-2deg);">
           <div class="sq-motif">
             <span style="background:var(--yellow)"></span>
             <span style="background:var(--red)"></span>
             <span style="background:var(--lime)"></span>
-            <span style="background:#fff;border:1px solid var(--line)"></span>
+            <span style="background:var(--paper);border:1px solid var(--line)"></span>
           </div>
         </div>
       </div>
@@ -202,28 +215,27 @@ const iconBoxStyle =
   <section class="section warm tight">
     <div class="container">
       <div class="section-head">
-        <p class="eyebrow">{dict.home.locEyebrow}</p>
         <h2>{dict.home.locTitle}</h2>
       </div>
       <div class="grid cols-2">
         <div class="card">
-          <h3><span class="placeholder-tag">Main Office — Los Angeles</span></h3>
-          <p style="display:flex;align-items:center;gap:0.5em;" class="mt-2">
+          <h3><span class="placeholder-tag">Main Office, Los Angeles</span></h3>
+          <p class="contact-row mt-2">
             <Icon name="map-pin" />
             <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500, Los Angeles, CA 90010</span>
           </p>
-          <p style="display:flex;align-items:center;gap:0.5em;" class="mt-1">
+          <p class="contact-row mt-1">
             <Icon name="phone" />
             <span class="placeholder-tag">(213) 555-0100</span>
           </p>
         </div>
         <div class="card">
-          <h3><span class="placeholder-tag">Branch Office — Orange County</span></h3>
-          <p style="display:flex;align-items:center;gap:0.5em;" class="mt-2">
+          <h3><span class="placeholder-tag">Branch Office, Orange County</span></h3>
+          <p class="contact-row mt-2">
             <Icon name="map-pin" />
             <span class="placeholder-tag">5678 Beach Blvd, Suite 200, Buena Park, CA 90621</span>
           </p>
-          <p style="display:flex;align-items:center;gap:0.5em;" class="mt-1">
+          <p class="contact-row mt-1">
             <Icon name="phone" />
             <span class="placeholder-tag">(714) 555-0100</span>
           </p>

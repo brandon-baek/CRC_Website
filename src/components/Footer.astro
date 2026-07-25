@@ -13,7 +13,7 @@ const year = new Date().getFullYear();
     <div class="cols">
       <div>
         <img src="/favicon.svg" alt="" width="52" height="52" style="border-radius:10px; margin-bottom:0.9rem;" />
-        <h4>{dict.siteName} · {dict.siteNameKo}</h4>
+        <h4>{dict.siteName} · <span lang={locale === 'en' ? 'ko' : 'en'}>{dict.siteNameKo}</span></h4>
         <p>{dict.footer.blurb}</p>
       </div>
       <nav aria-label={dict.footer.quickLinks}>
@@ -36,8 +36,8 @@ const year = new Date().getFullYear();
         <h4>{dict.footer.contact}</h4>
         <!-- PLACEHOLDER: replace with the real address, phone, and email -->
         <p>
-          <span class="placeholder-tag">123 Main Street, Suite 200</span><br />
-          <span class="placeholder-tag">Los Angeles, CA 90005</span><br />
+          <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500</span><br />
+          <span class="placeholder-tag">Los Angeles, CA 90010</span><br />
           <span class="placeholder-tag">(213) 555-0100</span><br />
           <span class="placeholder-tag">help@crcenter.org</span>
         </p>

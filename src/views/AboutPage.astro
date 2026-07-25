@@ -31,7 +31,6 @@ const dict = t(locale);
       <div class="grid cols-2">
         <div>
           <div class="section-head" style="margin-bottom:0;">
-            <p class="eyebrow yellow">{dict.about.whoEyebrow}</p>
             <h2>{dict.about.whoTitle}</h2>
           </div>
           <p class="mt-2">{dict.about.whoBody}</p>
@@ -66,29 +65,29 @@ const dict = t(locale);
       </div>
       <div class="grid cols-2">
         <div class="card">
-          <h3><span class="placeholder-tag">Main Office — Los Angeles</span></h3>
-          <p style="display:flex;align-items:center;gap:0.5em;" class="mt-2">
+          <h3><span class="placeholder-tag">Main Office, Los Angeles</span></h3>
+          <p class="contact-row mt-2">
             <Icon name="map-pin" />
             <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500, Los Angeles, CA 90010</span>
           </p>
-          <p style="display:flex;align-items:center;gap:0.5em;" class="mt-1">
+          <p class="contact-row mt-1">
             <Icon name="phone" />
             <span class="placeholder-tag">(213) 555-0100</span>
           </p>
         </div>
         <div class="card">
-          <h3><span class="placeholder-tag">Branch Office — Orange County</span></h3>
-          <p style="display:flex;align-items:center;gap:0.5em;" class="mt-2">
+          <h3><span class="placeholder-tag">Branch Office, Orange County</span></h3>
+          <p class="contact-row mt-2">
             <Icon name="map-pin" />
             <span class="placeholder-tag">5678 Beach Blvd, Suite 200, Buena Park, CA 90621</span>
           </p>
-          <p style="display:flex;align-items:center;gap:0.5em;" class="mt-1">
+          <p class="contact-row mt-1">
             <Icon name="phone" />
             <span class="placeholder-tag">(714) 555-0100</span>
           </p>
         </div>
       </div>
-      <p style="display:flex;align-items:center;gap:0.5em;" class="mt-3">
+      <p class="contact-row mt-3">
         <Icon name="clock" />
         <strong>{dict.contact.hoursLabel}</strong>
         <span class="placeholder-tag">{dict.contact.hoursValue}</span>

@@ -6,14 +6,14 @@ import { ui } from '../i18n';
 const en = ui.en;
 const ko = ui.ko;
 ---
-<Base locale="en" title={en.notFound.title} description={en.notFound.body} path="/">
+<Base locale="en" title={en.notFound.title} description={en.notFound.body} path="/" noindex={true}>
   <section class="section center">
     <div class="container">
       <div aria-hidden="true" style="width:120px;margin-inline:auto;margin-bottom:2rem;">
         <div class="sq-motif">
           <span style="background:var(--red)"></span>
           <span style="background:var(--yellow)"></span>
-          <span style="background:#fff;border:1px solid var(--line)"></span>
+          <span style="background:var(--paper);border:1px solid var(--line)"></span>
           <span style="background:var(--lime)"></span>
         </div>
       </div>

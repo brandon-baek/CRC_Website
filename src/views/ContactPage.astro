@@ -9,7 +9,6 @@ interface Props {
 const { locale } = Astro.props;
 const dict = t(locale);
 
-const rowStyle = 'display:flex;align-items:center;gap:0.6em;flex-wrap:wrap;';
 ---
 <Base
   locale={locale}
@@ -20,8 +19,10 @@ const rowStyle = 'display:flex;align-items:center;gap:0.6em;flex-wrap:wrap;';
   <!-- 1. Header -->
   <section class="section warm tight">
     <div class="container">
-      <h1>{dict.contact.pageTitle}</h1>
-      <p class="muted mt-2" style="font-size:var(--fs-md);">{dict.contact.pageLede}</p>
+      <div class="section-head" style="margin-bottom:0;">
+        <h1>{dict.contact.pageTitle}</h1>
+        <p class="muted mt-2" style="font-size:var(--fs-md);">{dict.contact.pageLede}</p>
+      </div>
     </div>
   </section>
 
@@ -56,8 +57,8 @@ const rowStyle = 'display:flex;align-items:center;gap:0.6em;flex-wrap:wrap;';
             </div>
             <div class="field">
               <label for="contact-message">{dict.contact.message}</label>
-              <textarea class="input" id="contact-message" name="message" disabled></textarea>
-              <p class="hint">{dict.contact.messageHint}</p>
+              <textarea class="input" id="contact-message" name="message" aria-describedby="contact-message-hint" disabled></textarea>
+              <p class="hint" id="contact-message-hint">{dict.contact.messageHint}</p>
             </div>
             <button class="btn primary" type="submit" disabled>{dict.contact.submit}</button>
           </form>
@@ -65,22 +66,22 @@ const rowStyle = 'display:flex;align-items:center;gap:0.6em;flex-wrap:wrap;';
         <div>
           <h2>{dict.contact.infoTitle}</h2>
           <div class="card mt-2">
-            <p style={rowStyle}>
+            <p class="contact-row">
               <Icon name="phone" />
               <strong>{dict.contact.phone}</strong>
               <span class="placeholder-tag">(213) 555-0100</span>
             </p>
-            <p style={rowStyle} class="mt-2">
+            <p class="contact-row mt-2">
               <Icon name="mail" />
               <strong>{dict.contact.emailLabel}</strong>
               <span class="placeholder-tag">help@crcenter.org</span>
             </p>
-            <p style={rowStyle} class="mt-2">
+            <p class="contact-row mt-2">
               <Icon name="map-pin" />
               <strong>{dict.contact.addressLabel}</strong>
               <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500, Los Angeles, CA 90010</span>
             </p>
-            <p style={rowStyle} class="mt-2">
+            <p class="contact-row mt-2">
               <Icon name="clock" />
               <strong>{dict.contact.hoursLabel}</strong>
               {dict.contact.hoursValue}

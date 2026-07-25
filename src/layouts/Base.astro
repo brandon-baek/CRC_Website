@@ -10,14 +10,16 @@ interface Props {
   description: string;
   /** Locale-less path of the current page, e.g. '/', '/directory', '/learn/phishing'. */
   path: string;
+  /** Keep the page out of search indexes (used by the 404 page). */
+  noindex?: boolean;
 }
-const { locale, title, description, path } = Astro.props;
+const { locale, title, description, path, noindex = false } = Astro.props;
 const dict = t(locale);
 const site = Astro.site ?? new URL('https://crc-website.pages.dev');
 const canonical = new URL(localePath(locale, path), site);
 const altEn = new URL(localePath('en', path), site);
 const altKo = new URL(localePath('ko', path), site);
-const fullTitle = path === '/' ? `${dict.siteName} · ${dict.siteNameKo}` : `${title} — ${dict.siteName}`;
+const fullTitle = path === '/' ? `${dict.siteName} · ${dict.siteNameKo}` : `${title} · ${dict.siteName}`;
 ---
 <!doctype html>
 <html lang={locale}>
@@ -26,17 +28,32 @@ const fullTitle = path === '/' ? `${dict.siteName} · ${dict.siteNameKo}` : `${t
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="en" href={altEn} />
-    <link rel="alternate" hreflang="ko" href={altKo} />
-    <link rel="alternate" hreflang="x-default" href={altEn} />
+    {!noindex && (
+      <>
+        <link rel="canonical" href={canonical} />
+        <link rel="alternate" hreflang="en" href={altEn} />
+        <link rel="alternate" hreflang="ko" href={altKo} />
+        <link rel="alternate" hreflang="x-default" href={altEn} />
+      </>
+    )}
     <meta property="og:type" content="website" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    {/*
+      TODO before launch: add a 1200x630 PNG at public/og-cover.png and point og:image
+      and twitter:image at it, then switch twitter:card to "summary_large_image".
+      Most social platforms do not render an SVG og:image, so we use the small-card
+      format with the logo for now (valid, just not a big preview).
+    */}
     <meta property="og:image" content={new URL('/logo.svg', site)} />
     <meta property="og:locale" content={locale === 'ko' ? 'ko_KR' : 'en_US'} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL('/logo.svg', site)} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

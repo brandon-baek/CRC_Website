@@ -10,8 +10,10 @@ interface Props {
   primary?: boolean;
   /** Show the recommended/also badge (used on wizard results). */
   badge?: 'primary' | 'also' | null;
+  /** Show category badges (used in the directory). */
+  showCats?: boolean;
 }
-const { agency, locale, primary = false, badge = null } = Astro.props;
+const { agency, locale, primary = false, badge = null, showCats = false } = Astro.props;
 const dict = t(locale);
 ---
 <article class:list={['agency-card', { primary }]} data-agency={agency.id}>
@@ -21,6 +23,13 @@ const dict = t(locale);
     {badge === 'also' && <span class="badge">{dict.wizard.also}</span>}
   </div>
   <p class="best">{agency.bestFor[locale]}</p>
+  {showCats && (
+    <p class="cats">
+      {agency.categories.map((cat) => (
+        <span class="badge plain">{dict.categories[cat]}</span>
+      ))}
+    </p>
+  )}
   <details>
     <summary>{dict.wizard.whatToExpect}</summary>
     <p>{agency.intake[locale]}</p>

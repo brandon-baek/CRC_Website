@@ -52,8 +52,8 @@ export const agencies: Agency[] = [
     url: 'https://reportfraud.ftc.gov',
     categories: ['general', 'business', 'online'],
     name: {
-      en: 'FTC — ReportFraud.gov',
-      ko: 'FTC 연방거래위원회 — ReportFraud.gov',
+      en: 'FTC ReportFraud.gov',
+      ko: 'FTC 연방거래위원회 ReportFraud.gov',
     },
     bestFor: {
       en: 'General scams, deceptive businesses, impersonation, unwanted calls, and consumer fraud.',
@@ -69,12 +69,12 @@ export const agencies: Agency[] = [
     url: 'https://www.identitytheft.gov',
     categories: ['identity'],
     name: {
-      en: 'FTC — IdentityTheft.gov',
-      ko: 'FTC — IdentityTheft.gov (신분 도용)',
+      en: 'FTC IdentityTheft.gov',
+      ko: 'FTC IdentityTheft.gov (신분 도용)',
     },
     bestFor: {
-      en: 'Fraud involving misuse of your identity — SSN, accounts, or cards opened in your name.',
-      ko: '신분 도용 피해 — 내 이름으로 개설된 계좌·카드, SSN 도용 등.',
+      en: 'Fraud involving misuse of your identity: SSN, accounts, or cards opened in your name.',
+      ko: '신분 도용 피해: 내 이름으로 개설된 계좌·카드, SSN 도용 등.',
     },
     intake: {
       en: 'Produces an official FTC Identity Theft Report and a personalized recovery plan. Creating an account lets you track recovery tasks and generate pre-filled letters and forms.',
@@ -86,7 +86,7 @@ export const agencies: Agency[] = [
     url: 'https://www.ic3.gov',
     categories: ['online', 'investment'],
     name: {
-      en: 'FBI — Internet Crime Complaint Center (IC3)',
+      en: 'FBI Internet Crime Complaint Center (IC3)',
       ko: 'FBI 인터넷범죄신고센터 (IC3)',
     },
     bestFor: {
@@ -103,8 +103,8 @@ export const agencies: Agency[] = [
     url: 'https://www.consumerfinance.gov/complaint/',
     categories: ['banking'],
     name: {
-      en: 'CFPB — Consumer Complaint Portal',
-      ko: 'CFPB 소비자금융보호국 — 민원 포털',
+      en: 'CFPB Consumer Complaint Portal',
+      ko: 'CFPB 소비자금융보호국 민원 포털',
     },
     bestFor: {
       en: 'Problems with banks, cards, credit reporting, debt collection, loans, mortgages, money transfers, or virtual currency services.',
@@ -120,8 +120,8 @@ export const agencies: Agency[] = [
     url: 'https://www.sec.gov/tcr',
     categories: ['investment'],
     name: {
-      en: 'SEC — Tips, Complaints and Referrals',
-      ko: 'SEC 증권거래위원회 — 제보·민원 접수',
+      en: 'SEC Tips, Complaints and Referrals',
+      ko: 'SEC 증권거래위원회 제보·민원 접수',
     },
     bestFor: {
       en: 'Investment fraud, Ponzi schemes, insider trading, market manipulation, and securities violations.',
@@ -137,16 +137,16 @@ export const agencies: Agency[] = [
     url: 'https://www.irs.gov/help/tax-scams/report-a-tax-scam-or-fraud',
     categories: ['tax'],
     name: {
-      en: 'IRS — Report Fraud',
-      ko: 'IRS 국세청 — 사기 신고',
+      en: 'IRS Report Fraud',
+      ko: 'IRS 국세청 사기 신고',
     },
     bestFor: {
       en: 'Tax evasion, fraudulent returns, tax preparer misconduct, IRS impersonation, and tax-related identity theft.',
       ko: '탈세, 허위 세금 신고, 세무 대리인 비위, IRS 사칭, 세금 관련 신분 도용.',
     },
     intake: {
-      en: 'An initial routing questionnaire directs you to the correct form or reporting method. The IRS launched this consolidated reporting entry point in February 2026.',
-      ko: '몇 가지 질문을 통해 알맞은 양식과 신고 방법으로 안내합니다. IRS가 2026년 2월에 통합 신고 창구로 새로 개설했습니다.',
+      en: 'An initial routing questionnaire directs you to the correct form or reporting method. The IRS now offers this as a single consolidated entry point for reporting tax scams and fraud.',
+      ko: '몇 가지 질문을 통해 알맞은 양식과 신고 방법으로 안내합니다. IRS가 세금 관련 사기 신고를 한곳에서 접수하도록 마련한 통합 창구입니다.',
     },
   },
   {
@@ -154,8 +154,8 @@ export const agencies: Agency[] = [
     url: 'https://oig.ssa.gov/report/',
     categories: ['benefits'],
     name: {
-      en: 'SSA — Office of Inspector General',
-      ko: 'SSA 사회보장국 — 감찰관실 (OIG)',
+      en: 'SSA Office of Inspector General',
+      ko: 'SSA 사회보장국 감찰관실 (OIG)',
     },
     bestFor: {
       en: 'Social Security benefit fraud, SSN misuse, representative-payee fraud, and SSA impersonation scams.',
@@ -171,15 +171,15 @@ export const agencies: Agency[] = [
     url: 'https://oig.hhs.gov/fraud/report-fraud/',
     categories: ['benefits'],
     name: {
-      en: 'HHS — Office of Inspector General',
-      ko: 'HHS 보건복지부 — 감찰관실 (OIG)',
+      en: 'HHS Office of Inspector General',
+      ko: 'HHS 보건복지부 감찰관실 (OIG)',
     },
     bestFor: {
       en: 'Medicare, Medicaid, healthcare billing fraud, HHS grants or contracts, kickbacks, and program abuse.',
       ko: '메디케어·메디케이드 사기, 의료비 부정 청구, HHS 보조금·계약 비리, 리베이트.',
     },
     intake: {
-      en: 'Requests involved parties, dates, scope, witnesses, your narrative, and supporting evidence. It is an investigative hotline — not a way to get refunds or resolve personal benefits disputes.',
+      en: 'Requests involved parties, dates, scope, witnesses, your narrative, and supporting evidence. It is an investigative hotline, not a way to get refunds or resolve personal benefits disputes.',
       ko: '관련자, 날짜, 규모, 증인, 사건 경위, 증빙 자료를 입력합니다. 수사용 핫라인이며, 환불을 받거나 개인 혜택 분쟁을 해결하는 창구는 아닙니다.',
     },
   },
@@ -205,8 +205,8 @@ export const agencies: Agency[] = [
     url: 'https://www.oversight.gov/hotline',
     categories: ['government'],
     name: {
-      en: 'Oversight.gov — Reporting Router',
-      ko: 'Oversight.gov — 연방기관 신고 안내',
+      en: 'Oversight.gov Reporting Router',
+      ko: 'Oversight.gov 연방기관 신고 안내',
     },
     bestFor: {
       en: 'Fraud, waste, abuse, or contract/grant wrongdoing involving federal agencies.',
@@ -222,8 +222,8 @@ export const agencies: Agency[] = [
     url: 'https://oag.ca.gov/contact/consumer-complaint-against-business-or-company',
     categories: ['california', 'business'],
     name: {
-      en: 'California Attorney General — Consumer Complaint',
-      ko: '캘리포니아 법무장관실 — 소비자 민원',
+      en: 'California Attorney General Consumer Complaint',
+      ko: '캘리포니아 법무장관실 소비자 민원',
     },
     bestFor: {
       en: 'California complaints against businesses not regulated by a more specialized agency.',

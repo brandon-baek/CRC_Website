@@ -89,6 +89,46 @@ const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
     </div>
   </section>
 
+  <!-- Emergency first steps for people who just lost money -->
+  <section class="section warm">
+    <div class="container">
+      <div class="section-head" style="max-width:640px;">
+        <h2>{dict.wizard.lossTitle}</h2>
+        <p class="sub">{dict.wizard.lossIntro}</p>
+      </div>
+      <ol class="checklist" style="max-width:780px;">
+        <li>
+          <Icon name="phone" size={22} />
+          <div>
+            <strong>{dict.wizard.loss1Title}</strong>
+            <p>{dict.wizard.loss1Body}</p>
+          </div>
+        </li>
+        <li>
+          <Icon name="alert" size={22} />
+          <div>
+            <strong>{dict.wizard.loss2Title}</strong>
+            <p>{dict.wizard.loss2Body}</p>
+          </div>
+        </li>
+        <li>
+          <Icon name="book" size={22} />
+          <div>
+            <strong>{dict.wizard.loss3Title}</strong>
+            <p>{dict.wizard.loss3Body}</p>
+          </div>
+        </li>
+        <li>
+          <Icon name="shield" size={22} />
+          <div>
+            <strong>{dict.wizard.loss4Title}</strong>
+            <p>{dict.wizard.loss4Body}</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
   <script type="application/json" id="wizard-data" set:html={payloadJson} />
 
   <script>
@@ -190,6 +230,14 @@ const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
           trailEl.setAttribute('aria-label', S.trailLabel);
           trail.forEach((label) => trailEl.appendChild(el('span', 'crumb', label)));
           mount.appendChild(trailEl);
+        }
+
+        if (!result) {
+          const qLabel = el('p', 'muted', `${S.questionLabel} ${trail.length + 1}`);
+          qLabel.style.fontSize = 'var(--fs-sm)';
+          qLabel.style.fontWeight = '700';
+          qLabel.style.marginBottom = '0.3rem';
+          mount.appendChild(qLabel);
         }
 
         const heading = el('h2', 'wizard-q');

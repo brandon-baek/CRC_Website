@@ -10,11 +10,13 @@ interface Props {
 const { locale, path } = Astro.props;
 const dict = t(locale);
 
+// Nav uses short labels so the bar stays on one line at laptop widths;
+// full descriptive labels remain on page titles and in the footer.
 const links = [
   { href: '/', label: dict.nav.home, exact: true },
-  { href: '/directory', label: dict.nav.directory },
-  { href: '/learn', label: dict.nav.learn },
-  { href: '/about', label: dict.nav.about },
+  { href: '/directory', label: dict.nav.directoryShort },
+  { href: '/learn', label: dict.nav.learnShort },
+  { href: '/about', label: dict.nav.aboutShort },
   { href: '/contact', label: dict.nav.contact },
 ];
 
@@ -28,7 +30,7 @@ function isCurrent(href: string, exact = false): boolean {
       <img class="mark" src="/favicon.svg" alt="" width="44" height="44" />
       <span class="name">
         {dict.siteName}
-        <small>{dict.siteNameKo}</small>
+        <small lang={locale === 'en' ? 'ko' : 'en'}>{dict.siteNameKo}</small>
       </span>
     </a>
 
@@ -38,6 +40,7 @@ function isCurrent(href: string, exact = false): boolean {
       aria-expanded="false"
       aria-controls="site-nav"
       aria-label={locale === 'ko' ? '메뉴 열기' : 'Open menu'}
+      data-close-label={locale === 'ko' ? '메뉴 닫기' : 'Close menu'}
       data-nav-toggle
     >
       <span data-icon-menu><Icon name="menu" size={24} /></span>
@@ -73,9 +76,12 @@ function isCurrent(href: string, exact = false): boolean {
   const nav = document.getElementById('site-nav');
   const iconMenu = document.querySelector('[data-icon-menu]');
   const iconClose = document.querySelector('[data-icon-close]');
+  const openLabel = toggle?.getAttribute('aria-label') ?? 'Open menu';
+  const closeLabel = toggle?.getAttribute('data-close-label') ?? 'Close menu';
   toggle?.addEventListener('click', () => {
     const open = nav?.classList.toggle('open') ?? false;
     toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? closeLabel : openLabel);
     if (iconMenu instanceof HTMLElement) iconMenu.hidden = open;
     if (iconClose instanceof HTMLElement) iconClose.hidden = !open;
   });

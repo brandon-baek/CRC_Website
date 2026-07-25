@@ -56,18 +56,27 @@ for (const agency of agencies) {
         </div>
       </div>
 
+      <p
+        class="dir-count"
+        id="dir-count"
+        aria-live="polite"
+        data-template={dict.directory.countTemplate}
+        data-total={agencies.length}
+      >
+        {dict.directory.countTemplate.replace('{n}', String(agencies.length)).replace('{total}', String(agencies.length))}
+      </p>
+
+      <h2 class="visually-hidden">{dict.directory.pageTitle}</h2>
       <div class="dir-grid" id="dir-grid">
         {agencies.map((agency) => (
           <div
             data-cats={agency.categories.join(' ')}
             data-text={`${agency.name[locale]} ${agency.bestFor[locale]} ${agency.intake[locale]}`.toLowerCase()}
           >
-            <AgencyCard agency={agency} locale={locale} />
+            <AgencyCard agency={agency} locale={locale} showCats={true} />
           </div>
         ))}
       </div>
-
-      <p class="visually-hidden" id="dir-count" aria-live="polite"></p>
 
       <div class="dir-empty" id="dir-empty" hidden>
         <p>{dict.directory.empty}</p>
@@ -113,7 +122,9 @@ for (const agency of agencies) {
           if (show) shown++;
         }
         emptyEl.hidden = shown > 0;
-        countEl.textContent = `${shown}`;
+        const template = countEl.getAttribute('data-template') || '{n}';
+        const total = countEl.getAttribute('data-total') || '';
+        countEl.textContent = template.replace('{n}', String(shown)).replace('{total}', total);
       };
 
       input.addEventListener('input', apply);
