@@ -18,10 +18,16 @@ npm run preview    # preview the production build
 
 ## Deploy to Cloudflare Pages
 
+> **Status: not deployed yet.** No Cloudflare Pages project exists for this site.
+> Note that `crc-website.pages.dev` is **already taken by an unrelated
+> organisation** (Climate Resilient Communities), so pick a different project
+> name — e.g. `crc-fraud-help` or `hanin-crc`.
+
 **Option A — connect the Git repo (recommended):**
 1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git.
-2. Select this repository.
-3. Build settings: framework preset **Astro**, build command `npm run build`, output directory `dist`.
+2. Select this repository, production branch `main`.
+3. Build settings: framework preset **Astro**, build command `npm run build`,
+   output directory `dist`. Node version comes from `.nvmrc` (22).
 4. Deploy. Every push to `main` redeploys automatically.
 
 **Option B — direct upload:**
@@ -30,8 +36,23 @@ npm run build
 npx wrangler pages deploy dist
 ```
 
-When you buy a domain, add it under the Pages project → Custom domains, then update
-`site` in `astro.config.mjs` to the new URL (it is used for canonical/hreflang tags).
+### The site URL
+
+`site` in `astro.config.mjs` drives canonical and hreflang tags, and it is **not**
+hardcoded — it reads `SITE_URL`, then `CF_PAGES_URL`, then falls back to
+localhost. Cloudflare sets `CF_PAGES_URL` automatically, so the first deploy is
+already self-consistent with no configuration.
+
+When a custom domain is connected (Pages project → Custom domains), set
+`SITE_URL` to it under Settings → Environment variables → Production, so
+canonical tags point at the real domain instead of the pages.dev one.
+
+### Verifying a build the way Cloudflare does
+
+```bash
+npm ci && npm run build
+```
+This is the exact path the Pages build runs; if it passes locally it will pass there.
 
 ## Where to edit things
 

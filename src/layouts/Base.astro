@@ -15,7 +15,9 @@ interface Props {
 }
 const { locale, title, description, path, noindex = false } = Astro.props;
 const dict = t(locale);
-const site = Astro.site ?? new URL('https://crc-website.pages.dev');
+// `site` is always configured in astro.config.mjs; the fallback only matters if
+// that is ever removed. Never point it at a domain this project does not own.
+const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(localePath(locale, path), site);
 const altEn = new URL(localePath('en', path), site);
 const altKo = new URL(localePath('ko', path), site);
