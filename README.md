@@ -1,4 +1,4 @@
-# Consumer Resource Center · 한인 시민센터 — Website
+# Consumer Resource Center · 한인 시민센터
 
 Bilingual (English/Korean) website for the Consumer Resource Center: scam education,
 a guided "where do I report?" helper, and a plain-language directory of official
