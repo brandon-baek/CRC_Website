@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { t, localePath, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const dict = t(locale);
+
+const ways = [
+  { icon: 'chat' as const, title: dict.donate.way1Title, body: dict.donate.way1Body },
+  { icon: 'users' as const, title: dict.donate.way2Title, body: dict.donate.way2Body },
+  { icon: 'book' as const, title: dict.donate.way3Title, body: dict.donate.way3Body },
+];
+---
+<Base
+  locale={locale}
+  title={dict.donate.pageTitle}
+  description={dict.donate.pageLede}
+  path="/donate"
+>
+  <!-- 1. Header -->
+  <section class="section warm tight">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:0;">
+        <h1>{dict.donate.pageTitle}</h1>
+        <p class="muted mt-2" style="font-size:var(--fs-md);max-width:52ch;">{dict.donate.pageLede}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Online giving placeholder -->
+  <!-- DONATE PLACEHOLDER: when a donation account exists (PayPal, Zeffy, Givebutter…),
+       replace this notice with the donate button or embed. -->
+  <section class="section tight">
+    <div class="container">
+      <div class="notice lime">
+        <Icon name="heart" />
+        <div>
+          <strong>{dict.donate.soonTitle}</strong>
+          <p>{dict.donate.soonBody}</p>
+          <p class="mt-2">
+            <a class="btn dark" href={localePath(locale, '/contact')}>
+              {dict.donate.soonCta}
+              <Icon name="arrow-right" size={16} />
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Other ways to help -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{dict.donate.waysTitle}</h2>
+      </div>
+      <div class="grid cols-3">
+        {ways.map((way) => (
+          <div class="card">
+            <Icon name={way.icon} size={26} />
+            <h3 class="mt-2">{way.title}</h3>
+            <p class="muted">{way.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>

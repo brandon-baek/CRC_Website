@@ -219,7 +219,7 @@ const chipColors = ['red', 'yellow', '', 'red'];
       </div>
       <div class="grid cols-2">
         <div class="card">
-          <h3><span class="placeholder-tag">Main Office, Los Angeles</span></h3>
+          <h3>{dict.contact.officeLabel}</h3>
           <p class="contact-row mt-2">
             <Icon name="map-pin" />
             <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500, Los Angeles, CA 90010</span>
@@ -230,15 +230,12 @@ const chipColors = ['red', 'yellow', '', 'red'];
           </p>
         </div>
         <div class="card">
-          <h3><span class="placeholder-tag">Branch Office, Orange County</span></h3>
+          <h3>{dict.contact.hoursLabel}</h3>
           <p class="contact-row mt-2">
-            <Icon name="map-pin" />
-            <span class="placeholder-tag">5678 Beach Blvd, Suite 200, Buena Park, CA 90621</span>
+            <Icon name="clock" />
+            <span>{dict.contact.hoursValue}</span>
           </p>
-          <p class="contact-row mt-1">
-            <Icon name="phone" />
-            <span class="placeholder-tag">(714) 555-0100</span>
-          </p>
+          <p class="muted mt-1">{dict.contact.hoursClosed}</p>
         </div>
       </div>
     </div>

@@ -78,7 +78,7 @@ const dict = t(locale);
             </p>
             <p class="contact-row mt-2">
               <Icon name="map-pin" />
-              <strong>{dict.contact.addressLabel}</strong>
+              <strong>{dict.contact.officeLabel}</strong>
               <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500, Los Angeles, CA 90010</span>
             </p>
             <p class="contact-row mt-2">
@@ -86,6 +86,7 @@ const dict = t(locale);
               <strong>{dict.contact.hoursLabel}</strong>
               {dict.contact.hoursValue}
             </p>
+            <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.contact.hoursClosed}</p>
           </div>
           <div class="notice red mt-2">
             <Icon name="alert" />

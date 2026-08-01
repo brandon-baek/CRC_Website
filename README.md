@@ -39,11 +39,15 @@ When you buy a domain, add it under the Pages project → Custom domains, then u
 |---|---|
 | Reporting agencies (directory + wizard results) | `src/data/agencies.ts` |
 | Guided-helper questions & routing | `src/data/wizard.ts` |
-| Scam education guides | `src/data/scams.ts` |
+| Scam education guides (incl. the FTC video on each guide) | `src/data/scams.ts` |
+| CRC press releases / announcements on the News page | `src/data/press.ts` |
+| FTC alert feed (source URL, parsing, how many show) | `src/data/ftcAlerts.ts` |
 | All UI text, both languages | `src/i18n/index.ts` |
-| **Placeholders to replace** (address, phone, email, office names) | `src/components/Footer.astro`, `src/views/HomePage.astro`, `src/views/AboutPage.astro`, `src/views/ContactPage.astro` — search for `PLACEHOLDER` |
+| **Placeholders to replace** (address, phone, email) | `src/components/Footer.astro`, `src/views/HomePage.astro`, `src/views/AboutPage.astro`, `src/views/ContactPage.astro` — search for `PLACEHOLDER` |
+| Office hours | `contact.hoursValue` / `contact.hoursClosed` in `src/i18n/index.ts` |
 | Colors, fonts, spacing | `src/styles/global.css` |
 | Logo | `public/logo.svg`, `public/favicon.svg` |
+| NGA partner logo | save as `public/nga-logo.svg`, then add the `<img>` in `src/views/AboutPage.astro` (marked with a comment) |
 
 ## Structure
 
@@ -52,9 +56,28 @@ When you buy a domain, add it under the Pages project → Custom domains, then u
   so content and layout are written once and rendered per language.
 - The Get Help wizard is a decision tree defined as data in `src/data/wizard.ts`.
   Results reference agency ids from `src/data/agencies.ts`.
+- The News page pulls the FTC consumer-alert feed **at build time** and bakes the
+  results into static HTML, so the page stays fast and has no runtime dependency
+  on the FTC. It refreshes on every deploy; if the feed is unreachable during a
+  build, the page falls back to a link to consumer.ftc.gov instead of failing.
+- Every scam guide has one video, defined in `src/data/scams.ts`. The rules for
+  adding or swapping one (also written at the top of that file):
+  - published by a government agency or a recognised consumer-protection body
+    (FTC, USPIS, FBI, AARP) — never a re-upload of someone else's video;
+  - at least 45 seconds, and actually explaining the scam;
+  - embeddable off the publisher's own site. **Check this before adding**, or the
+    guide will render a grey error box:
+    - Vimeo — `https://player.vimeo.com/video/<id>` must return HTTP 200. Many
+      FTC videos are privacy-locked to ftc.gov and return 401.
+    - YouTube — the watch page must report `"playableInEmbed":true`.
+  - Korean-language versions are used automatically when one exists (set `ko`);
+    otherwise the English video plays with a note saying it is in English.
 
 ## Planned next steps (deliberately not built yet)
 
+- **Online donations**: `/donate` explains how to give and links to the office.
+  When a donation account exists (PayPal, Zeffy, Givebutter…), replace the
+  notice in `src/views/DonatePage.astro` marked `DONATE PLACEHOLDER`.
 - **Intake form**: the contact form is a disabled placeholder. To activate it,
   remove the `disabled` attributes in `src/views/ContactPage.astro` and point the
   form at a form service (e.g. Formspree) or a Cloudflare Pages Function.

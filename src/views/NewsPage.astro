@@ -1,0 +1,112 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { t, localePath, type Locale } from '../i18n';
+import { fetchFtcAlerts, FTC_ALERTS_PAGE } from '../data/ftcAlerts';
+import { sortedPressPosts } from '../data/press';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const dict = t(locale);
+
+// Fetched once at build time; see src/data/ftcAlerts.ts.
+const alerts = await fetchFtcAlerts(8);
+
+const dateFormat = new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+const formatDate = (iso: string) => dateFormat.format(new Date(iso));
+---
+<Base
+  locale={locale}
+  title={dict.news.pageTitle}
+  description={dict.news.pageLede}
+  path="/news"
+>
+  <!-- 1. Header -->
+  <section class="section warm tight">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:0;">
+        <h1>{dict.news.pageTitle}</h1>
+        <p class="muted mt-2" style="font-size:var(--fs-md);">{dict.news.pageLede}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. FTC alert feed -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{dict.news.alertsTitle}</h2>
+        <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.news.alertsSource}</p>
+      </div>
+
+      {alerts.length > 0 ? (
+        <ul class="news-list">
+          {alerts.map((alert) => (
+            <li class="news-item">
+              {alert.date && <p class="date">{formatDate(alert.date)}</p>}
+              <h3>
+                <a href={alert.url} target="_blank" rel="noopener" hreflang="en">{alert.title}</a>
+              </h3>
+              <p>{alert.summary}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="notice">
+          <Icon name="alert" />
+          <p>{dict.news.alertsEmpty}</p>
+        </div>
+      )}
+
+      <p class="mt-3">
+        <a class="btn outline" href={FTC_ALERTS_PAGE} target="_blank" rel="noopener">
+          {dict.news.alertsCta}
+          <Icon name="external" size={16} />
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 3. CRC press releases -->
+  <section class="section warm">
+    <div class="container">
+      <div class="section-head">
+        <h2>{dict.news.pressTitle}</h2>
+        <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.news.pressLede}</p>
+      </div>
+
+      {sortedPressPosts.length > 0 ? (
+        <ul class="news-list">
+          {sortedPressPosts.map((post) => (
+            <li class="news-item">
+              <p class="date">{formatDate(post.date)}</p>
+              <h3>
+                {post.url ? <a href={post.url}>{post.title[locale]}</a> : post.title[locale]}
+              </h3>
+              <p>{post.summary[locale]}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="card">
+          <p class="contact-row">
+            <Icon name="newspaper" />
+            <span class="muted">{dict.news.pressEmpty}</span>
+          </p>
+          <p class="mt-2">
+            <a class="btn ghost" href={localePath(locale, '/contact')}>
+              {dict.nav.contact}
+              <Icon name="arrow-right" size={16} />
+            </a>
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
+</Base>

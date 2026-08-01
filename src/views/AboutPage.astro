@@ -43,7 +43,26 @@ const dict = t(locale);
     </div>
   </section>
 
-  <!-- 3. Team -->
+  <!-- 3. Program leadership (NGA) -->
+  <section class="section tight">
+    <div class="container">
+      <div class="card nga-card">
+        <!-- LOGO: save the NGA logo as public/nga-logo.svg (or .png) and swap the img src below in. -->
+        <div>
+          <h2 style="font-size:var(--fs-lg);">{dict.about.ngaTitle}</h2>
+          <p class="mt-2">{dict.about.ngaBody}</p>
+          <p class="mt-2">
+            <a class="btn ghost" href="https://www.nextnga.org/about" target="_blank" rel="noopener">
+              {dict.about.ngaCta}
+              <Icon name="external" size={16} />
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Team -->
   <section class="section tight">
     <div class="container">
       <div class="section-head">
@@ -56,8 +75,8 @@ const dict = t(locale);
     </div>
   </section>
 
-  <!-- 4. Locations & hours -->
-  <!-- PLACEHOLDER: replace with real locations -->
+  <!-- 5. Location & hours -->
+  <!-- PLACEHOLDER: replace the address and phone with the real main-office details -->
   <section class="section warm">
     <div class="container">
       <div class="section-head">
@@ -65,7 +84,7 @@ const dict = t(locale);
       </div>
       <div class="grid cols-2">
         <div class="card">
-          <h3><span class="placeholder-tag">Main Office, Los Angeles</span></h3>
+          <h3>{dict.contact.officeLabel}</h3>
           <p class="contact-row mt-2">
             <Icon name="map-pin" />
             <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500, Los Angeles, CA 90010</span>
@@ -76,22 +95,14 @@ const dict = t(locale);
           </p>
         </div>
         <div class="card">
-          <h3><span class="placeholder-tag">Branch Office, Orange County</span></h3>
+          <h3>{dict.contact.hoursLabel}</h3>
           <p class="contact-row mt-2">
-            <Icon name="map-pin" />
-            <span class="placeholder-tag">5678 Beach Blvd, Suite 200, Buena Park, CA 90621</span>
+            <Icon name="clock" />
+            <span>{dict.contact.hoursValue}</span>
           </p>
-          <p class="contact-row mt-1">
-            <Icon name="phone" />
-            <span class="placeholder-tag">(714) 555-0100</span>
-          </p>
+          <p class="muted mt-1">{dict.contact.hoursClosed}</p>
         </div>
       </div>
-      <p class="contact-row mt-3">
-        <Icon name="clock" />
-        <strong>{dict.contact.hoursLabel}</strong>
-        <span class="placeholder-tag">{dict.contact.hoursValue}</span>
-      </p>
     </div>
   </section>
 </Base>

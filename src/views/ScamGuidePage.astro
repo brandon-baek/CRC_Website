@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import AgencyCard from '../components/AgencyCard.astro';
 import { t, localePath, type Locale } from '../i18n';
+import Icon from '../components/Icon.astro';
 import { agencyById } from '../data/agencies';
 import type { ScamGuide } from '../data/scams';
 
@@ -11,6 +12,28 @@ interface Props {
 }
 const { locale, guide } = Astro.props;
 const dict = t(locale);
+
+// Official public-service videos (FTC, USPIS, FBI, AARP). Korean-language
+// versions exist for only a few, so fall back to the English one and say so.
+const video = guide.video ? (guide.video[locale] ?? guide.video.en) : null;
+const videoIsEnglishOnly = locale === 'ko' && guide.video != null && guide.video.ko == null;
+
+const embedSrc = video
+  ? video.provider === 'youtube'
+    ? `https://www.youtube-nocookie.com/embed/${video.id}?rel=0`
+    : `https://player.vimeo.com/video/${video.id}?dnt=1`
+  : null;
+
+/** 186 → "3:06" */
+function runtime(seconds: number): string {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+const videoCaption = video
+  ? dict.learn.videoBy
+      .replace('{source}', video.source[locale])
+      .replace('{duration}', runtime(video.seconds))
+  : '';
 
 const reportAgencies = guide.reportTo
   .map((id) => agencyById.get(id))
@@ -36,6 +59,31 @@ const reportAgencies = guide.reportTo
     <div class="guide-body">
       <div>
         <p>{guide.what[locale]}</p>
+
+        {video && (
+          <section class="guide-section mt-3">
+            <h2>{dict.learn.videoTitle}</h2>
+            <div class="video-embed">
+              <iframe
+                src={embedSrc}
+                title={`${guide.title[locale]} — ${dict.learn.videoTitle}`}
+                loading="lazy"
+                allow="fullscreen; picture-in-picture"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen
+              ></iframe>
+            </div>
+            <p class="video-note">
+              {videoCaption}
+              {videoIsEnglishOnly && ` ${dict.learn.videoNoteEn}`}
+              {' '}
+              <a href={video.page} target="_blank" rel="noopener">
+                {dict.learn.videoOpen}
+                <Icon name="external" size={14} />
+              </a>
+            </p>
+          </section>
+        )}
 
         <section class="guide-section mt-3">
           <h2>{dict.learn.warning}</h2>

@@ -1,9 +1,60 @@
 import type { Locale } from '../i18n';
 
+/**
+ * An official public-service video for a guide.
+ *
+ * Rules for anything added here:
+ *  - published by a government agency or a recognised consumer-protection body
+ *    (FTC, USPIS, FBI, AARP) — never a random re-upload;
+ *  - at least 45 seconds and actually about the scam, not a 30-second slogan;
+ *  - embeddable off the publisher's own domain. Check before adding:
+ *    Vimeo  → `https://player.vimeo.com/video/<id>` must return HTTP 200
+ *             (many FTC videos are privacy-locked to ftc.gov and will 401);
+ *    YouTube→ the watch page must report `"playableInEmbed":true`.
+ */
+export type VideoProvider = 'youtube' | 'vimeo';
+
+export interface VideoRef {
+  provider: VideoProvider;
+  /** YouTube video id, or the numeric Vimeo id. */
+  id: string;
+  /** Public page for the video, used as the fallback link. */
+  page: string;
+  /** Runtime in seconds; shown next to the publisher's name. */
+  seconds: number;
+  /** Publisher, per language. */
+  source: Record<Locale, string>;
+}
+
+export interface ScamVideo {
+  en: VideoRef;
+  /** Only set when a Korean-language version of a video actually exists. */
+  ko?: VideoRef;
+}
+
+const FTC: Record<Locale, string> = {
+  en: 'the U.S. Federal Trade Commission',
+  ko: '미국 연방거래위원회(FTC)',
+};
+const USPIS: Record<Locale, string> = {
+  en: 'the U.S. Postal Inspection Service',
+  ko: '미국 우정 감찰국(USPIS)',
+};
+const FBI: Record<Locale, string> = {
+  en: 'the FBI',
+  ko: '미국 연방수사국(FBI)',
+};
+const AARP: Record<Locale, string> = {
+  en: 'AARP',
+  ko: 'AARP(미국 은퇴자협회)',
+};
+
 export interface ScamGuide {
   slug: string;
   /** Icon name from src/components/Icon.astro. */
   icon: string;
+  /** Optional official video shown on the guide page. */
+  video?: ScamVideo;
   title: Record<Locale, string>;
   tagline: Record<Locale, string>;      // one-sentence hook
   what: Record<Locale, string>;         // 2-4 sentence plain-language explanation of how the scam works
@@ -21,6 +72,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'phishing',
     icon: 'smartphone',
+    video: {
+      en: {
+        provider: 'youtube',
+        id: 'dmjfdHquxyQ',
+        page: 'https://www.youtube.com/watch?v=dmjfdHquxyQ',
+        seconds: 79,
+        source: USPIS,
+      },
+    },
     title: {
       en: 'Phishing Emails & Fake Texts',
       ko: '피싱 이메일과 가짜 문자 (스미싱)',
@@ -86,6 +146,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'government-impersonation',
     icon: 'landmark',
+    video: {
+      en: {
+        provider: 'youtube',
+        id: 'Exf4iUD7gRo',
+        page: 'https://www.youtube.com/watch?v=Exf4iUD7gRo',
+        seconds: 94,
+        source: FTC,
+      },
+    },
     title: {
       en: 'Government Impersonation Calls',
       ko: '정부 기관 사칭 전화 (보이스피싱)',
@@ -151,6 +220,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'family-emergency',
     icon: 'users',
+    video: {
+      en: {
+        provider: 'vimeo',
+        id: '352058971',
+        page: 'https://consumer.ftc.gov/media/79939',
+        seconds: 135,
+        source: FTC,
+      },
+    },
     title: {
       en: 'Family Emergency & AI Voice Scams',
       ko: '가족 사칭 전화 (AI 목소리 복제)',
@@ -216,6 +294,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'investment-crypto',
     icon: 'chart',
+    video: {
+      en: {
+        provider: 'youtube',
+        id: 'vUE03dqE0Zw',
+        page: 'https://www.youtube.com/watch?v=vUE03dqE0Zw',
+        seconds: 153,
+        source: AARP,
+      },
+    },
     title: {
       en: 'Investment & Crypto Scams',
       ko: '투자·암호화폐 사기',
@@ -281,6 +368,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'romance-scams',
     icon: 'heart',
+    video: {
+      en: {
+        provider: 'youtube',
+        id: 'lxReHY2SBrw',
+        page: 'https://www.youtube.com/watch?v=lxReHY2SBrw',
+        seconds: 157,
+        source: FBI,
+      },
+    },
     title: {
       en: 'Romance Scams',
       ko: '로맨스 스캠 (연애 빙자 사기)',
@@ -346,6 +442,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'tech-support',
     icon: 'monitor',
+    video: {
+      en: {
+        provider: 'youtube',
+        id: 'wuj5tvnbJwg',
+        page: 'https://www.youtube.com/watch?v=wuj5tvnbJwg',
+        seconds: 186,
+        source: FTC,
+      },
+    },
     title: {
       en: 'Tech Support Scams',
       ko: '기술지원 사기 (컴퓨터 수리 사칭)',
@@ -411,6 +516,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'identity-theft',
     icon: 'id-card',
+    video: {
+      en: {
+        provider: 'youtube',
+        id: 'k3yh9hjnE44',
+        page: 'https://www.youtube.com/watch?v=k3yh9hjnE44',
+        seconds: 77,
+        source: FTC,
+      },
+    },
     title: {
       en: 'Identity Theft',
       ko: '신분 도용',
@@ -476,6 +590,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'online-shopping',
     icon: 'cart',
+    video: {
+      en: {
+        provider: 'vimeo',
+        id: '352069005',
+        page: 'https://consumer.ftc.gov/media/79929',
+        seconds: 208,
+        source: FTC,
+      },
+    },
     title: {
       en: 'Fake Online Stores',
       ko: '가짜 온라인 쇼핑몰',
@@ -541,6 +664,15 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'job-scams',
     icon: 'briefcase',
+    video: {
+      en: {
+        provider: 'vimeo',
+        id: '352603068',
+        page: 'https://consumer.ftc.gov/media/video-0184-avoid-work-home-scams',
+        seconds: 180,
+        source: FTC,
+      },
+    },
     title: {
       en: 'Fake Job & Check Scams',
       ko: '가짜 구인·수표 사기',
@@ -606,6 +738,24 @@ export const scamGuides: ScamGuide[] = [
   {
     slug: 'mail-lottery',
     icon: 'gift',
+    video: {
+      en: {
+        provider: 'youtube',
+        id: 'ZYHYcZJIBjY',
+        page: 'https://www.youtube.com/watch?v=ZYHYcZJIBjY',
+        seconds: 114,
+        source: USPIS,
+      },
+      // The FTC published this one in Korean: how scammers demand payment,
+      // which is the step where every prize and lottery scam gives itself away.
+      ko: {
+        provider: 'vimeo',
+        id: '352064154',
+        page: 'https://consumer.ftc.gov/media/79837',
+        seconds: 139,
+        source: FTC,
+      },
+    },
     title: {
       en: 'Lottery & Sweepstakes Mail Scams',
       ko: '복권·경품 당첨 우편 사기',

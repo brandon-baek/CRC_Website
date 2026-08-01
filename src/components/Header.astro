@@ -16,6 +16,7 @@ const links = [
   { href: '/', label: dict.nav.home, exact: true },
   { href: '/directory', label: dict.nav.directoryShort },
   { href: '/learn', label: dict.nav.learnShort },
+  { href: '/news', label: dict.nav.newsShort },
   { href: '/about', label: dict.nav.aboutShort },
   { href: '/contact', label: dict.nav.contact },
 ];
@@ -56,6 +57,14 @@ function isCurrent(href: string, exact = false): boolean {
           {l.label}
         </a>
       ))}
+      <a
+        class="nav-donate"
+        href={localePath(locale, '/donate')}
+        aria-current={isCurrent('/donate') ? 'page' : undefined}
+      >
+        <Icon name="heart" size={16} />
+        {dict.nav.donate}
+      </a>
       <a
         class="nav-cta"
         href={localePath(locale, '/get-help')}

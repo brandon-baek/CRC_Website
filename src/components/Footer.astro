@@ -22,6 +22,7 @@ const year = new Date().getFullYear();
           <li><a href={localePath(locale, '/get-help')}>{dict.nav.getHelp}</a></li>
           <li><a href={localePath(locale, '/directory')}>{dict.nav.directory}</a></li>
           <li><a href={localePath(locale, '/learn')}>{dict.nav.learn}</a></li>
+          <li><a href={localePath(locale, '/news')}>{dict.nav.news}</a></li>
         </ul>
       </nav>
       <nav aria-label={dict.footer.resources}>
@@ -29,6 +30,7 @@ const year = new Date().getFullYear();
         <ul>
           <li><a href={localePath(locale, '/about')}>{dict.nav.about}</a></li>
           <li><a href={localePath(locale, '/contact')}>{dict.nav.contact}</a></li>
+          <li><a href={localePath(locale, '/donate')}>{dict.nav.donate}</a></li>
           <li><a href="https://reportfraud.ftc.gov" rel="noopener">ReportFraud.gov</a></li>
         </ul>
       </nav>
@@ -40,6 +42,10 @@ const year = new Date().getFullYear();
           <span class="placeholder-tag">Los Angeles, CA 90010</span><br />
           <span class="placeholder-tag">(213) 555-0100</span><br />
           <span class="placeholder-tag">help@crcenter.org</span>
+        </p>
+        <p class="mt-1">
+          {dict.contact.hoursValue}<br />
+          {dict.contact.hoursClosed}
         </p>
       </div>
     </div>
