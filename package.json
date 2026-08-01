@@ -6,9 +6,16 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "videos:ko": "tsx scripts/video/build-korean-videos.mjs --all",
+    "videos:ko:one": "tsx scripts/video/build-korean-videos.mjs",
+    "videos:ko:validate": "tsx scripts/video/validate-korean-videos.mjs"
   },
   "dependencies": {
     "astro": "^5.1.0"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.3",
+    "tsx": "^4.23.1"
   }
 }
