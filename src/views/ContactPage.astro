@@ -1,7 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import IntakeForm from '../components/IntakeForm.astro';
 import { t, type Locale } from '../i18n';
+import { org, orgAddress, orgMapUrl } from '../data/org';
 
 interface Props {
   locale: Locale;
@@ -32,36 +34,10 @@ const dict = t(locale);
       <div class="grid cols-2" style="align-items:start;">
         <div>
           <h2>{dict.contact.formTitle}</h2>
-          <div class="notice mt-2">
-            <Icon name="alert" />
-            <div>
-              <strong>{dict.contact.comingSoon}</strong>
-              <p>{dict.contact.comingSoonBody}</p>
-            </div>
+          <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.intake.lede}</p>
+          <div class="mt-3">
+            <IntakeForm locale={locale} page="contact" />
           </div>
-          <!-- INTAKE FORM PLACEHOLDER: when ready, remove `disabled` attributes and wire this form to a form service (e.g. Formspree action URL) or a Cloudflare Pages Function. See README. -->
-          <form class="mt-3" aria-disabled="true">
-            <div class="field">
-              <label for="contact-name">{dict.contact.name}</label>
-              <input class="input" id="contact-name" name="name" type="text" disabled />
-            </div>
-            <div class="field">
-              <label for="contact-email">{dict.contact.email}</label>
-              <input class="input" id="contact-email" name="email" type="text" disabled />
-            </div>
-            <div class="field">
-              <label for="contact-topic">{dict.contact.topic}</label>
-              <select class="input" id="contact-topic" name="topic" disabled>
-                {dict.contact.topicOptions.map((option) => <option>{option}</option>)}
-              </select>
-            </div>
-            <div class="field">
-              <label for="contact-message">{dict.contact.message}</label>
-              <textarea class="input" id="contact-message" name="message" aria-describedby="contact-message-hint" disabled></textarea>
-              <p class="hint" id="contact-message-hint">{dict.contact.messageHint}</p>
-            </div>
-            <button class="btn primary" type="submit" disabled>{dict.contact.submit}</button>
-          </form>
         </div>
         <div>
           <h2>{dict.contact.infoTitle}</h2>
@@ -69,22 +45,26 @@ const dict = t(locale);
             <p class="contact-row">
               <Icon name="phone" />
               <strong>{dict.contact.phone}</strong>
-              <span class="placeholder-tag">(213) 555-0100</span>
+              <a href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a>
             </p>
             <p class="contact-row mt-2">
               <Icon name="mail" />
               <strong>{dict.contact.emailLabel}</strong>
-              <span class="placeholder-tag">help@crcenter.org</span>
+              <span class="placeholder-tag">{org.email}</span>
             </p>
             <p class="contact-row mt-2">
               <Icon name="map-pin" />
               <strong>{dict.contact.officeLabel}</strong>
-              <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500, Los Angeles, CA 90010</span>
+              <a href={orgMapUrl} rel="noopener">{orgAddress}</a>
             </p>
             <p class="contact-row mt-2">
               <Icon name="clock" />
               <strong>{dict.contact.hoursLabel}</strong>
-              {dict.contact.hoursValue}
+              <span>
+                {dict.contact.hoursRows.map((row) => (
+                  <>{row.day}: {row.time}<br /></>
+                ))}
+              </span>
             </p>
             <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.contact.hoursClosed}</p>
           </div>

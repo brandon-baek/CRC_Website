@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { t, localePath, type Locale } from '../i18n';
-import { fetchFtcAlerts, FTC_ALERTS_PAGE } from '../data/ftcAlerts';
+import { fetchAllNews, type NewsSource } from '../data/newsFeeds';
 import { sortedPressPosts } from '../data/press';
 
 interface Props {
@@ -11,8 +11,10 @@ interface Props {
 const { locale } = Astro.props;
 const dict = t(locale);
 
-// Fetched once at build time; see src/data/ftcAlerts.ts.
-const alerts = await fetchFtcAlerts(8);
+// Fetched once at build time; see src/data/newsFeeds.ts.
+const { items, liveSources } = await fetchAllNews();
+
+const sourceById = new Map<string, NewsSource>(liveSources.map((s) => [s.id, s]));
 
 const dateFormat = new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
   year: 'numeric',
@@ -37,39 +39,67 @@ const formatDate = (iso: string) => dateFormat.format(new Date(iso));
     </div>
   </section>
 
-  <!-- 2. FTC alert feed -->
+  <!-- 2. Agency feeds, filterable by source -->
   <section class="section">
     <div class="container">
       <div class="section-head">
-        <h2>{dict.news.alertsTitle}</h2>
-        <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.news.alertsSource}</p>
+        <h2>{dict.news.feedTitle}</h2>
+        <p class="muted mt-1" style="font-size:var(--fs-sm);">
+          {dict.news.feedLede}
+          {/* Only set on the Korean page: these articles are all in English. */}
+          {dict.news.englishNote && <> <span>{dict.news.englishNote}</span></>}
+        </p>
       </div>
 
-      {alerts.length > 0 ? (
-        <ul class="news-list">
-          {alerts.map((alert) => (
-            <li class="news-item">
-              {alert.date && <p class="date">{formatDate(alert.date)}</p>}
-              <h3>
-                <a href={alert.url} target="_blank" rel="noopener" hreflang="en">{alert.title}</a>
-              </h3>
-              <p>{alert.summary}</p>
-            </li>
-          ))}
-        </ul>
+      {items.length > 0 ? (
+        <>
+          <div class="dir-chips" role="group" aria-label={dict.news.filterLabel}>
+            <button type="button" class="chip" data-source="" aria-pressed="true">
+              {dict.news.all}
+            </button>
+            {liveSources.map((source) => (
+              <button type="button" class="chip" data-source={source.id} aria-pressed="false">
+                {source.label[locale]}
+              </button>
+            ))}
+          </div>
+
+          <ul class="news-list mt-3" id="news-list">
+            {items.map((item) => {
+              const source = sourceById.get(item.sourceId);
+              return (
+                <li class="news-item" data-source={item.sourceId}>
+                  <p class="date">
+                    <span class="badge plain">{source?.label[locale]}</span>
+                    {item.date && <span>{formatDate(item.date)}</span>}
+                    {source?.linksToPdf && <span class="badge plain">{dict.news.pdf}</span>}
+                  </p>
+                  <h3>
+                    <a href={item.url} target="_blank" rel="noopener" hreflang="en" lang="en">
+                      {item.title}
+                    </a>
+                  </h3>
+                  {item.summary && <p lang="en">{item.summary}</p>}
+                </li>
+              );
+            })}
+          </ul>
+
+          <p class="mt-3 news-sources">
+            {liveSources.map((source) => (
+              <a class="btn outline" href={source.homepage} target="_blank" rel="noopener">
+                {source.label[locale]}
+                <Icon name="external" size={16} />
+              </a>
+            ))}
+          </p>
+        </>
       ) : (
         <div class="notice">
           <Icon name="alert" />
-          <p>{dict.news.alertsEmpty}</p>
+          <p>{dict.news.empty}</p>
         </div>
       )}
-
-      <p class="mt-3">
-        <a class="btn outline" href={FTC_ALERTS_PAGE} target="_blank" rel="noopener">
-          {dict.news.alertsCta}
-          <Icon name="external" size={16} />
-        </a>
-      </p>
     </div>
   </section>
 
@@ -109,4 +139,26 @@ const formatDate = (iso: string) => dateFormat.format(new Date(iso));
       )}
     </div>
   </section>
+
+  <script>
+    /* Same chip-filter approach as the directory: everything is rendered at
+       build time and the script only toggles visibility, so the full list is
+       still there with JavaScript off. */
+    const chips = document.querySelector('.dir-chips');
+    const list = document.getElementById('news-list');
+    if (chips && list) {
+      const buttons = Array.from(chips.querySelectorAll('.chip'));
+      const entries = Array.from(list.querySelectorAll<HTMLElement>('[data-source]'));
+
+      chips.addEventListener('click', (event) => {
+        const chip = (event.target as HTMLElement).closest('.chip');
+        if (!chip) return;
+        const active = chip.getAttribute('data-source') || '';
+        buttons.forEach((b) => b.setAttribute('aria-pressed', b === chip ? 'true' : 'false'));
+        for (const entry of entries) {
+          entry.hidden = Boolean(active) && entry.getAttribute('data-source') !== active;
+        }
+      });
+    }
+  </script>
 </Base>

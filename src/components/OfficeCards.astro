@@ -1,0 +1,41 @@
+---
+import Icon from './Icon.astro';
+import { t, type Locale } from '../i18n';
+import { org, orgAddress, orgMapUrl } from '../data/org';
+
+/**
+ * Office address and opening hours, side by side.
+ * Used on the home page and the about page, which showed the same pair of
+ * cards from two copies of the same markup.
+ */
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const dict = t(locale);
+---
+<div class="grid cols-2">
+  <div class="card">
+    <h3>{dict.contact.officeLabel}</h3>
+    <p class="contact-row mt-2">
+      <Icon name="map-pin" />
+      <a href={orgMapUrl} rel="noopener">{orgAddress}</a>
+    </p>
+    <p class="contact-row mt-1">
+      <Icon name="phone" />
+      <a href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a>
+    </p>
+  </div>
+  <div class="card">
+    <h3>{dict.contact.hoursLabel}</h3>
+    <p class="contact-row mt-2">
+      <Icon name="clock" />
+      <span>
+        {dict.contact.hoursRows.map((row) => (
+          <>{row.day}: {row.time}<br /></>
+        ))}
+      </span>
+    </p>
+    <p class="muted mt-1">{dict.contact.hoursClosed}</p>
+  </div>
+</div>

@@ -1,5 +1,6 @@
 ---
 import { t, localePath, type Locale } from '../i18n';
+import { org } from '../data/org';
 
 interface Props {
   locale: Locale;
@@ -36,15 +37,17 @@ const year = new Date().getFullYear();
       </nav>
       <div>
         <h4>{dict.footer.contact}</h4>
-        <!-- PLACEHOLDER: replace with the real address, phone, and email -->
+        <!-- PLACEHOLDER: email only — the address and phone are real (src/data/org.ts) -->
         <p>
-          <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500</span><br />
-          <span class="placeholder-tag">Los Angeles, CA 90010</span><br />
-          <span class="placeholder-tag">(213) 555-0100</span><br />
-          <span class="placeholder-tag">help@crcenter.org</span>
+          {org.addressLine1}<br />
+          {org.addressLine2}<br />
+          <a href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a><br />
+          <span class="placeholder-tag">{org.email}</span>
         </p>
         <p class="mt-1">
-          {dict.contact.hoursValue}<br />
+          {dict.contact.hoursRows.map((row) => (
+            <>{row.day}: {row.time}<br /></>
+          ))}
           {dict.contact.hoursClosed}
         </p>
       </div>

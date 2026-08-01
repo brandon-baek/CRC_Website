@@ -22,6 +22,7 @@ const dict = t(locale);
     {badge === 'primary' && <span class="badge primary">{dict.wizard.recommended}</span>}
     {badge === 'also' && <span class="badge">{dict.wizard.also}</span>}
   </div>
+  {agency.fullName?.[locale] && <p class="full-name">{agency.fullName[locale]}</p>}
   <p class="best">{agency.bestFor[locale]}</p>
   {showCats && (
     <p class="cats">

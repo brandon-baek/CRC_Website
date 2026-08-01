@@ -63,11 +63,13 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
 | Scam education guides and localized video references | `src/data/scams.ts` |
 | Original Korean video builder and validation | `scripts/video/` |
 | CRC press releases / announcements on the News page | `src/data/press.ts` |
-| FTC alert feed (source URL, parsing, how many show) | `src/data/ftcAlerts.ts` |
+| News feeds (which sources, filtering, how many show) | `src/data/newsFeeds.ts` |
 | All UI text, both languages | `src/i18n/index.ts` |
 | Assistant answers, keywords, urgent triggers | `src/lib/chat-kb.ts` |
-| **Placeholders to replace** (address, phone, email) | `src/components/Footer.astro`, `src/views/HomePage.astro`, `src/views/AboutPage.astro`, `src/views/ContactPage.astro` — search for `PLACEHOLDER` |
-| Office hours | `contact.hoursValue` / `contact.hoursClosed` in `src/i18n/index.ts` |
+| Address, phone, email | `src/data/org.ts` — one place, used by every page |
+| Office hours | `contact.hoursRows` / `contact.hoursClosed` in `src/i18n/index.ts` |
+| Intake form fields and messages | `src/components/IntakeForm.astro`, `intake.*` in `src/i18n/index.ts` |
+| **Placeholder still to replace** | the email address in `src/data/org.ts` — no real inbox exists yet |
 | Colors, fonts, spacing | `src/styles/global.css` |
 | Logo | `public/logo.svg`, `public/favicon.svg` |
 | NGA partner logo | save as `public/nga-logo.svg`, then add the `<img>` in `src/views/AboutPage.astro` (marked with a comment) |
@@ -79,10 +81,14 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
   so content and layout are written once and rendered per language.
 - The Get Help wizard is a decision tree defined as data in `src/data/wizard.ts`.
   Results reference agency ids from `src/data/agencies.ts`.
-- The News page pulls the FTC consumer-alert feed **at build time** and bakes the
-  results into static HTML, so the page stays fast and has no runtime dependency
-  on the FTC. It refreshes on every deploy; if the feed is unreachable during a
-  build, the page falls back to a link to consumer.ftc.gov instead of failing.
+- The News page pulls several agency feeds (FTC consumer alerts, FTC press,
+  CFPB, FBI IC3, FBI press) **at build time** and bakes the results into static
+  HTML, so the page stays fast and has no runtime dependency on those agencies.
+  It refreshes on every deploy. Readers filter by source with the chip row.
+  Failures are contained per source: a feed that is unreachable, empty, or has
+  no fraud stories right now simply loses its chip, and the page still renders.
+  That is normal — the CFPB tab in particular comes and goes, since its newsroom
+  is mostly rulemaking and only its fraud headlines are kept.
 - Every scam guide has localized video references in `src/data/scams.ts`. The
   English references remain official third-party public-service videos. Korean
   pages use original CRC productions generated from the Korean guide copy by
@@ -162,11 +168,36 @@ cross-language `keywords` lists that drive matching, and `urgentTriggers`, the
 phrases that pin the "you just lost money" first-steps card above an answer.
 Ranking logic lives in `src/lib/chat-search.js`.
 
+## The intake form
+
+`/contact` and `/get-help` both carry a form that asks for a name, a way to
+reach the person, city and ZIP, what their concern is, and what happened. It
+posts to `functions/api/intake.ts`, which validates and rate-limits the
+submission and forwards it to a Google Apps Script that appends a row to a
+Google Sheet the staff can read.
+
+**It is disabled until the Sheet is set up**, and says so on the page — so this
+can ship before the Sheet exists without anything looking broken. To switch it
+on, follow **[docs/intake-sheet-setup.md](docs/intake-sheet-setup.md)** (about
+ten minutes: create a Sheet, paste in `scripts/intake-appscript.js`, deploy it,
+and add two encrypted variables to the Pages project).
+
+| Binding | Type | Purpose |
+|---|---|---|
+| `INTAKE_SHEET_URL` | secret | Apps Script web-app URL. Its presence is what enables the form. |
+| `INTAKE_SHARED_KEY` | secret | Must match `SHARED_KEY` in the script, so a leaked URL alone cannot write to the Sheet. |
+| `INTAKE_RATE_LIMIT` | KV namespace | Durable per-IP limiting. Without it the limiter is per-isolate and best-effort. |
+
+The Apps Script URL stays server-side deliberately: it is the only thing between
+the internet and the Sheet. The Sheet itself holds names, phone numbers, and
+people's accounts of being defrauded — **keep it shared with named staff only,
+never by link**.
+
 ## Planned next steps (deliberately not built yet)
 
 - **Online donations**: `/donate` explains how to give and links to the office.
   When a donation account exists (PayPal, Zeffy, Givebutter…), replace the
   notice in `src/views/DonatePage.astro` marked `DONATE PLACEHOLDER`.
-- **Intake form**: the contact form is a disabled placeholder. To activate it,
-  remove the `disabled` attributes in `src/views/ContactPage.astro` and point the
-  form at a form service (e.g. Formspree) or a Cloudflare Pages Function.
+- **A real email address**: `src/data/org.ts` still carries a placeholder, shown
+  with placeholder styling wherever it appears. Replacing it also unlocks the
+  per-submission email notification in `scripts/intake-appscript.js`.

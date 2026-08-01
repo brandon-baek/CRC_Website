@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import IntakeForm from '../components/IntakeForm.astro';
 import { t, localePath, type Locale } from '../i18n';
 import { agencyById } from '../data/agencies';
 import { wizardNodes, wizardStart } from '../data/wizard';
@@ -85,6 +86,19 @@ const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
             </p>
           </noscript>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Talk to a person, for anyone who would rather not use the wizard -->
+  <section class="section warm">
+    <div class="container">
+      <div class="section-head" style="max-width:640px;">
+        <h2>{dict.intake.title}</h2>
+        <p class="sub">{dict.intake.lede}</p>
+      </div>
+      <div style="max-width:780px;">
+        <IntakeForm locale={locale} page="get-help" />
       </div>
     </div>
   </section>

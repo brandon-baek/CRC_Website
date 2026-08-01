@@ -35,6 +35,18 @@ function isCurrent(href: string, exact = false): boolean {
       </span>
     </a>
 
+    <!-- Mobile copy: the nav collapses behind the toggle, so the language
+         switch lives in the bar itself where it stays reachable. Exactly one of
+         the two copies is displayed at any width. -->
+    <a
+      class="lang-switch in-bar"
+      href={otherLocalePath(locale, path)}
+      lang={locale === 'en' ? 'ko' : 'en'}
+    >
+      <Icon name="globe" size={16} />
+      {dict.langSwitch}
+    </a>
+
     <button
       class="nav-toggle"
       type="button"
@@ -49,6 +61,14 @@ function isCurrent(href: string, exact = false): boolean {
     </button>
 
     <nav id="site-nav" class="site-nav" aria-label={locale === 'ko' ? '주 메뉴' : 'Main menu'}>
+      <a
+        class="lang-switch in-nav"
+        href={otherLocalePath(locale, path)}
+        lang={locale === 'en' ? 'ko' : 'en'}
+      >
+        <Icon name="globe" size={16} />
+        {dict.langSwitch}
+      </a>
       {links.map((l) => (
         <a
           href={localePath(locale, l.href)}
@@ -71,10 +91,6 @@ function isCurrent(href: string, exact = false): boolean {
         aria-current={isCurrent('/get-help') ? 'page' : undefined}
       >
         {dict.nav.getHelp}
-      </a>
-      <a class="lang-switch" href={otherLocalePath(locale, path)} lang={locale === 'en' ? 'ko' : 'en'}>
-        <Icon name="globe" size={16} />
-        {dict.langSwitch}
       </a>
     </nav>
   </div>

@@ -1,5 +1,6 @@
 import { agencies } from '../data/agencies';
 import { scamGuides } from '../data/scams';
+import { org, orgAddress } from '../data/org';
 import { localePath, t, type Locale } from '../i18n';
 
 /**
@@ -122,10 +123,27 @@ const agencyKeywords: Record<string, string[]> = {
     '캘리포니아', '법무장관', '주정부', '업체 민원'],
 };
 
+const uniq = (values: string[]): string[] => [...new Set(values.filter(Boolean))];
+
 export function buildKb(locale: Locale): ChatKb {
   const d = t(locale);
   const p = (path: string) => localePath(locale, path);
   const entries: KbEntry[] = [];
+
+  /*
+   * The visiting details, written out for the assistant.
+   *
+   * functions/api/chat.ts forbids the model from producing an address, phone
+   * number or opening hours that is not in this knowledge base — a wrong one
+   * sends a frightened person to the wrong door. So they have to be stated
+   * here, in the entries most likely to be retrieved for "where are you?".
+   */
+  const hours = d.contact.hoursRows.map((row) => `${row.day}: ${row.time}`).join(', ');
+  const visiting = [
+    `${d.contact.officeLabel}: ${orgAddress}.`,
+    `${d.contact.phone}: ${org.phoneDisplay}.`,
+    `${d.contact.hoursLabel}: ${hours}. ${d.contact.hoursClosed}`,
+  ].join(' ');
 
   /* ---------- Site pages (navigation intents) ---------- */
   entries.push(
@@ -177,7 +195,10 @@ export function buildKb(locale: Locale): ChatKb {
       title: d.contact.pageTitle,
       url: p('/contact'),
       summary: d.contact.pageLede,
-      body: [d.contact.pageLede, d.contact.comingSoonBody, d.wizard.needHelp, d.home.what3Body].join(' '),
+      body: [d.contact.pageLede, visiting, d.intake.lede, d.wizard.needHelp, d.home.what3Body].join(' '),
+      /* Address and opening-hours words belong to `topic-visit`, which answers
+         them with the actual details. Leaving them here too split the match
+         and this entry won, replying "contact us" to "what is your address?". */
       keywords: [
         'contact', 'phone', 'call', 'email', 'talk to a person', 'talk to someone', 'staff',
         'speak', 'human', 'appointment', 'help me file', 'korean speaker',
@@ -191,7 +212,13 @@ export function buildKb(locale: Locale): ChatKb {
       title: d.about.pageTitle,
       url: p('/about'),
       summary: d.about.missionBody2,
-      body: [d.about.missionTitle, d.about.missionBody1, d.about.missionBody2, d.about.whoBody].join(' '),
+      body: [
+        d.about.missionTitle,
+        d.about.missionBody1,
+        d.about.missionBody2,
+        d.about.whoBody,
+        visiting,
+      ].join(' '),
       keywords: [
         'about', 'who are you', 'mission', 'organization', 'location', 'address', 'hours',
         'visit', 'office', 'team', 'nonprofit',
@@ -251,15 +278,32 @@ export function buildKb(locale: Locale): ChatKb {
       url: a.url,
       external: true,
       summary: a.bestFor[locale],
-      body: `${a.bestFor[locale]}\n${d.wizard.whatToExpect}: ${a.intake[locale]}`,
-      keywords: [
+      body: [
+        a.fullName?.[locale] ? `${a.name[locale]} — ${a.fullName[locale]}.` : '',
+        a.bestFor[locale],
+        `\n${d.wizard.whatToExpect}: ${a.intake[locale]}`,
+      ]
+        .filter(Boolean)
+        .join(' '),
+      // Deduplicated: the search adds a point per matching keyword, so a term
+      // listed twice (a spelled-out name that is also in agencyKeywords) would
+      // quietly score double.
+      keywords: uniq([
         a.id,
         ...a.id.split('-'),
         ...a.name.en.toLowerCase().split(/[^a-z0-9.]+/).filter((w) => w.length > 2),
+        // Spelled-out names, so "Federal Trade Commission" finds the FTC entry
+        // as readily as "FTC" does.
+        ...(a.fullName
+          ? [
+              ...a.fullName.en.toLowerCase().split(/[^a-z0-9.]+/).filter((w) => w.length > 2),
+              ...a.fullName.ko.split(/[^가-힣]+/).filter((w) => w.length > 1),
+            ]
+          : []),
         ...a.categories.map((c) => d.categories[c].toLowerCase()),
         ...a.categories.map((c) => c),
         ...(agencyKeywords[a.id] ?? []),
-      ],
+      ]),
       actions: [
         { label: d.wizard.visit, url: a.url, external: true },
         { label: d.wizard.seeAll, url: p('/directory') },
@@ -312,6 +356,35 @@ export function buildKb(locale: Locale): ChatKb {
       actions: [{ label: d.hero.ctaPrimary, url: p('/get-help') }],
     },
     {
+      /*
+       * "Where are you?" and "when are you open?" are among the most common
+       * things anyone asks an organization, and they need a literal answer.
+       *
+       * The details go in `summary`, not just `body`: without an API key the
+       * widget replies with an entry's summary alone, so an address hidden in
+       * the body would have the assistant answer "contact us" to "what is your
+       * address?" — which is how this entry came to exist.
+       */
+      id: 'topic-visit',
+      kind: 'topic',
+      title: d.about.locTitle,
+      url: p('/contact'),
+      summary: visiting,
+      body: `${visiting} ${d.contact.pageLede}`,
+      keywords: [
+        'address', 'where are you', 'where is the office', 'location', 'located',
+        'directions', 'how do i get there', 'visit', 'walk in', 'in person', 'office',
+        'hours', 'open', 'opening hours', 'when are you open', 'what time', 'closed',
+        'phone number', 'what is your phone number', 'your number', 'call you',
+        '주소', '어디', '어디에 있', '위치', '찾아가', '가는 길', '방문', '직접 가',
+        '사무실', '운영 시간', '몇 시', '문 여', '문 닫', '영업', '전화번호', '전화 번호',
+      ],
+      actions: [
+        { label: d.wizard.contactCta, url: p('/contact') },
+        { label: d.about.pageTitle, url: p('/about') },
+      ],
+    },
+    {
       id: 'topic-who-we-are',
       kind: 'topic',
       title: d.about.whoTitle,
@@ -360,7 +433,7 @@ export function buildKb(locale: Locale): ChatKb {
       title: d.wizard.pageTitle,
       url: p('/get-help'),
       summary: d.wizard.pageLede,
-      body: `${d.wizard.pageLede} ${d.contact.messageHint}`,
+      body: `${d.wizard.pageLede} ${d.intake.storyHint} ${d.intake.privacy}`,
       keywords: [
         'privacy', 'personal information', 'anonymous', 'do you store', 'data', 'safe to use',
         '개인정보', '익명', '저장', '데이터', '안전한가요', '수집',

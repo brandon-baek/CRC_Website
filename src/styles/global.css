@@ -60,6 +60,12 @@
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
 
+/* The `hidden` attribute must win over any component's display rule. Without
+   this, a class like `.notice { display: flex }` outranks the browser default
+   and the element stays on screen — which left the intake form showing both its
+   success and its error message on page load. */
+[hidden] { display: none !important; }
+
 html {
   font-size: 18px; /* large base for readability (older readers) */
   scroll-behavior: smooth;
@@ -269,6 +275,27 @@ a.card-hover:hover .card { border-color: var(--ink); }
 .badge.plain { background: var(--paper-warm); border-color: var(--line); color: var(--ink-soft); font-weight: 600; }
 
 /* ---------- Forms ---------- */
+/* ---------- Intake form (IntakeForm.astro) ---------- */
+.intake-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+/* Disabled until the Sheet endpoint is configured; make that obvious. */
+.intake-form fieldset[disabled] { opacity: 0.55; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+@media (max-width: 560px) {
+  .field-row { grid-template-columns: 1fr; }
+}
+.intake-form .field-row + .hint { margin-top: -0.6rem; margin-bottom: 1.2rem; }
+.intake-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; }
+.intake-status { font-size: var(--fs-sm); color: var(--ink-soft); }
+.intake-status.is-error { color: var(--red-text); font-weight: 700; }
+/* Honeypot: off-screen rather than display:none, which some bots skip. */
+.intake-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .field { margin-bottom: 1.2rem; }
 .field label { display: block; font-weight: 700; margin-bottom: 0.4rem; }
 .field .hint { font-size: var(--fs-sm); color: var(--ink-mute); margin-top: 0.3rem; }
@@ -396,6 +423,10 @@ textarea.input { min-height: 130px; resize: vertical; }
   white-space: nowrap;
 }
 .lang-switch:hover { background: var(--lime); }
+/* The language switch is rendered twice — first in the nav, and again in the
+   bar for mobile, where the nav is collapsed. Only one shows at a time. */
+.lang-switch.in-bar { display: none; }
+.site-nav .lang-switch.in-nav { margin-left: 0; margin-right: 0.5rem; }
 
 .nav-toggle {
   display: none;
@@ -429,6 +460,9 @@ textarea.input { min-height: 130px; resize: vertical; }
   .site-nav a.nav-cta,
   .site-nav a.nav-donate { margin-left: 0; justify-content: center; }
   .lang-switch { justify-content: center; margin-left: 0; margin-top: 0.4rem; }
+  /* Swap the copies: in the bar, out of the collapsed menu. */
+  .lang-switch.in-bar { display: inline-flex; margin-top: 0; padding-inline: 0.7em; }
+  .site-nav .lang-switch.in-nav { display: none; }
 }
 
 /* ---------- Footer ---------- */
@@ -626,6 +660,13 @@ main .placeholder-tag { color: var(--ink-mute); }
 .agency-card.primary { border-left-color: var(--red); }
 .agency-card .top { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
 .agency-card h3 { font-size: var(--fs-md); }
+/* The acronym in the heading, written out. Quiet, but always visible —
+   a tooltip would be invisible to the phone users who need it most. */
+.agency-card .full-name {
+  font-size: var(--fs-sm);
+  color: var(--ink-mute);
+  margin: -0.15rem 0 0.5rem;
+}
 .agency-card .best { color: var(--ink-soft); }
 .agency-card .cats { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.7rem; }
 .agency-card details { margin-top: 0.5rem; }
@@ -739,7 +780,18 @@ main .placeholder-tag { color: var(--ink-mute); }
 .news-item h3 { font-size: var(--fs-md); margin-bottom: 0.35rem; }
 .news-item h3 a { text-decoration: none; }
 .news-item h3 a:hover { text-decoration: underline; }
-.news-item .date { font-size: var(--fs-xs); color: var(--ink-mute); font-variant-numeric: tabular-nums; }
+/* Source badge, date and any "PDF" marker share one line above the headline. */
+.news-item .date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.4rem;
+  font-size: var(--fs-xs);
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+.news-sources { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .news-item p { font-size: var(--fs-sm); color: var(--ink-soft); margin-top: 0.4rem; }
 
 /* ---------- Contact rows ---------- */

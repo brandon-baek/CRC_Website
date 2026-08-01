@@ -18,6 +18,13 @@ export interface Agency {
   url: string;
   categories: CategoryId[];
   name: Record<Locale, string>;
+  /**
+   * The acronyms in `name`, written out. Shown under the name on every agency
+   * card, so "FTC" or "IC3" always appears next to what it actually stands for.
+   * Omitted where the name has no acronym to expand; an empty string for one
+   * locale where that language's name already spells it out in full.
+   */
+  fullName?: Record<Locale, string>;
   /** Short "best used for" line, from the planning table. */
   bestFor: Record<Locale, string>;
   /** What the intake asks for and what happens after filing. */
@@ -53,7 +60,11 @@ export const agencies: Agency[] = [
     categories: ['general', 'business', 'online'],
     name: {
       en: 'FTC ReportFraud.gov',
-      ko: 'FTC 연방거래위원회 ReportFraud.gov',
+      ko: 'FTC ReportFraud.gov',
+    },
+    fullName: {
+      en: 'Federal Trade Commission',
+      ko: '연방거래위원회 (Federal Trade Commission)',
     },
     bestFor: {
       en: 'General scams, deceptive businesses, impersonation, unwanted calls, and consumer fraud.',
@@ -72,6 +83,10 @@ export const agencies: Agency[] = [
       en: 'FTC IdentityTheft.gov',
       ko: 'FTC IdentityTheft.gov (신분 도용)',
     },
+    fullName: {
+      en: 'Federal Trade Commission',
+      ko: '연방거래위원회 (Federal Trade Commission)',
+    },
     bestFor: {
       en: 'Fraud involving misuse of your identity: SSN, accounts, or cards opened in your name.',
       ko: '신분 도용 피해: 내 이름으로 개설된 계좌·카드, SSN 도용 등.',
@@ -89,6 +104,11 @@ export const agencies: Agency[] = [
       en: 'FBI Internet Crime Complaint Center (IC3)',
       ko: 'FBI 인터넷범죄신고센터 (IC3)',
     },
+    fullName: {
+      // The English name already spells out IC3; only the FBI needs expanding.
+      en: 'Federal Bureau of Investigation',
+      ko: '연방수사국 인터넷범죄신고센터 (Federal Bureau of Investigation)',
+    },
     bestFor: {
       en: 'Cybercrime, online scams, ransomware, business email compromise, cryptocurrency fraud, and internet-enabled financial crime.',
       ko: '사이버 범죄, 온라인 사기, 랜섬웨어, 업무 이메일 침해(BEC), 암호화폐 사기 등 인터넷 관련 금융 범죄.',
@@ -104,7 +124,11 @@ export const agencies: Agency[] = [
     categories: ['banking'],
     name: {
       en: 'CFPB Consumer Complaint Portal',
-      ko: 'CFPB 소비자금융보호국 민원 포털',
+      ko: 'CFPB 민원 포털',
+    },
+    fullName: {
+      en: 'Consumer Financial Protection Bureau',
+      ko: '소비자금융보호국 (Consumer Financial Protection Bureau)',
     },
     bestFor: {
       en: 'Problems with banks, cards, credit reporting, debt collection, loans, mortgages, money transfers, or virtual currency services.',
@@ -121,7 +145,11 @@ export const agencies: Agency[] = [
     categories: ['investment'],
     name: {
       en: 'SEC Tips, Complaints and Referrals',
-      ko: 'SEC 증권거래위원회 제보·민원 접수',
+      ko: 'SEC 제보·민원 접수',
+    },
+    fullName: {
+      en: 'Securities and Exchange Commission',
+      ko: '증권거래위원회 (Securities and Exchange Commission)',
     },
     bestFor: {
       en: 'Investment fraud, Ponzi schemes, insider trading, market manipulation, and securities violations.',
@@ -138,7 +166,11 @@ export const agencies: Agency[] = [
     categories: ['tax'],
     name: {
       en: 'IRS Report Fraud',
-      ko: 'IRS 국세청 사기 신고',
+      ko: 'IRS 사기 신고',
+    },
+    fullName: {
+      en: 'Internal Revenue Service',
+      ko: '국세청 (Internal Revenue Service)',
     },
     bestFor: {
       en: 'Tax evasion, fraudulent returns, tax preparer misconduct, IRS impersonation, and tax-related identity theft.',
@@ -154,8 +186,12 @@ export const agencies: Agency[] = [
     url: 'https://oig.ssa.gov/report/',
     categories: ['benefits'],
     name: {
-      en: 'SSA Office of Inspector General',
-      ko: 'SSA 사회보장국 감찰관실 (OIG)',
+      en: 'SSA Office of Inspector General (OIG)',
+      ko: 'SSA 감찰관실 (OIG)',
+    },
+    fullName: {
+      en: 'Social Security Administration — Office of the Inspector General',
+      ko: '사회보장국 감찰관실 (Social Security Administration, Office of the Inspector General)',
     },
     bestFor: {
       en: 'Social Security benefit fraud, SSN misuse, representative-payee fraud, and SSA impersonation scams.',
@@ -171,8 +207,12 @@ export const agencies: Agency[] = [
     url: 'https://oig.hhs.gov/fraud/report-fraud/',
     categories: ['benefits'],
     name: {
-      en: 'HHS Office of Inspector General',
-      ko: 'HHS 보건복지부 감찰관실 (OIG)',
+      en: 'HHS Office of Inspector General (OIG)',
+      ko: 'HHS 감찰관실 (OIG)',
+    },
+    fullName: {
+      en: 'Department of Health and Human Services — Office of the Inspector General',
+      ko: '보건복지부 감찰관실 (Department of Health and Human Services, Office of the Inspector General)',
     },
     bestFor: {
       en: 'Medicare, Medicaid, healthcare billing fraud, HHS grants or contracts, kickbacks, and program abuse.',
@@ -188,8 +228,13 @@ export const agencies: Agency[] = [
     url: 'https://www.uspis.gov/report',
     categories: ['mail'],
     name: {
-      en: 'U.S. Postal Inspection Service',
+      en: 'U.S. Postal Inspection Service (USPIS)',
       ko: '미국 우정 감찰국 (USPIS)',
+    },
+    fullName: {
+      // Already written out in the English name; only Korean needs the English.
+      en: '',
+      ko: 'United States Postal Inspection Service',
     },
     bestFor: {
       en: 'Mail fraud, lottery and sweepstakes scams, fraudulent mailings, mail theft, and fraudulent address changes.',

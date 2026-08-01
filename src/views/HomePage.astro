@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import OfficeCards from '../components/OfficeCards.astro';
 import { t, localePath, type Locale } from '../i18n';
 import { scamGuides } from '../data/scams';
 
@@ -210,34 +211,13 @@ const chipColors = ['red', 'yellow', '', 'red'];
     </div>
   </section>
 
-  <!-- 7. Locations -->
-  <!-- PLACEHOLDER: replace with real locations -->
+  <!-- 7. Location -->
   <section class="section warm tight">
     <div class="container">
       <div class="section-head">
         <h2>{dict.home.locTitle}</h2>
       </div>
-      <div class="grid cols-2">
-        <div class="card">
-          <h3>{dict.contact.officeLabel}</h3>
-          <p class="contact-row mt-2">
-            <Icon name="map-pin" />
-            <span class="placeholder-tag">1234 Wilshire Blvd, Suite 500, Los Angeles, CA 90010</span>
-          </p>
-          <p class="contact-row mt-1">
-            <Icon name="phone" />
-            <span class="placeholder-tag">(213) 555-0100</span>
-          </p>
-        </div>
-        <div class="card">
-          <h3>{dict.contact.hoursLabel}</h3>
-          <p class="contact-row mt-2">
-            <Icon name="clock" />
-            <span>{dict.contact.hoursValue}</span>
-          </p>
-          <p class="muted mt-1">{dict.contact.hoursClosed}</p>
-        </div>
-      </div>
+      <OfficeCards locale={locale} />
     </div>
   </section>
 </Base>

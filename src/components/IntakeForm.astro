@@ -1,0 +1,244 @@
+---
+import Icon from './Icon.astro';
+import { t, type Locale } from '../i18n';
+import { scamGuides } from '../data/scams';
+import { org } from '../data/org';
+
+/**
+ * Intake form. Posts to /api/intake, which appends a row to the staff
+ * Google Sheet (see docs/intake-sheet-setup.md).
+ *
+ * Until that endpoint is configured the form renders disabled with the
+ * "coming soon" notice, so deploying this ahead of the Sheet is safe. The
+ * script asks GET /api/intake whether it is live and enables the fields itself.
+ */
+interface Props {
+  locale: Locale;
+  /** Which page this was submitted from; recorded in the Sheet. */
+  page: 'contact' | 'get-help';
+}
+const { locale, page } = Astro.props;
+const dict = t(locale);
+
+/* Built from the guides so the list can never drift from what the site covers. */
+const concerns = scamGuides.map((guide) => guide.title[locale]);
+---
+<form class="intake-form" data-intake data-page={page} data-locale={locale} novalidate>
+  <div class="notice" data-intake-disabled>
+    <Icon name="alert" />
+    <div>
+      <strong>{dict.contact.comingSoon}</strong>
+      <p>{dict.contact.comingSoonBody}</p>
+    </div>
+  </div>
+
+  <fieldset disabled data-intake-fields>
+    <div class="field-row">
+      <div class="field">
+        <label for={`${page}-first`}>{dict.intake.firstName}</label>
+        <input class="input" id={`${page}-first`} name="firstName" type="text" autocomplete="given-name" required />
+      </div>
+      <div class="field">
+        <label for={`${page}-last`}>{dict.intake.lastName}</label>
+        <input class="input" id={`${page}-last`} name="lastName" type="text" autocomplete="family-name" required />
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for={`${page}-phone`}>{dict.intake.phone}</label>
+        <input class="input" id={`${page}-phone`} name="phone" type="tel" autocomplete="tel" inputmode="tel" />
+      </div>
+      <div class="field">
+        <label for={`${page}-email`}>{dict.intake.email}</label>
+        <input class="input" id={`${page}-email`} name="email" type="email" autocomplete="email" />
+      </div>
+    </div>
+    <p class="hint" data-intake-contact-hint>{dict.intake.contactHint}</p>
+
+    <div class="field-row mt-3">
+      <div class="field">
+        <label for={`${page}-city`}>
+          {dict.intake.city} <span class="muted">({dict.intake.optional})</span>
+        </label>
+        <input class="input" id={`${page}-city`} name="city" type="text" autocomplete="address-level2" />
+      </div>
+      <div class="field">
+        <label for={`${page}-zip`}>
+          {dict.intake.zip} <span class="muted">({dict.intake.optional})</span>
+        </label>
+        <input
+          class="input"
+          id={`${page}-zip`}
+          name="zip"
+          type="text"
+          autocomplete="postal-code"
+          inputmode="numeric"
+        />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for={`${page}-concern`}>{dict.intake.concern}</label>
+      <select class="input" id={`${page}-concern`} name="concern" required data-intake-concern>
+        <option value="">{dict.intake.concernChoose}</option>
+        {concerns.map((concern) => <option value={concern}>{concern}</option>)}
+        <option value="unsure">{dict.intake.concernUnsure}</option>
+        <option value="other">{dict.intake.concernOther}</option>
+      </select>
+    </div>
+
+    <div class="field" hidden data-intake-other>
+      <label for={`${page}-concern-other`}>{dict.intake.concernOtherLabel}</label>
+      <input class="input" id={`${page}-concern-other`} name="concernOther" type="text" />
+    </div>
+
+    <div class="field">
+      <label for={`${page}-story`}>{dict.intake.story}</label>
+      <textarea
+        class="input"
+        id={`${page}-story`}
+        name="story"
+        rows="6"
+        required
+        aria-describedby={`${page}-story-hint`}></textarea>
+      <p class="hint" id={`${page}-story-hint`}>{dict.intake.storyHint}</p>
+    </div>
+
+    {/* Bots fill every field they find; people never see this one. */}
+    <div class="intake-trap" aria-hidden="true">
+      <label for={`${page}-website`}>Website</label>
+      <input id={`${page}-website`} name="website" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <p class="hint">{dict.intake.privacy}</p>
+
+    <div class="intake-actions mt-2">
+      <button class="btn primary" type="submit" data-intake-submit>{dict.intake.submit}</button>
+      <p class="intake-status" role="status" aria-live="polite" data-intake-status></p>
+    </div>
+  </fieldset>
+
+  <div class="notice red mt-3" hidden data-intake-error>
+    <Icon name="alert" />
+    <div>
+      <strong>{dict.intake.errorTitle}</strong>
+      <p>{dict.intake.errorBody}</p>
+      <p class="mt-1"><a href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a></p>
+    </div>
+  </div>
+
+  <div class="notice lime mt-3" hidden data-intake-success>
+    <Icon name="check" />
+    <div>
+      <strong>{dict.intake.successTitle}</strong>
+      <p>{dict.intake.successBody}</p>
+    </div>
+  </div>
+</form>
+
+<script
+  type="application/json"
+  data-intake-strings
+  set:html={JSON.stringify({
+    sending: dict.intake.sending,
+    submit: dict.intake.submit,
+    needName: dict.intake.needName,
+    needContact: dict.intake.needContact,
+    needConcern: dict.intake.needConcern,
+    needStory: dict.intake.needStory,
+  }).replace(/</g, '\\u003c')}
+/>
+
+<script>
+  for (const form of document.querySelectorAll<HTMLFormElement>('[data-intake]')) {
+    const stringsEl = form.parentElement?.querySelector('[data-intake-strings]');
+    const S = JSON.parse(stringsEl?.textContent || '{}');
+
+    const fields = form.querySelector<HTMLFieldSetElement>('[data-intake-fields]');
+    const disabledNotice = form.querySelector<HTMLElement>('[data-intake-disabled]');
+    const concern = form.querySelector<HTMLSelectElement>('[data-intake-concern]');
+    const otherField = form.querySelector<HTMLElement>('[data-intake-other]');
+    const submit = form.querySelector<HTMLButtonElement>('[data-intake-submit]');
+    const status = form.querySelector<HTMLElement>('[data-intake-status]');
+    const errorBox = form.querySelector<HTMLElement>('[data-intake-error]');
+    const successBox = form.querySelector<HTMLElement>('[data-intake-success]');
+    if (!fields || !submit || !status) continue;
+
+    /* The endpoint reports whether a Sheet is wired up. Until then the form
+       stays disabled and the "coming soon" notice stands. */
+    fetch('/api/intake')
+      .then((res) => (res.ok ? res.json() : { enabled: false }))
+      .then((info) => {
+        if (!info?.enabled) return;
+        fields.disabled = false;
+        if (disabledNotice) disabledNotice.hidden = true;
+      })
+      .catch(() => {
+        /* Offline or no Function: leave the form disabled. */
+      });
+
+    concern?.addEventListener('change', () => {
+      if (otherField) otherField.hidden = concern.value !== 'other';
+    });
+
+    const fail = (message: string, field?: HTMLElement | null) => {
+      status.textContent = message;
+      status.classList.add('is-error');
+      field?.focus();
+    };
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      status.textContent = '';
+      status.classList.remove('is-error');
+      if (errorBox) errorBox.hidden = true;
+
+      const data = new FormData(form);
+      const value = (name: string) => String(data.get(name) ?? '').trim();
+
+      if (!value('firstName') || !value('lastName')) {
+        return fail(S.needName, form.querySelector('[name="firstName"]'));
+      }
+      // Either contact method is enough — many older visitors have no email.
+      if (!value('phone') && !value('email')) {
+        return fail(S.needContact, form.querySelector('[name="phone"]'));
+      }
+      if (!value('concern')) {
+        return fail(S.needConcern, concern);
+      }
+      if (!value('story')) {
+        return fail(S.needStory, form.querySelector('[name="story"]'));
+      }
+
+      data.set('page', form.getAttribute('data-page') || '');
+      data.set('locale', form.getAttribute('data-locale') || '');
+      /* Send what the visitor actually chose, not the option's internal value —
+         staff read this column, and "other" tells them less than "Other" or
+         the guide's own title does. */
+      if (concern?.selectedIndex >= 0) {
+        data.set('concern', concern.options[concern.selectedIndex].text.trim());
+      }
+
+      submit.disabled = true;
+      const label = submit.textContent;
+      submit.textContent = S.sending;
+
+      try {
+        const response = await fetch('/api/intake', {
+          method: 'POST',
+          // Form-encoded on purpose: a simple request, so no CORS preflight.
+          body: new URLSearchParams(data as unknown as Record<string, string>),
+        });
+        if (!response.ok) throw new Error(String(response.status));
+        fields.hidden = true;
+        if (successBox) successBox.hidden = false;
+        successBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch {
+        if (errorBox) errorBox.hidden = false;
+        submit.disabled = false;
+        submit.textContent = label || S.submit;
+      }
+    });
+  }
+</script>
