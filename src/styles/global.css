@@ -282,7 +282,9 @@ a.card-hover:hover .card { border-color: var(--ink); }
 /* ---------- Intake form (IntakeForm.astro) ---------- */
 .intake-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 /* Disabled until the Sheet endpoint is configured; make that obvious. */
-.intake-form fieldset[disabled] { opacity: 0.55; }
+.intake-form fieldset[disabled] { opacity: 1; margin-top: 1.6rem; }
+.intake-form fieldset[disabled] .input { background: var(--paper-warm); border-color: var(--line); color: var(--ink-mute); cursor: not-allowed; }
+.intake-form fieldset[disabled] .btn { opacity: 0.55; cursor: not-allowed; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
 @media (max-width: 560px) {
   .field-row { grid-template-columns: 1fr; }

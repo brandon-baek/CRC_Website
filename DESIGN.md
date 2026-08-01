@@ -170,7 +170,7 @@ The system is flat by default. Borders, warm tonal bands, and spacing establish 
 
 - **Style:** 2px ink-muted border, warm-paper background, 10px radius, minimum 48px height.
 - **Focus:** Border shifts to focus blue and retains the global 3px outline.
-- **Error / Disabled:** Errors use dark readable red. Unavailable forms are hidden, not displayed as disabled controls.
+- **Error / Disabled:** Errors use dark readable red. When organizational context matters, unavailable forms may remain visible as a clearly labeled, non-interactive preview.
 
 ### Navigation
 

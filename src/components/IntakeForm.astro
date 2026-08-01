@@ -24,7 +24,7 @@ const dict = t(locale);
 const concerns = scamGuides.map((guide) => guide.title[locale]);
 ---
 <form class="intake-form" data-intake data-page={page} data-locale={locale} novalidate>
-  <div class="notice" data-intake-disabled>
+  <div class="notice" id={`${page}-intake-disabled`} data-intake-disabled>
     <Icon name="alert" />
     <div>
       <strong>{dict.contact.comingSoon}</strong>
@@ -33,7 +33,7 @@ const concerns = scamGuides.map((guide) => guide.title[locale]);
     </div>
   </div>
 
-  <fieldset hidden disabled data-intake-fields>
+  <fieldset disabled aria-describedby={`${page}-intake-disabled`} data-intake-fields>
     <div class="field-row">
       <div class="field">
         <label for={`${page}-first`}>{dict.intake.firstName}</label>
