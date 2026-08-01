@@ -64,6 +64,7 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
 | CRC press releases / announcements on the News page | `src/data/press.ts` |
 | FTC alert feed (source URL, parsing, how many show) | `src/data/ftcAlerts.ts` |
 | All UI text, both languages | `src/i18n/index.ts` |
+| Assistant answers, keywords, urgent triggers | `src/lib/chat-kb.ts` |
 | **Placeholders to replace** (address, phone, email) | `src/components/Footer.astro`, `src/views/HomePage.astro`, `src/views/AboutPage.astro`, `src/views/ContactPage.astro` — search for `PLACEHOLDER` |
 | Office hours | `contact.hoursValue` / `contact.hoursClosed` in `src/i18n/index.ts` |
 | Colors, fonts, spacing | `src/styles/global.css` |
@@ -94,6 +95,59 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
   - Korean-language versions are used automatically when one exists (set `ko`);
     otherwise the English video plays with a note saying it is in English.
 
+## The site assistant (bottom-right)
+
+Every page carries an "Ask a question" launcher that answers scam questions and
+helps people find their way around the site, in Korean or English. It has two
+modes and picks one at runtime, so the same build works either way.
+
+**Local mode (default, no setup).** Answers come from `/chat-kb-<locale>.json`, a
+knowledge base generated at build time from `agencies.ts`, `scams.ts`,
+`wizard.ts` and the i18n dictionaries — so the assistant can never contradict the
+site. It is fetched lazily the first time someone opens the panel, costs nothing,
+and nothing the visitor types leaves their browser. It matches questions to
+existing pages, so it can only answer what the site already covers.
+
+**AI mode (opt-in).** Add a provider API key in the Pages project
+(Settings → Environment variables → **Encrypt**) and redeploy. `functions/api/chat.ts`
+then answers with that provider and the widget switches over on its own. Now
+visitors can ask *any* scam or fraud question in their own words — how a con
+works, whether a message looks fake, what to do next — not just what the site has
+a page for. The knowledge base is still sent as the authority on this
+organization and on where to report, and the prompt forbids inventing agency
+names, URLs, phone numbers, or statistics from memory: those may only come from
+the site's own data, so a victim is never sent to a made-up reporting link.
+Remove the key to go back to local mode.
+
+To try AI mode locally, copy `.dev.vars.example` to `.dev.vars`, put your key in
+it, then run the production build with the Function attached:
+
+```bash
+npm run build && npx wrangler pages dev dist
+```
+
+`.dev.vars` is gitignored — never commit a key, and never put a real one in
+`.dev.vars.example`. Note `npm run dev` (Astro alone) does not run Functions, so
+the widget always stays in local mode there.
+
+Set **exactly one** provider key (Gemini wins if both are present):
+
+| Binding | Type | Purpose |
+|---|---|---|
+| `GEMINI_API_KEY` | secret | Use Google Gemini. **Has a free tier** — get a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (starts with `AIza`). Free limits as of 2026: `gemini-2.5-flash` 250 requests/day, `gemini-2.5-flash-lite` 1,000/day. Google has changed these without notice, so treat them as a moving target. |
+| `ANTHROPIC_API_KEY` | secret | Use Claude. No free tier; roughly 2.5¢ per cold message at the current prompt size. Stronger instruction-following, which is what the safety rules in the prompt rely on. |
+| `CHAT_MODEL` | variable | Override the model id for whichever provider is active (defaults: `gemini-2.5-flash`, `claude-sonnet-5`). |
+| `CHAT_RATE_LIMIT` | KV namespace | Durable per-IP rate limiting. Without it the limiter is per-isolate and best-effort — **bind a KV namespace before enabling AI mode in production.** |
+
+If the API key is missing, rate-limited, or the API call fails, the widget falls
+back to a local answer rather than showing an error, so visitors always get
+usable links.
+
+To change what it knows, edit `src/lib/chat-kb.ts` — entry summaries, the
+cross-language `keywords` lists that drive matching, and `urgentTriggers`, the
+phrases that pin the "you just lost money" first-steps card above an answer.
+Ranking logic lives in `src/lib/chat-search.js`.
+
 ## Planned next steps (deliberately not built yet)
 
 - **Online donations**: `/donate` explains how to give and links to the office.
@@ -102,6 +156,3 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
 - **Intake form**: the contact form is a disabled placeholder. To activate it,
   remove the `disabled` attributes in `src/views/ContactPage.astro` and point the
   form at a form service (e.g. Formspree) or a Cloudflare Pages Function.
-- **AI assistant**: the wizard is designed so an AI chat (Cloudflare Pages
-  Function calling the Claude API) can return the same result shape
-  (`WizardResult` in `src/data/wizard.ts`) and reuse the results UI.

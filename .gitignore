@@ -1,5 +1,11 @@
 node_modules/
 dist/
 .astro/
+.wrangler/
 .DS_Store
 *.log
+
+# Local secrets for `wrangler pages dev` (ANTHROPIC_API_KEY). Never commit.
+.dev.vars
+.dev.vars.*
+!.dev.vars.example

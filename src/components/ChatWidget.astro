@@ -1,0 +1,769 @@
+---
+import Icon from './Icon.astro';
+import { localePath, t, type Locale } from '../i18n';
+
+/**
+ * Bottom-right site assistant.
+ *
+ * Two answering modes, decided at runtime so the same build works on a plain
+ * static deploy and on one with an API key configured:
+ *
+ *   1. LOCAL (default) — keyword retrieval over /chat-kb-<locale>.json, which is
+ *      generated from src/data/* at build time. Zero cost, no network calls
+ *      after the KB loads, nothing the visitor types leaves their device. Only
+ *      answers what the site already covers.
+ *   2. AI — if functions/api/chat.ts reports an ANTHROPIC_API_KEY is configured,
+ *      messages go there and Claude answers open-ended scam questions, using the
+ *      same KB as the authority on this org and where to report. The widget
+ *      probes for this once per session and silently stays local if unavailable.
+ *
+ * Any message that sounds like an in-progress emergency pins the "you just lost
+ * money" first-steps card above the answer in both modes.
+ */
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const d = t(locale);
+
+const strings = {
+  greeting: d.chat.greeting,
+  suggestionsLabel: d.chat.suggestionsLabel,
+  suggestions: d.chat.suggestions,
+  thinking: d.chat.thinking,
+  alsoHelpful: d.chat.alsoHelpful,
+  goTo: d.chat.goTo,
+  noAnswerTitle: d.chat.noAnswerTitle,
+  noAnswer: d.chat.noAnswer,
+  urgentTitle: d.chat.urgentTitle,
+  urgentIntro: d.chat.urgentIntro,
+  urgentCta: d.chat.urgentCta,
+  cleared: d.chat.cleared,
+  errorTitle: d.chat.errorTitle,
+  error: d.chat.error,
+  privacyLocal: d.chat.privacyLocal,
+  privacyAi: d.chat.privacyAi,
+  open: d.chat.open,
+  close: d.chat.close,
+  you: locale === 'ko' ? '나' : 'You',
+  assistant: d.chat.title,
+  external: locale === 'ko' ? '새 창에서 열림' : 'opens in a new tab',
+  urgentSteps: [
+    { title: d.wizard.loss1Title, body: d.wizard.loss1Body },
+    { title: d.wizard.loss2Title, body: d.wizard.loss2Body },
+    { title: d.wizard.loss3Title, body: d.wizard.loss3Body },
+    { title: d.wizard.loss4Title, body: d.wizard.loss4Body },
+  ],
+};
+
+const config = {
+  locale,
+  kbUrl: `/chat-kb-${locale}.json`,
+  apiUrl: '/api/chat',
+  helpUrl: localePath(locale, '/get-help'),
+};
+---
+
+{/* Strings and config for the widget script, kept out of the script bundle so
+    it stays identical (and cacheable) across all pages and both locales. */}
+<script type="application/json" data-crc-config set:html={JSON.stringify({ S: strings, C: config })} />
+
+<div class="crc-chat" data-crc-chat>
+  <button
+    type="button"
+    class="crc-chat-fab"
+    data-crc-open
+    aria-expanded="false"
+    aria-controls="crc-chat-panel"
+  >
+    <span class="crc-chat-fab-icon"><Icon name="chat" size={24} /></span>
+    <span class="crc-chat-fab-label">{d.chat.open}</span>
+  </button>
+
+  <div
+    class="crc-chat-panel"
+    id="crc-chat-panel"
+    data-crc-panel
+    role="dialog"
+    aria-labelledby="crc-chat-title"
+    hidden
+  >
+    <header class="crc-chat-head">
+      <div>
+        <h2 id="crc-chat-title">{d.chat.title}</h2>
+        <p>{d.chat.subtitle}</p>
+      </div>
+      <button type="button" class="crc-chat-x" data-crc-close aria-label={d.chat.close}>
+        <Icon name="close" size={22} />
+      </button>
+    </header>
+
+    <div class="crc-chat-log" data-crc-log role="log" aria-live="polite" aria-relevant="additions text"></div>
+
+    <form class="crc-chat-form" data-crc-form>
+      <label class="visually-hidden" for="crc-chat-input">{d.chat.inputLabel}</label>
+      <textarea
+        id="crc-chat-input"
+        data-crc-input
+        rows="1"
+        placeholder={d.chat.placeholder}
+        autocomplete="off"
+        maxlength="600"></textarea>
+      <button type="submit" class="crc-chat-send" aria-label={d.chat.send}>
+        <Icon name="arrow-right" size={22} />
+      </button>
+    </form>
+
+    <footer class="crc-chat-foot">
+      <p data-crc-privacy>{d.chat.privacyLocal}</p>
+      <p class="crc-chat-disclaimer">{d.chat.disclaimer}</p>
+      <button type="button" class="crc-chat-clear" data-crc-clear>{d.chat.clear}</button>
+    </footer>
+  </div>
+</div>
+
+<style is:global>
+  /* ---------- Site assistant (ChatWidget.astro) ---------- */
+  .crc-chat {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 60;
+    font-size: var(--fs-sm);
+  }
+  /* Progressive enhancement: the launcher only appears once the script runs. */
+  .crc-chat-fab { display: none; }
+  .crc-chat[data-ready] .crc-chat-fab { display: inline-flex; }
+
+  .crc-chat-fab {
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 1.25rem 0.7rem 0.95rem;
+    min-height: 52px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-pill);
+    background: var(--red);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-lift);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+  }
+  .crc-chat-fab:hover { background: var(--red-deep); transform: translateY(-2px); }
+  .crc-chat-fab-icon { display: flex; }
+  .crc-chat[data-open] .crc-chat-fab { display: none; }
+
+  .crc-chat-panel {
+    display: flex;
+    flex-direction: column;
+    width: min(400px, calc(100vw - 2rem));
+    height: min(660px, calc(100vh - 2rem));
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lift);
+    overflow: hidden;
+  }
+  .crc-chat-panel[hidden] { display: none; }
+
+  .crc-chat-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.1rem;
+    background: var(--lime);
+    border-bottom: 2px solid var(--ink);
+  }
+  .crc-chat-head h2 { font-size: var(--fs-md); font-weight: 900; }
+  .crc-chat-head p { font-size: var(--fs-xs); color: var(--ink-soft); margin-top: 0.15rem; max-width: none; }
+  .crc-chat-x {
+    margin-left: auto;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    cursor: pointer;
+  }
+  .crc-chat-x:hover { background: rgba(26, 30, 36, 0.1); border-color: var(--ink); }
+
+  .crc-chat-log {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    background: var(--paper-warm);
+  }
+
+  .crc-msg { max-width: 100%; }
+  .crc-msg-user {
+    align-self: flex-end;
+    max-width: 85%;
+    background: var(--ink);
+    color: #fff;
+    padding: 0.6rem 0.9rem;
+    border-radius: 14px 14px 4px 14px;
+  }
+  .crc-msg-bot {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px 14px 14px 4px;
+    padding: 0.85rem 1rem;
+    box-shadow: var(--shadow);
+  }
+  .crc-msg-bot p { max-width: none; }
+  .crc-msg-bot .crc-answer { white-space: pre-wrap; }
+  .crc-msg-bot h3 { font-size: var(--fs-base); margin-bottom: 0.3rem; }
+  .crc-msg-note { font-size: var(--fs-xs); color: var(--ink-mute); margin-top: 0.6rem; }
+
+  .crc-urgent {
+    background: var(--red-soft);
+    border: 2px solid var(--red);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+  }
+  .crc-urgent h3 { color: var(--red-text); font-size: var(--fs-base); }
+  .crc-urgent > p { font-size: var(--fs-xs); color: var(--ink-soft); margin-top: 0.2rem; }
+  .crc-urgent ol { margin: 0.7rem 0 0; padding-left: 1.2em; }
+  .crc-urgent li { margin-block: 0.5em; }
+  .crc-urgent li strong { display: block; }
+  .crc-urgent li span { font-size: var(--fs-xs); color: var(--ink-soft); }
+
+  .crc-links { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.8rem; }
+  .crc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 40px;
+    padding: 0.35rem 0.85rem;
+    border: 1.5px solid var(--ink);
+    border-radius: var(--radius-pill);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .crc-link:hover { background: var(--lime); }
+  .crc-link-primary { background: var(--ink); color: #fff; }
+  .crc-link-primary:hover { background: var(--red); border-color: var(--ink); color: #fff; }
+
+  .crc-related { margin-top: 0.85rem; border-top: 1px solid var(--line); padding-top: 0.7rem; }
+  .crc-related > p { font-size: var(--fs-xs); font-weight: 700; color: var(--ink-mute); margin-bottom: 0.35rem; }
+  .crc-related ul { list-style: none; padding: 0; margin: 0; }
+  .crc-related li { margin-block: 0.15em; }
+  .crc-related a { font-size: var(--fs-xs); color: var(--link); text-underline-offset: 3px; }
+
+  .crc-suggestions { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
+  .crc-suggestions > p { font-size: var(--fs-xs); font-weight: 700; color: var(--ink-mute); }
+  .crc-chip {
+    text-align: left;
+    padding: 0.5rem 0.9rem;
+    min-height: 40px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: var(--paper);
+    font-size: var(--fs-xs);
+    cursor: pointer;
+  }
+  .crc-chip:hover { border-color: var(--ink); background: var(--lime-soft); }
+
+  .crc-chat-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    padding: 0.75rem;
+    border-top: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .crc-chat-form textarea {
+    flex: 1;
+    resize: none;
+    max-height: 120px;
+    padding: 0.6rem 0.8rem;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-input);
+    background: var(--paper);
+    line-height: 1.5;
+  }
+  .crc-chat-form textarea:focus { border-color: var(--ink); }
+  .crc-chat-send {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-pill);
+    background: var(--red);
+    color: #fff;
+    cursor: pointer;
+  }
+  .crc-chat-send:hover { background: var(--red-deep); }
+  .crc-chat-send:disabled { background: var(--ink-mute); border-color: var(--ink-mute); cursor: default; }
+
+  .crc-chat-foot {
+    padding: 0.5rem 1rem 0.6rem;
+    border-top: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .crc-chat-foot p { font-size: 0.68rem; line-height: 1.4; color: var(--ink-mute); max-width: none; }
+  .crc-chat-disclaimer { margin-top: 0.25rem; }
+  .crc-chat-clear {
+    margin-top: 0.35rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: 0.72rem;
+    color: var(--ink-mute);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .crc-chat-clear:hover { color: var(--red-text); }
+
+  .crc-typing { display: inline-flex; gap: 0.25rem; align-items: center; color: var(--ink-mute); }
+  .crc-typing i {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ink-mute);
+    animation: crc-bounce 1.2s infinite ease-in-out;
+  }
+  .crc-typing i:nth-child(2) { animation-delay: 0.15s; }
+  .crc-typing i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes crc-bounce { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+
+  /* Full-height sheet on small screens */
+  @media (max-width: 560px) {
+    .crc-chat { left: max(0.5rem, env(safe-area-inset-left)); right: max(0.5rem, env(safe-area-inset-right)); }
+    .crc-chat-fab { float: right; }
+    .crc-chat-fab-label { display: none; }
+    .crc-chat-fab { padding: 0.7rem; }
+    .crc-chat-panel { width: 100%; height: min(80vh, calc(100vh - 1.5rem)); }
+  }
+
+  /* Keep the launcher clear of the footer on print */
+  @media print { .crc-chat { display: none; } }
+</style>
+
+<script>
+  import { search, isUrgent } from '../lib/chat-search.js';
+
+  (function () {
+    var root = document.querySelector('[data-crc-chat]');
+    var configEl = document.querySelector('[data-crc-config]');
+    if (!root || !configEl) return;
+
+    var cfg = JSON.parse(configEl.textContent || '{}');
+    var S = cfg.S;
+    var C = cfg.C;
+
+    var fab = root.querySelector('[data-crc-open]');
+    var panel = root.querySelector('[data-crc-panel]');
+    var closeBtn = root.querySelector('[data-crc-close]');
+    var log = root.querySelector('[data-crc-log]');
+    var form = root.querySelector('[data-crc-form]');
+    var input = root.querySelector('[data-crc-input]');
+    var sendBtn = form.querySelector('button[type=submit]');
+    var clearBtn = root.querySelector('[data-crc-clear]');
+    var privacyEl = root.querySelector('[data-crc-privacy]');
+
+    var STORE = 'crc-chat-transcript-v1';
+    var AI_FLAG = 'crc-chat-ai-v1';
+    var kb = null;
+    var aiMode = false;
+    var busy = false;
+    var lastFocus = null;
+
+    root.setAttribute('data-ready', '');
+
+    /* ---------------- transcript persistence ---------------- */
+    // sessionStorage, so the conversation survives navigation between the
+    // site's static pages but never outlives the visit. Stored answers are
+    // written in one language, so a switch to the other locale starts fresh
+    // rather than leaving Korean replies stranded in the English panel.
+    function load() {
+      try {
+        var saved = JSON.parse(sessionStorage.getItem(STORE) || 'null');
+        if (!saved || saved.locale !== C.locale || !Array.isArray(saved.items)) return [];
+        return saved.items;
+      } catch (e) {
+        return [];
+      }
+    }
+    function save(items) {
+      try {
+        sessionStorage.setItem(STORE, JSON.stringify({ locale: C.locale, items: items.slice(-30) }));
+      } catch (e) {
+        /* private mode: fall back to in-memory only */
+      }
+    }
+    var transcript = load();
+
+    /* ---------------- small DOM helpers ---------------- */
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    }
+    function linkEl(item, primary) {
+      var a = el('a', 'crc-link' + (primary ? ' crc-link-primary' : ''), item.label);
+      a.href = item.url;
+      if (item.external) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        var sr = el('span', 'visually-hidden', ' (' + S.external + ')');
+        a.appendChild(sr);
+      }
+      return a;
+    }
+    function scrollDown() {
+      log.scrollTop = log.scrollHeight;
+    }
+    // On a fresh conversation the greeting is the first thing to read, so stay
+    // at the top; once there are replies, the newest one matters most.
+    function restoreScroll() {
+      if (transcript.length) scrollDown();
+      else log.scrollTop = 0;
+    }
+
+    /* ---------------- rendering ---------------- */
+    function renderUser(text) {
+      var d = el('div', 'crc-msg crc-msg-user');
+      d.appendChild(el('p', null, text));
+      log.appendChild(d);
+    }
+
+    function renderUrgent() {
+      var box = el('div', 'crc-msg crc-urgent');
+      box.appendChild(el('h3', null, S.urgentTitle));
+      box.appendChild(el('p', null, S.urgentIntro));
+      var ol = el('ol');
+      S.urgentSteps.forEach(function (step) {
+        var li = el('li');
+        li.appendChild(el('strong', null, step.title));
+        li.appendChild(el('span', null, step.body));
+        ol.appendChild(li);
+      });
+      box.appendChild(ol);
+      var links = el('div', 'crc-links');
+      links.appendChild(linkEl({ label: S.urgentCta, url: C.helpUrl }, true));
+      box.appendChild(links);
+      log.appendChild(box);
+    }
+
+    function renderBot(msg) {
+      if (msg.urgent) renderUrgent();
+      var d = el('div', 'crc-msg crc-msg-bot');
+      if (msg.title) d.appendChild(el('h3', null, msg.title));
+      if (msg.text) d.appendChild(el('p', 'crc-answer', msg.text));
+
+      if (msg.links && msg.links.length) {
+        var links = el('div', 'crc-links');
+        msg.links.forEach(function (l, i) {
+          links.appendChild(linkEl(l, i === 0));
+        });
+        d.appendChild(links);
+      }
+      if (msg.related && msg.related.length) {
+        var rel = el('div', 'crc-related');
+        rel.appendChild(el('p', null, msg.relatedLabel || S.alsoHelpful));
+        var ul = el('ul');
+        msg.related.forEach(function (r) {
+          var li = el('li');
+          var a = el('a', null, r.label);
+          a.href = r.url;
+          if (r.external) {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+          }
+          li.appendChild(a);
+          ul.appendChild(li);
+        });
+        rel.appendChild(ul);
+        d.appendChild(rel);
+      }
+      if (msg.note) d.appendChild(el('p', 'crc-msg-note', msg.note));
+      log.appendChild(d);
+    }
+
+    function renderSuggestions() {
+      var wrap = el('div', 'crc-suggestions');
+      wrap.appendChild(el('p', null, S.suggestionsLabel));
+      S.suggestions.forEach(function (q) {
+        var b = el('button', 'crc-chip', q);
+        b.type = 'button';
+        b.addEventListener('click', function () {
+          ask(q);
+        });
+        wrap.appendChild(b);
+      });
+      log.appendChild(wrap);
+    }
+
+    function renderAll() {
+      log.innerHTML = '';
+      renderBot({ text: S.greeting });
+      if (!transcript.length) {
+        renderSuggestions();
+      } else {
+        transcript.forEach(function (m) {
+          if (m.role === 'user') renderUser(m.text);
+          else renderBot(m);
+        });
+      }
+      restoreScroll();
+    }
+
+    /* ---------------- retrieval (see src/lib/chat-search.js) ---------------- */
+    function byId(id) {
+      for (var i = 0; i < kb.entries.length; i++) if (kb.entries[i].id === id) return kb.entries[i];
+      return null;
+    }
+
+    /** Compose an answer purely from site content — the no-API-key path. */
+    function localAnswer(q) {
+      var hits = search(kb, q);
+      var urgent = isUrgent(kb, q);
+
+      if (!hits.length) {
+        var fallbacks = kb.fallbackIds
+          .map(byId)
+          .filter(Boolean)
+          .map(function (e) {
+            return { label: e.title, url: e.url, external: e.external };
+          });
+        return {
+          role: 'bot',
+          urgent: urgent,
+          title: S.noAnswerTitle,
+          text: S.noAnswer,
+          links: fallbacks.slice(0, 2),
+          related: fallbacks.slice(2),
+        };
+      }
+
+      var top = hits[0].entry;
+      var related = hits.slice(1, 4).map(function (h) {
+        return { label: h.entry.title, url: h.entry.url, external: h.entry.external };
+      });
+      return {
+        role: 'bot',
+        urgent: urgent,
+        title: top.title,
+        text: top.summary,
+        links: (top.actions || [{ label: S.goTo, url: top.url, external: top.external }]).slice(0, 2),
+        related: related,
+      };
+    }
+
+    /* ---------------- loading ---------------- */
+    function loadKb() {
+      if (kb) return Promise.resolve(kb);
+      return fetch(C.kbUrl)
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (json) {
+          kb = json;
+          return kb;
+        });
+    }
+
+    // One probe per session decides whether the Pages Function has a key wired
+    // up. Any failure (static deploy, no function, offline) stays local.
+    function probeAi() {
+      var cached = null;
+      try {
+        cached = sessionStorage.getItem(AI_FLAG);
+      } catch (e) {}
+      if (cached !== null) {
+        aiMode = cached === '1';
+        return Promise.resolve(aiMode);
+      }
+      return fetch(C.apiUrl, { method: 'GET' })
+        .then(function (r) {
+          return r.ok ? r.json() : { ai: false };
+        })
+        .catch(function () {
+          return { ai: false };
+        })
+        .then(function (j) {
+          aiMode = !!(j && j.ai);
+          try {
+            sessionStorage.setItem(AI_FLAG, aiMode ? '1' : '0');
+          } catch (e) {}
+          return aiMode;
+        });
+    }
+
+    function applyPrivacyNote() {
+      privacyEl.textContent = aiMode ? S.privacyAi : S.privacyLocal;
+    }
+
+    /* ---------------- asking ---------------- */
+    function showTyping() {
+      var d = el('div', 'crc-msg crc-msg-bot');
+      d.setAttribute('data-crc-typing', '');
+      var t = el('span', 'crc-typing');
+      t.appendChild(el('i'));
+      t.appendChild(el('i'));
+      t.appendChild(el('i'));
+      d.appendChild(t);
+      d.appendChild(el('span', 'visually-hidden', S.thinking));
+      log.appendChild(d);
+      scrollDown();
+    }
+    function clearTyping() {
+      var t = log.querySelector('[data-crc-typing]');
+      if (t) t.remove();
+    }
+
+    function aiAnswer(q) {
+      var history = transcript
+        .filter(function (m) {
+          return m.role === 'user' || m.text;
+        })
+        .slice(-6)
+        .map(function (m) {
+          return { role: m.role === 'user' ? 'user' : 'assistant', content: m.text || '' };
+        });
+
+      return fetch(C.apiUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ locale: C.locale, message: q, history: history }),
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('http ' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data || !data.reply) throw new Error('empty');
+          var hits = search(kb, q);
+          return {
+            role: 'bot',
+            urgent: isUrgent(kb, q),
+            text: data.reply,
+            links: (data.sources || [])
+              .slice(0, 2)
+              .map(function (s) {
+                return { label: s.title, url: s.url, external: s.external };
+              }),
+            // These come from local search, not from the model, so they are
+            // "related reading" — not a claim about what the answer was based on.
+            related: hits.slice(0, 3).map(function (h) {
+              return { label: h.entry.title, url: h.entry.url, external: h.entry.external };
+            }),
+          };
+        });
+    }
+
+    function ask(q) {
+      q = (q || '').trim();
+      if (!q || busy) return;
+      busy = true;
+      sendBtn.disabled = true;
+
+      transcript.push({ role: 'user', text: q });
+      save(transcript);
+
+      // Drop the starter chips once the conversation begins.
+      var chips = log.querySelector('.crc-suggestions');
+      if (chips) chips.remove();
+
+      renderUser(q);
+      showTyping();
+      scrollDown();
+
+      loadKb()
+        .then(function () {
+          return aiMode ? aiAnswer(q) : localAnswer(q);
+        })
+        .catch(function () {
+          // AI unreachable or KB missing: answer from the site if we can.
+          if (kb) {
+            var fallback = localAnswer(q);
+            fallback.note = S.error;
+            return fallback;
+          }
+          return { role: 'bot', title: S.errorTitle, text: S.error };
+        })
+        .then(function (msg) {
+          clearTyping();
+          transcript.push(msg);
+          save(transcript);
+          renderBot(msg);
+          scrollDown();
+          busy = false;
+          sendBtn.disabled = false;
+        });
+    }
+
+    /* ---------------- open / close ---------------- */
+    function open() {
+      lastFocus = document.activeElement;
+      panel.hidden = false;
+      root.setAttribute('data-open', '');
+      fab.setAttribute('aria-expanded', 'true');
+      loadKb().catch(function () {});
+      probeAi().then(applyPrivacyNote);
+      input.focus();
+      restoreScroll();
+    }
+    function close() {
+      panel.hidden = true;
+      root.removeAttribute('data-open');
+      fab.setAttribute('aria-expanded', 'false');
+      // Send focus back where it came from, but never to <body> — a keyboard
+      // user who presses Escape would otherwise lose their place on the page.
+      // The launcher is what the panel collapses into, so it is the fallback.
+      var restore =
+        lastFocus && lastFocus !== document.body && document.contains(lastFocus) ? lastFocus : fab;
+      restore.focus();
+    }
+
+    fab.addEventListener('click', open);
+    closeBtn.addEventListener('click', close);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !panel.hidden) close();
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var q = input.value;
+      input.value = '';
+      input.style.height = 'auto';
+      ask(q);
+    });
+
+    // Enter sends, Shift+Enter makes a new line.
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    input.addEventListener('input', function () {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    });
+
+    clearBtn.addEventListener('click', function () {
+      transcript = [];
+      save(transcript);
+      renderAll();
+      input.focus();
+    });
+
+    renderAll();
+  })();
+</script>

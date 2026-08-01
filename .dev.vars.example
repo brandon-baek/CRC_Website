@@ -1,0 +1,22 @@
+# Local secrets for `npx wrangler pages dev dist`.
+#
+# Copy this file to `.dev.vars` and paste your real key there. `.dev.vars` is
+# gitignored — never commit it, and never put a real key in this example file.
+#
+# Set exactly ONE provider key. Gemini wins if both are present.
+#
+# In production, do NOT use this file: set the same variable in the Cloudflare
+# Pages dashboard (Settings -> Environment variables) with "Encrypt" checked.
+
+# --- Option A: Google Gemini (has a free tier) ---
+# Get a key at https://aistudio.google.com/apikey — it starts with "AIza".
+GEMINI_API_KEY=AIza-your-key-here
+
+# --- Option B: Anthropic Claude (no free tier; pay as you go) ---
+# Get a key at https://console.anthropic.com/settings/keys
+# ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Optional: override the model for whichever provider is active.
+# Gemini defaults to gemini-2.5-flash (250 requests/day on the free tier).
+# Use gemini-2.5-flash-lite for 1000/day at lower answer quality.
+# CHAT_MODEL=gemini-2.5-flash-lite
