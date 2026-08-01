@@ -76,6 +76,8 @@ const config = {
     data-crc-open
     aria-expanded="false"
     aria-controls="crc-chat-panel"
+    aria-label={d.chat.open}
+    title={d.chat.open}
   >
     <span class="crc-chat-fab-icon"><Icon name="chat" size={24} /></span>
     <span class="crc-chat-fab-label">{d.chat.open}</span>
@@ -87,12 +89,13 @@ const config = {
     data-crc-panel
     role="dialog"
     aria-labelledby="crc-chat-title"
+    aria-describedby="crc-chat-subtitle"
     hidden
   >
     <header class="crc-chat-head">
       <div>
         <h2 id="crc-chat-title">{d.chat.title}</h2>
-        <p>{d.chat.subtitle}</p>
+        <p id="crc-chat-subtitle">{d.chat.subtitle}</p>
       </div>
       <button type="button" class="crc-chat-x" data-crc-close aria-label={d.chat.close}>
         <Icon name="close" size={22} />
@@ -127,7 +130,7 @@ const config = {
   /* ---------- Site assistant (ChatWidget.astro) ---------- */
   .crc-chat {
     position: fixed;
-    right: max(1rem, env(safe-area-inset-right));
+    right: max(1rem, env(safe-area-inset-right), calc((100vw - var(--container)) / 2 - 4rem));
     bottom: max(1rem, env(safe-area-inset-bottom));
     z-index: 60;
     font-size: var(--fs-sm);
@@ -138,13 +141,14 @@ const config = {
 
   .crc-chat-fab {
     align-items: center;
-    gap: 0.55rem;
-    padding: 0.7rem 1.25rem 0.7rem 0.95rem;
-    min-height: 52px;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
     border: 2px solid var(--ink);
-    border-radius: var(--radius-pill);
-    background: var(--red);
-    color: #fff;
+    border-radius: var(--radius);
+    background: var(--red-deep);
+    color: var(--paper);
     font-weight: 700;
     cursor: pointer;
     box-shadow: var(--shadow-lift);
@@ -152,6 +156,14 @@ const config = {
   }
   .crc-chat-fab:hover { background: var(--red-deep); transform: translateY(-2px); }
   .crc-chat-fab-icon { display: flex; }
+  .crc-chat-fab-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
   .crc-chat[data-open] .crc-chat-fab { display: none; }
 
   .crc-chat-panel {
@@ -182,8 +194,8 @@ const config = {
     flex: none;
     display: grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border: 1px solid transparent;
     border-radius: var(--radius-pill);
     background: transparent;
@@ -207,7 +219,7 @@ const config = {
     align-self: flex-end;
     max-width: 85%;
     background: var(--ink);
-    color: #fff;
+    color: var(--paper);
     padding: 0.6rem 0.9rem;
     border-radius: 14px 14px 4px 14px;
   }
@@ -241,10 +253,10 @@ const config = {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    min-height: 40px;
+    min-height: 44px;
     padding: 0.35rem 0.85rem;
     border: 1.5px solid var(--ink);
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-input);
     background: var(--paper);
     color: var(--ink);
     font-size: var(--fs-xs);
@@ -252,8 +264,8 @@ const config = {
     text-decoration: none;
   }
   .crc-link:hover { background: var(--lime); }
-  .crc-link-primary { background: var(--ink); color: #fff; }
-  .crc-link-primary:hover { background: var(--red); border-color: var(--ink); color: #fff; }
+  .crc-link-primary { background: var(--ink); color: var(--paper); }
+  .crc-link-primary:hover { background: var(--red-deep); border-color: var(--ink); color: var(--paper); }
 
   .crc-related { margin-top: 0.85rem; border-top: 1px solid var(--line); padding-top: 0.7rem; }
   .crc-related > p { font-size: var(--fs-xs); font-weight: 700; color: var(--ink-mute); margin-bottom: 0.35rem; }
@@ -266,9 +278,9 @@ const config = {
   .crc-chip {
     text-align: left;
     padding: 0.5rem 0.9rem;
-    min-height: 40px;
+    min-height: 44px;
     border: 1.5px solid var(--line);
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-input);
     background: var(--paper);
     font-size: var(--fs-xs);
     cursor: pointer;
@@ -301,9 +313,9 @@ const config = {
     width: 46px;
     height: 46px;
     border: 2px solid var(--ink);
-    border-radius: var(--radius-pill);
-    background: var(--red);
-    color: #fff;
+    border-radius: var(--radius-input);
+    background: var(--red-deep);
+    color: var(--paper);
     cursor: pointer;
   }
   .crc-chat-send:hover { background: var(--red-deep); }
@@ -314,14 +326,15 @@ const config = {
     border-top: 1px solid var(--line);
     background: var(--paper);
   }
-  .crc-chat-foot p { font-size: 0.68rem; line-height: 1.4; color: var(--ink-mute); max-width: none; }
+  .crc-chat-foot p { font-size: var(--fs-xs); line-height: 1.45; color: var(--ink-mute); max-width: none; }
   .crc-chat-disclaimer { margin-top: 0.25rem; }
   .crc-chat-clear {
-    margin-top: 0.35rem;
-    padding: 0;
+    margin-top: 0.2rem;
+    min-height: 44px;
+    padding: 0.45rem 0;
     border: 0;
     background: none;
-    font-size: 0.72rem;
+    font-size: var(--fs-xs);
     color: var(--ink-mute);
     text-decoration: underline;
     text-underline-offset: 2px;
@@ -333,18 +346,16 @@ const config = {
   .crc-typing i {
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--ink-mute);
-    animation: crc-bounce 1.2s infinite ease-in-out;
+    animation: crc-pulse 1.2s infinite ease-out;
   }
   .crc-typing i:nth-child(2) { animation-delay: 0.15s; }
   .crc-typing i:nth-child(3) { animation-delay: 0.3s; }
-  @keyframes crc-bounce { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+  @keyframes crc-pulse { 0%, 100% { opacity: 0.3; } 45% { opacity: 1; } }
 
   /* Full-height sheet on small screens */
   @media (max-width: 560px) {
     .crc-chat { left: max(0.5rem, env(safe-area-inset-left)); right: max(0.5rem, env(safe-area-inset-right)); }
     .crc-chat-fab { float: right; }
-    .crc-chat-fab-label { display: none; }
-    .crc-chat-fab { padding: 0.7rem; }
     .crc-chat-panel { width: 100%; height: min(80vh, calc(100vh - 1.5rem)); }
   }
 

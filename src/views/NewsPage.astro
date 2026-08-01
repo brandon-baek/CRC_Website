@@ -12,9 +12,24 @@ const { locale } = Astro.props;
 const dict = t(locale);
 
 // Fetched once at build time; see src/data/newsFeeds.ts.
-const { items, liveSources } = await fetchAllNews();
+const { items: allItems, liveSources } = await fetchAllNews();
 
 const sourceById = new Map<string, NewsSource>(liveSources.map((s) => [s.id, s]));
+
+/*
+ * The reader's own language first, then everything else, each still newest
+ * first. Sorting purely by date put four Korean headlines in the first eight on
+ * the English page — the Korean outlets simply publish more often — which is a
+ * poor greeting for a reader who cannot read them. Nothing is hidden: the other
+ * language is further down the same list, and its chips filter straight to it.
+ */
+const items = [...allItems].sort((a, b) => {
+  const aOwn = (sourceById.get(a.sourceId)?.lang ?? 'en') === locale ? 0 : 1;
+  const bOwn = (sourceById.get(b.sourceId)?.lang ?? 'en') === locale ? 0 : 1;
+  if (aOwn !== bOwn) return aOwn - bOwn;
+  if (a.date && b.date) return b.date.localeCompare(a.date);
+  return a.date ? -1 : b.date ? 1 : 0;
+});
 
 const dateFormat = new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
   year: 'numeric',
@@ -22,6 +37,7 @@ const dateFormat = new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', 
   day: 'numeric',
 });
 const formatDate = (iso: string) => dateFormat.format(new Date(iso));
+const initialVisible = 8;
 ---
 <Base
   locale={locale}
@@ -53,7 +69,7 @@ const formatDate = (iso: string) => dateFormat.format(new Date(iso));
 
       {items.length > 0 ? (
         <>
-          <div class="dir-chips" role="group" aria-label={dict.news.filterLabel}>
+          <div class="dir-chips news-filters" role="group" aria-label={dict.news.filterLabel}>
             <button type="button" class="chip" data-source="" aria-pressed="true">
               {dict.news.all}
             </button>
@@ -64,26 +80,48 @@ const formatDate = (iso: string) => dateFormat.format(new Date(iso));
             ))}
           </div>
 
-          <ul class="news-list mt-3" id="news-list">
-            {items.map((item) => {
+          <p
+            class="dir-count mt-2"
+            id="news-count"
+            aria-live="polite"
+            data-template={dict.news.showing}
+          >
+            {dict.news.showing.replace('{n}', String(Math.min(initialVisible, items.length))).replace('{total}', String(items.length))}
+          </p>
+
+          <ul class="news-list" id="news-list">
+            {items.map((item, index) => {
               const source = sourceById.get(item.sourceId);
               return (
-                <li class="news-item" data-source={item.sourceId}>
+                <li class:list={['news-item', { featured: index === 0 }]} data-source={item.sourceId}>
                   <p class="date">
-                    <span class="badge plain">{source?.label[locale]}</span>
+                    {/* The outlet when we know it — "Los Angeles Times", never "Google News". */}
+                    <span class="badge plain">{item.publisher ?? source?.label[locale]}</span>
                     {item.date && <span>{formatDate(item.date)}</span>}
                     {source?.linksToPdf && <span class="badge plain">{dict.news.pdf}</span>}
                   </p>
                   <h3>
-                    <a href={item.url} target="_blank" rel="noopener" hreflang="en" lang="en">
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener"
+                      hreflang={source?.lang ?? 'en'}
+                      lang={source?.lang ?? 'en'}
+                    >
                       {item.title}
                     </a>
                   </h3>
-                  {item.summary && <p lang="en">{item.summary}</p>}
+                  {item.summary && <p lang={source?.lang ?? 'en'}>{item.summary}</p>}
                 </li>
               );
             })}
           </ul>
+
+          {items.length > initialVisible && (
+            <p class="center mt-3">
+              <button type="button" class="btn outline" data-news-more>{dict.news.showMore}</button>
+            </p>
+          )}
 
           <p class="mt-3 news-sources">
             {liveSources.map((source) => (
@@ -103,15 +141,14 @@ const formatDate = (iso: string) => dateFormat.format(new Date(iso));
     </div>
   </section>
 
-  <!-- 3. CRC press releases -->
-  <section class="section warm">
-    <div class="container">
-      <div class="section-head">
-        <h2>{dict.news.pressTitle}</h2>
-        <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.news.pressLede}</p>
-      </div>
-
-      {sortedPressPosts.length > 0 ? (
+  <!-- 3. CRC press releases, only when there is something to publish -->
+  {sortedPressPosts.length > 0 && (
+    <section class="section warm">
+      <div class="container">
+        <div class="section-head">
+          <h2>{dict.news.pressTitle}</h2>
+          <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.news.pressLede}</p>
+        </div>
         <ul class="news-list">
           {sortedPressPosts.map((post) => (
             <li class="news-item">
@@ -123,42 +160,52 @@ const formatDate = (iso: string) => dateFormat.format(new Date(iso));
             </li>
           ))}
         </ul>
-      ) : (
-        <div class="card">
-          <p class="contact-row">
-            <Icon name="newspaper" />
-            <span class="muted">{dict.news.pressEmpty}</span>
-          </p>
-          <p class="mt-2">
-            <a class="btn ghost" href={localePath(locale, '/contact')}>
-              {dict.nav.contact}
-              <Icon name="arrow-right" size={16} />
-            </a>
-          </p>
-        </div>
-      )}
-    </div>
-  </section>
+      </div>
+    </section>
+  )}
 
   <script>
     /* Same chip-filter approach as the directory: everything is rendered at
        build time and the script only toggles visibility, so the full list is
        still there with JavaScript off. */
-    const chips = document.querySelector('.dir-chips');
+    const chips = document.querySelector('.news-filters');
     const list = document.getElementById('news-list');
-    if (chips && list) {
+    const count = document.getElementById('news-count');
+    const more = document.querySelector<HTMLButtonElement>('[data-news-more]');
+    if (chips && list && count) {
       const buttons = Array.from(chips.querySelectorAll('.chip'));
       const entries = Array.from(list.querySelectorAll<HTMLElement>('[data-source]'));
+      const pageSize = 8;
+      let active = '';
+      let visibleLimit = pageSize;
+
+      const apply = () => {
+        const matching = entries.filter((entry) => !active || entry.getAttribute('data-source') === active);
+        entries.forEach((entry) => {
+          const index = matching.indexOf(entry);
+          entry.hidden = index < 0 || index >= visibleLimit;
+        });
+        const shown = Math.min(visibleLimit, matching.length);
+        const template = count.getAttribute('data-template') || '{n} / {total}';
+        count.textContent = template.replace('{n}', String(shown)).replace('{total}', String(matching.length));
+        if (more) more.hidden = shown >= matching.length;
+      };
 
       chips.addEventListener('click', (event) => {
         const chip = (event.target as HTMLElement).closest('.chip');
         if (!chip) return;
-        const active = chip.getAttribute('data-source') || '';
+        active = chip.getAttribute('data-source') || '';
+        visibleLimit = pageSize;
         buttons.forEach((b) => b.setAttribute('aria-pressed', b === chip ? 'true' : 'false'));
-        for (const entry of entries) {
-          entry.hidden = Boolean(active) && entry.getAttribute('data-source') !== active;
-        }
+        apply();
       });
+
+      more?.addEventListener('click', () => {
+        visibleLimit += pageSize;
+        apply();
+      });
+
+      apply();
     }
   </script>
 </Base>

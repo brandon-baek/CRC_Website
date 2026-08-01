@@ -32,17 +32,15 @@ const year = new Date().getFullYear();
           <li><a href={localePath(locale, '/about')}>{dict.nav.about}</a></li>
           <li><a href={localePath(locale, '/contact')}>{dict.nav.contact}</a></li>
           <li><a href={localePath(locale, '/donate')}>{dict.nav.donate}</a></li>
-          <li><a href="https://reportfraud.ftc.gov" rel="noopener">ReportFraud.gov</a></li>
+          <li><a href="https://reportfraud.ftc.gov" rel="noopener">{dict.footer.reportFraud}</a></li>
         </ul>
       </nav>
       <div>
         <h4>{dict.footer.contact}</h4>
-        <!-- PLACEHOLDER: email only — the address and phone are real (src/data/org.ts) -->
         <p>
           {org.addressLine1}<br />
           {org.addressLine2}<br />
-          <a href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a><br />
-          <span class="placeholder-tag">{org.email}</span>
+          <a class="footer-phone" href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a>
         </p>
         <p class="mt-1">
           {dict.contact.hoursRows.map((row) => (

@@ -36,19 +36,19 @@ const dict = t(locale);
           </div>
           <p class="mt-2">{dict.about.whoBody}</p>
         </div>
-        <div class="notice">
-          <Icon name="shield" />
-          <p>{dict.footer.disclaimer}</p>
+        <div class="about-statement" aria-hidden="true">
+          <span>CRC</span>
+          <strong>{locale === 'ko' ? '교육 · 안내 · 대변' : 'Educate · Guide · Advocate'}</strong>
         </div>
       </div>
     </div>
   </section>
 
   <!-- 3. Program leadership (NGA) -->
-  <section class="section tight">
+  <section class="section tight partner-section">
     <div class="container">
-      <div class="card nga-card">
-        <!-- LOGO: save the NGA logo as public/nga-logo.svg (or .png) and swap the img src below in. -->
+      <div class="nga-card">
+        <div class="partner-monogram" aria-hidden="true">NGA</div>
         <div>
           <h2 style="font-size:var(--fs-lg);">{dict.about.ngaTitle}</h2>
           <p class="mt-2">{dict.about.ngaBody}</p>
@@ -63,16 +63,17 @@ const dict = t(locale);
     </div>
   </section>
 
-  <!-- 4. Team -->
-  <section class="section tight">
+  <!-- 4. Public commitments -->
+  <section class="section">
     <div class="container">
       <div class="section-head">
-        <h2>{dict.about.teamTitle}</h2>
+        <h2>{dict.about.trustTitle}</h2>
       </div>
-      <!-- PLACEHOLDER: team bios -->
-      <div class="card">
-        <p class="muted">{dict.about.teamPlaceholder}</p>
-      </div>
+      <ol class="trust-list">
+        <li><strong>{dict.about.trust1Title}</strong><p>{dict.about.trust1Body}</p></li>
+        <li><strong>{dict.about.trust2Title}</strong><p>{dict.about.trust2Body}</p></li>
+        <li><strong>{dict.about.trust3Title}</strong><p>{dict.about.trust3Body}</p></li>
+      </ol>
     </div>
   </section>
 

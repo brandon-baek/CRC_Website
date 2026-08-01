@@ -18,6 +18,21 @@ for (const agency of agencies) {
     if (!cats.includes(cat)) cats.push(cat);
   }
 }
+
+const directorySynonyms: Record<string, string> = {
+  usagov: 'not sure unsure help router immigration consulate embassy 어디 신고 모르겠 안내 이민 영사관 대사관',
+  ftc: 'consumer scam robocall gift card impostor recovery government immigration consulate embassy 소비자 사기 보이스피싱 기프트카드 정부 이민 영사관 대사관 사칭',
+  idtheft: 'ssn social security number account takeover credit freeze 명의 도용 개인정보 크레딧 동결',
+  ic3: 'fbi cyber ransomware bec business email compromise crypto zelle wire 사이버 랜섬웨어 코인 송금',
+  cfpb: 'bank transfer credit card loan mortgage debt collector wire 은행 카드 대출 채권 추심 송금',
+  sec: 'stock broker ponzi investment crypto securities 주식 투자 리딩방 폰지 코인',
+  irs: 'tax refund tax preparer identity theft 세금 환급 세무사 사칭',
+  'ssa-oig': 'ssn social security benefit impersonation 소셜시큐리티 연금 사칭',
+  'hhs-oig': 'medicare medicaid medical billing health insurance 메디케어 메디케이드 의료비',
+  uspis: 'mail package letter lottery sweepstakes postal 우편 택배 복권 경품',
+  oversight: 'federal employee contract grant whistleblower inspector general 연방 직원 계약 보조금 내부고발',
+  'ca-ag': 'california business company store consumer complaint 캘리포니아 업체 회사 상점 민원',
+};
 ---
 <Base
   locale={locale}
@@ -71,7 +86,7 @@ for (const agency of agencies) {
         {agencies.map((agency) => (
           <div
             data-cats={agency.categories.join(' ')}
-            data-text={`${agency.name[locale]} ${agency.bestFor[locale]} ${agency.intake[locale]}`.toLowerCase()}
+            data-text={`${agency.name.en} ${agency.name.ko} ${agency.fullName?.en ?? ''} ${agency.fullName?.ko ?? ''} ${agency.bestFor.en} ${agency.bestFor.ko} ${agency.intake.en} ${agency.intake.ko} ${directorySynonyms[agency.id] ?? ''}`.toLowerCase()}
           >
             <AgencyCard agency={agency} locale={locale} showCats={true} />
           </div>

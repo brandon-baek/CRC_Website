@@ -86,8 +86,8 @@ export const wizardNodes: WizardNode[] = [
         result: {
           agencies: ['usagov', 'ftc'],
           note: {
-            en: 'The USA.gov tool asks a few questions and routes you to the right agency. When in doubt, filing with the Federal Trade Commission (FTC) is always a safe first step. You can also contact us and we will help you figure it out.',
-            ko: 'USA.gov 도구가 몇 가지 질문으로 알맞은 기관을 찾아줍니다. 잘 모르겠다면 연방거래위원회(FTC)에 신고하는 것이 언제나 안전한 첫걸음입니다. 저희 센터에 연락 주셔도 함께 찾아드립니다.',
+            en: 'The USA.gov tool asks a few questions and routes you to the right agency. For many consumer scams, the Federal Trade Commission (FTC) is a useful starting point. You can also contact us and we will help you figure it out.',
+            ko: 'USA.gov 도구가 몇 가지 질문으로 알맞은 기관을 찾아줍니다. 여러 소비자 사기는 연방거래위원회(FTC)에서 시작하면 도움이 됩니다. 저희 센터에 연락 주셔도 함께 찾아드립니다.',
           },
         },
       },
@@ -256,6 +256,19 @@ export const wizardNodes: WizardNode[] = [
           note: {
             en: 'Hang up and call the company back at its official number. Report the impersonation to the Federal Trade Commission (FTC); if they reached you online or accessed your computer, also file with the FBI’s Internet Crime Complaint Center (IC3).',
             ko: '전화를 끊고 회사의 공식 번호로 다시 확인하세요. 사칭은 연방거래위원회(FTC)에 신고하고, 온라인으로 접근했거나 컴퓨터에 접속했다면 FBI 인터넷범죄신고센터(IC3)에도 신고하세요.',
+          },
+        },
+      },
+      {
+        label: {
+          en: 'Immigration, a consulate, Korean police, or prosecutors',
+          ko: '이민국, 영사관, 한국 경찰 또는 검찰',
+        },
+        result: {
+          agencies: ['ftc', 'ic3', 'usagov'],
+          note: {
+            en: 'Do not pay or share documents with an unexpected caller. Hang up and use the agency or consulate’s official public number to verify the claim. Report the impersonation to the Federal Trade Commission (FTC), and use the FBI Internet Crime Complaint Center (IC3) if messages, websites, or online payments were involved.',
+            ko: '갑자기 걸려 온 전화에 돈을 보내거나 서류 정보를 알려주지 마세요. 전화를 끊고 해당 기관이나 영사관의 공식 대표 번호를 직접 찾아 사실인지 확인하세요. 사칭은 연방거래위원회(FTC)에 신고하고, 문자·웹사이트·온라인 송금이 관련되었다면 FBI 인터넷범죄신고센터(IC3)에도 신고하세요.',
           },
         },
       },

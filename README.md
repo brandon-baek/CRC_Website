@@ -64,15 +64,15 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
 | Original Korean video builder and validation | `scripts/video/` |
 | CRC press releases / announcements on the News page | `src/data/press.ts` |
 | News feeds (which sources, filtering, how many show) | `src/data/newsFeeds.ts` |
+| Which news outlets may appear | `src/data/newsPublishers.ts` |
 | All UI text, both languages | `src/i18n/index.ts` |
 | Assistant answers, keywords, urgent triggers | `src/lib/chat-kb.ts` |
-| Address, phone, email | `src/data/org.ts` — one place, used by every page |
+| Address and phone | `src/data/org.ts` — one place, used by every page |
 | Office hours | `contact.hoursRows` / `contact.hoursClosed` in `src/i18n/index.ts` |
 | Intake form fields and messages | `src/components/IntakeForm.astro`, `intake.*` in `src/i18n/index.ts` |
-| **Placeholder still to replace** | the email address in `src/data/org.ts` — no real inbox exists yet |
 | Colors, fonts, spacing | `src/styles/global.css` |
 | Logo | `public/logo.svg`, `public/favicon.svg` |
-| NGA partner logo | save as `public/nga-logo.svg`, then add the `<img>` in `src/views/AboutPage.astro` (marked with a comment) |
+| Brand and interface standards | `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json` |
 
 ## Structure
 
@@ -81,14 +81,30 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
   so content and layout are written once and rendered per language.
 - The Get Help wizard is a decision tree defined as data in `src/data/wizard.ts`.
   Results reference agency ids from `src/data/agencies.ts`.
-- The News page pulls several agency feeds (FTC consumer alerts, FTC press,
-  CFPB, FBI IC3, FBI press) **at build time** and bakes the results into static
-  HTML, so the page stays fast and has no runtime dependency on those agencies.
-  It refreshes on every deploy. Readers filter by source with the chip row.
-  Failures are contained per source: a feed that is unreachable, empty, or has
-  no fraud stories right now simply loses its chip, and the page still renders.
-  That is normal — the CFPB tab in particular comes and goes, since its newsroom
-  is mostly rulemaking and only its fraud headlines are kept.
+- The News page gathers everything **at build time** and bakes it into static
+  HTML, so the page stays fast and has no runtime dependency on any source. It
+  refreshes on every deploy, and readers filter by source with the chip row.
+  Two kinds of source feed it:
+  - **Agencies**, each its own feed: FTC consumer alerts, FTC press, CFPB,
+    FBI IC3, FBI press.
+  - **Press coverage**, via Google News search feeds — LA/California scam
+    stories, national consumer warnings, the Korean-American papers, and Korean
+    outlets. Outlets' own RSS is no use here: front-page feeds from KTLA, ABC7,
+    NBC LA, FOX 11, NPR and others yielded zero scam stories across 152 items,
+    and their topic-tag feeds return nothing. Google's search feeds carry the
+    same outlets and name the publisher per item. This is also the only route
+    that reaches 미주중앙일보 and 시애틀코리안데일리, which publish no feed at all.
+    Each item shows the outlet's own name; **links pass through Google's
+    redirector** before landing on the publisher's article.
+  - Press items are filtered twice: the outlet must be listed in
+    `src/data/newsPublishers.ts` (Google indexes corporate blogs and content
+    farms next to newspapers), **and** the headline must be about fraud. Both
+    are needed — an allowed outlet's healthcare-policy story still matches the
+    word "fraud".
+  - Failures are contained per source: a feed that is unreachable, empty, or has
+    no fraud stories right now simply loses its chip, and the page still renders.
+    That is normal — the CFPB tab in particular comes and goes, since its
+    newsroom is mostly rulemaking and only its fraud headlines are kept.
 - Every scam guide has localized video references in `src/data/scams.ts`. The
   English references remain official third-party public-service videos. Korean
   pages use original CRC productions generated from the Korean guide copy by
@@ -193,11 +209,11 @@ the internet and the Sheet. The Sheet itself holds names, phone numbers, and
 people's accounts of being defrauded — **keep it shared with named staff only,
 never by link**.
 
-## Planned next steps (deliberately not built yet)
+## Integrations that require organizational setup
 
-- **Online donations**: `/donate` explains how to give and links to the office.
-  When a donation account exists (PayPal, Zeffy, Givebutter…), replace the
-  notice in `src/views/DonatePage.astro` marked `DONATE PLACEHOLDER`.
-- **A real email address**: `src/data/org.ts` still carries a placeholder, shown
-  with placeholder styling wherever it appears. Replacing it also unlocks the
-  per-submission email notification in `scripts/intake-appscript.js`.
+- **Online donations**: `/donate` truthfully says that online giving is not
+  available and directs supporters to the office. Add a payment link only after
+  the organization has selected and verified its donation provider.
+- **Online contact intake**: the public form stays disabled until the Sheet
+  integration above is configured. Phone, office address, and office hours are
+  shown first so the page still provides a complete contact path.

@@ -344,8 +344,8 @@ export const scamGuides: ScamGuide[] = [
       ko: '"원금 보장, 고수익"은 투자 기회가 아니라 사기의 가장 오래된 거짓말입니다.',
     },
     what: {
-      en: 'A stranger, or an online "friend" or romantic interest, introduces you to an investment platform, usually cryptocurrency or foreign exchange. The website looks professional and your account balance seems to grow quickly, so you invest more. This is called "pig butchering": the scammer fattens your trust before taking everything. The numbers on the screen were never real, and when you try to withdraw, they demand fees and taxes, or simply disappear. These scams also spread through Korean-language KakaoTalk investment groups, fake celebrity endorsements, and "reading rooms" with paid stock tips.',
-      ko: '모르는 사람, 혹은 온라인에서 사귄 "친구"나 연인이 투자 플랫폼을 소개합니다. 주로 암호화폐(코인)나 외환 투자입니다. 웹사이트가 그럴듯하고 계좌 잔고가 빠르게 불어나는 것처럼 보여서 점점 더 큰돈을 넣게 됩니다. 이것을 "돼지 도살(pig butchering)" 사기라고 부릅니다. 돼지를 살찌우듯 신뢰를 키운 뒤 한꺼번에 전 재산을 가져가기 때문입니다. 화면의 숫자는 처음부터 가짜였고, 출금하려고 하면 수수료와 세금을 내라고 하다가 결국 사라집니다. 이런 사기는 한국어 카카오톡 투자 단체방, 유명인 사칭 광고, 유료 주식 "리딩방"을 통해서도 퍼집니다.',
+      en: 'A stranger, or an online "friend" or romantic interest, introduces you to an investment platform, usually cryptocurrency or foreign exchange. The website looks professional and your account balance seems to grow quickly, so you invest more. This long-term relationship investment scam is sometimes called "pig butchering." The numbers on the screen were never real, and when you try to withdraw, they demand fees and taxes, or simply disappear. These scams also spread through Korean-language KakaoTalk investment groups, fake celebrity endorsements, and "reading rooms" with paid stock tips.',
+      ko: '모르는 사람, 혹은 온라인에서 사귄 "친구"나 연인이 투자 플랫폼을 소개합니다. 주로 암호화폐(코인)나 외환 투자입니다. 웹사이트가 그럴듯하고 계좌 잔고가 빠르게 불어나는 것처럼 보여서 점점 더 큰돈을 넣게 됩니다. 이렇게 오랫동안 관계와 신뢰를 쌓은 뒤 투자금을 가로채는 수법을 "돼지 도살(pig butchering)" 사기라고도 부릅니다. 화면의 숫자는 처음부터 가짜였고, 출금하려고 하면 수수료와 세금을 내라고 하다가 결국 사라집니다. 이런 사기는 한국어 카카오톡 투자 단체방, 유명인 사칭 광고, 유료 주식 "리딩방"을 통해서도 퍼집니다.',
     },
     warningSigns: {
       en: [

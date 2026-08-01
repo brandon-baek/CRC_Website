@@ -1,18 +1,25 @@
 import type { Locale } from '../i18n';
+import { allowedEnglishPublishers, allowedKoreanPublishers } from './newsPublishers';
 
 /**
  * Fraud news, gathered from several trusted feeds at BUILD TIME and baked into
  * the static News page. Rebuild (or redeploy) to refresh — Cloudflare Pages
  * rebuilds on every push, and a scheduled deploy hook keeps it fresher.
  *
- * Replaces the single-source ftcAlerts.ts. The parsing quirks it handled are
- * still here, now as per-source flags rather than hard-coded behaviour.
+ * Two kinds of source feed this page:
+ *   - Government agencies, each its own feed (FTC, CFPB, FBI).
+ *   - Press coverage, via Google News search feeds. Outlets' own RSS is no use
+ *     here: front-page feeds from KTLA, ABC7, NBC LA, FOX 11, NPR, NBC, ABC and
+ *     CBS MoneyWatch together yielded zero scam stories across 152 items, and
+ *     their per-topic tag feeds return nothing at all. One Google News query
+ *     returns 100 items from dozens of real outlets, each naming its publisher.
  *
  * ADDING A SOURCE: append to `newsSources` below. It must be a government
  * agency, a recognised consumer-protection body, or an established newspaper —
  * this site sends fraud victims to reporting agencies, and a bad link in this
  * list costs more than a missing one. Check the feed returns HTTP 200 and real
  * <item> elements first; a source that fails simply loses its tab.
+ * For press coverage, the outlet must also be in src/data/newsPublishers.ts.
  */
 
 export interface NewsSource {
@@ -39,6 +46,21 @@ export interface NewsSource {
   showSummary?: boolean;
   /** Items link to a PDF rather than a web page. */
   linksToPdf?: boolean;
+  /**
+   * Google News aggregates many outlets into one feed, naming the publisher per
+   * item in <source> rather than per feed. Set this to read that name, strip the
+   * " - Publisher" suffix Google appends to every headline, and enforce
+   * `allowPublishers`.
+   */
+  publisherPerItem?: boolean;
+  /**
+   * Only these outlets may appear. Required alongside `publisherPerItem`:
+   * Google indexes corporate blogs and content farms next to real newspapers,
+   * and this page is about whom to trust. See src/data/newsPublishers.ts.
+   */
+  allowPublishers?: Set<string>;
+  /** Language of the items, for the lang/hreflang attributes on each link. */
+  lang?: Locale;
 }
 
 export interface NewsItem {
@@ -48,6 +70,19 @@ export interface NewsItem {
   summary: string;
   /** ISO date string, or null when the feed omits/garbles pubDate. */
   date: string | null;
+  /** The outlet, when the feed carries many. Shown instead of the feed label. */
+  publisher?: string;
+}
+
+/**
+ * Build a Google News search feed URL.
+ *
+ * `hl`/`gl`/`ceid` together decide both the interface language and which
+ * edition is searched, which is how the same mechanism reaches Korean-American
+ * papers (`gl=US`, `hl=ko`) and Korean domestic ones (`gl=KR`).
+ */
+function googleNews(query: string, hl: string, gl: string): string {
+  return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${hl}&gl=${gl}&ceid=${gl}:${hl.split('-')[0]}`;
 }
 
 /**
@@ -57,6 +92,17 @@ export interface NewsItem {
  */
 const FRAUD_TERMS =
   /fraud|scam|phish|identity theft|impost[eo]r|deceptive|romance|crypto|ponzi|robocall|spoof|elder|consumer protection|money launder/i;
+
+/**
+ * The Korean equivalent.
+ *
+ * Deliberately does NOT match a bare 사기: it is a substring of common,
+ * unrelated words — 군사기밀 (military secrets), 수사기관 (investigative body),
+ * 사기충천 (high morale) — which pulled politics and crime stories onto a
+ * consumer-fraud page when this was tried the obvious way. Match compounds.
+ */
+const KO_FRAUD_TERMS =
+  /보이스피싱|스미싱|피싱|사기범|사기단|사기[\s·]?혐의|사기[\s·]?피해|사기[\s·]?사건|사기[\s·]?행각|금융[\s·]?사기|투자[\s·]?사기|전화[\s·]?사기|보험[\s·]?사기|중고[\s·]?거래[\s·]?사기|로맨스[\s·]?스캠|사칭|먹튀/;
 
 export const newsSources: NewsSource[] = [
   {
@@ -108,6 +154,61 @@ export const newsSources: NewsSource[] = [
     homepage: 'https://www.fbi.gov/news/press-releases',
     keywords: FRAUD_TERMS,
     showSummary: true,
+  },
+  /* ---------- Press coverage, via Google News searches ---------- */
+  {
+    id: 'news-la',
+    label: { en: 'LA & California', ko: 'LA·캘리포니아 뉴스' },
+    urls: [
+      googleNews(
+        '("scam" OR "scams" OR "scammer" OR "consumer fraud" OR "identity theft") ("Los Angeles" OR "Southern California" OR California)',
+        'en-US',
+        'US',
+      ),
+    ],
+    homepage: 'https://news.google.com/search?q=scam%20%22Los%20Angeles%22',
+    publisherPerItem: true,
+    allowPublishers: allowedEnglishPublishers,
+    keywords: FRAUD_TERMS,
+    lang: 'en',
+  },
+  {
+    id: 'news-national',
+    label: { en: 'National', ko: '전국 뉴스' },
+    urls: [
+      googleNews(
+        '"phone scam" OR "text scam" OR "romance scam" OR "elder fraud" OR "identity theft" OR "imposter scam"',
+        'en-US',
+        'US',
+      ),
+    ],
+    homepage: 'https://news.google.com/search?q=%22phone%20scam%22',
+    publisherPerItem: true,
+    allowPublishers: allowedEnglishPublishers,
+    keywords: FRAUD_TERMS,
+    lang: 'en',
+  },
+  {
+    id: 'news-korean',
+    label: { en: 'Korean-American press', ko: '한인 뉴스' },
+    // Reaches 미주중앙일보 and 시애틀코리안데일리, which publish no RSS of their
+    // own — Google indexes them, which is why this route exists at all.
+    urls: [googleNews('한인 사기 OR 한인 보이스피싱 OR 한인 피싱', 'ko', 'US')],
+    homepage: 'https://news.google.com/search?q=%ED%95%9C%EC%9D%B8%20%EC%82%AC%EA%B8%B0&hl=ko',
+    publisherPerItem: true,
+    allowPublishers: allowedKoreanPublishers,
+    keywords: KO_FRAUD_TERMS,
+    lang: 'ko',
+  },
+  {
+    id: 'news-korea',
+    label: { en: 'Korean press', ko: '한국 뉴스' },
+    urls: [googleNews('보이스피싱 OR 전화금융사기', 'ko', 'KR')],
+    homepage: 'https://news.google.com/search?q=%EB%B3%B4%EC%9D%B4%EC%8A%A4%ED%94%BC%EC%8B%B1&hl=ko',
+    publisherPerItem: true,
+    allowPublishers: allowedKoreanPublishers,
+    keywords: KO_FRAUD_TERMS,
+    lang: 'ko',
   },
   /*
    * Two things were tried here and dropped, so they are not retried blindly:
@@ -184,7 +285,21 @@ export function parseFeed(xml: string, source: NewsSource, limit: number): NewsI
 
   for (const block of blocks) {
     const rawTitle = tagContent(block, 'title');
-    const title = clean(rawTitle);
+    let title = clean(rawTitle);
+    let publisher: string | undefined;
+
+    if (source.publisherPerItem) {
+      publisher = clean(tagContent(block, 'source'));
+      // The allowlist is the whole point of this branch: without it Google
+      // hands us corporate blogs and content farms alongside the newspapers.
+      if (!publisher || !source.allowPublishers?.has(publisher)) continue;
+      // Google appends " - Publisher" to every headline. Match on the known
+      // publisher name rather than the last dash — headlines contain dashes.
+      // Looped, because an outlet that already signs its own headline ends up
+      // with the suffix twice and one pass leaves the other showing.
+      const suffix = ` - ${publisher}`;
+      while (title.endsWith(suffix)) title = title.slice(0, -suffix.length).trim();
+    }
 
     let url: string | null = null;
     if (source.urlFromTitleAnchor) {
@@ -213,6 +328,7 @@ export function parseFeed(xml: string, source: NewsSource, limit: number): NewsI
       url,
       summary: source.showSummary ? truncate(summary) : '',
       date: parsed && !Number.isNaN(parsed.getTime()) ? parsed.toISOString() : null,
+      publisher,
     });
 
     if (items.length >= limit) break;
@@ -266,6 +382,14 @@ async function fetchFeed(url: string): Promise<string | null> {
   return null;
 }
 
+/** Loose key for spotting the same story twice: case, punctuation and spacing differ. */
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
 function byDateDesc(a: NewsItem, b: NewsItem): number {
   if (a.date && b.date) return b.date.localeCompare(a.date);
   if (a.date) return -1;
@@ -313,7 +437,8 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
 
   const items: NewsItem[] = [];
   const liveSources: NewsSource[] = [];
-  const seen = new Set<string>();
+  const seenUrls = new Set<string>();
+  const seenTitles = new Set<string>();
 
   results.forEach((result, index) => {
     if (result.status !== 'fulfilled' || result.value.length === 0) {
@@ -322,8 +447,14 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
     }
     liveSources.push(newsSources[index]);
     for (const item of result.value) {
-      if (seen.has(item.url)) continue;
-      seen.add(item.url);
+      // Two keys, because one story reaches us twice in different disguises:
+      // Google mints a unique redirect URL per item, so a story covered by
+      // several outlets — or caught by two of our queries — passes a URL check
+      // and still reads as a duplicate on the page.
+      const titleKey = normalizeTitle(item.title);
+      if (seenUrls.has(item.url) || seenTitles.has(titleKey)) continue;
+      seenUrls.add(item.url);
+      seenTitles.add(titleKey);
       items.push(item);
     }
   });

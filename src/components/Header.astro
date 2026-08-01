@@ -78,14 +78,6 @@ function isCurrent(href: string, exact = false): boolean {
         </a>
       ))}
       <a
-        class="nav-donate"
-        href={localePath(locale, '/donate')}
-        aria-current={isCurrent('/donate') ? 'page' : undefined}
-      >
-        <Icon name="heart" size={16} />
-        {dict.nav.donate}
-      </a>
-      <a
         class="nav-cta"
         href={localePath(locale, '/get-help')}
         aria-current={isCurrent('/get-help') ? 'page' : undefined}

@@ -28,29 +28,17 @@ const dict = t(locale);
     </div>
   </section>
 
-  <!-- 2. Form + direct contact -->
+  <!-- 2. Direct contact + optional online form -->
   <section class="section">
     <div class="container">
-      <div class="grid cols-2" style="align-items:start;">
-        <div>
-          <h2>{dict.contact.formTitle}</h2>
-          <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.intake.lede}</p>
-          <div class="mt-3">
-            <IntakeForm locale={locale} page="contact" />
-          </div>
-        </div>
-        <div>
+      <div class="contact-layout">
+        <div class="contact-direct">
           <h2>{dict.contact.infoTitle}</h2>
-          <div class="card mt-2">
+          <div class="contact-details mt-2">
             <p class="contact-row">
               <Icon name="phone" />
               <strong>{dict.contact.phone}</strong>
               <a href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a>
-            </p>
-            <p class="contact-row mt-2">
-              <Icon name="mail" />
-              <strong>{dict.contact.emailLabel}</strong>
-              <span class="placeholder-tag">{org.email}</span>
             </p>
             <p class="contact-row mt-2">
               <Icon name="map-pin" />
@@ -71,6 +59,13 @@ const dict = t(locale);
           <div class="notice red mt-2">
             <Icon name="alert" />
             <p>{dict.hero.urgent}</p>
+          </div>
+        </div>
+        <div id="online-contact">
+          <h2>{dict.contact.formTitle}</h2>
+          <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.intake.lede}</p>
+          <div class="mt-3">
+            <IntakeForm locale={locale} page="contact" />
           </div>
         </div>
       </div>

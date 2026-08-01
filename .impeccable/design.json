@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-01T23:00:00.000Z",
+  "title": "Design System: Consumer Resource Center",
+  "extensions": {
+    "colorMeta": {
+      "community-lime": { "role": "primary", "displayName": "Community Lime", "canonical": "#CDF07A", "tonalRamp": ["#293018", "#50602F", "#799047", "#A2C05F", "#CDF07A", "#DCF5A0", "#EAF9C7", "#F6FCEB"] },
+      "action-red": { "role": "secondary", "displayName": "Action Red", "canonical": "#C9372A", "tonalRamp": ["#2F0D0A", "#5E1914", "#8D261D", "#B53226", "#D95043", "#E98279", "#F2B4AE", "#FBE7E4"] },
+      "warning-yellow": { "role": "tertiary", "displayName": "Warning Yellow", "canonical": "#F4B942", "tonalRamp": ["#35270B", "#695016", "#9E7822", "#D2A02D", "#F4B942", "#F7CC72", "#FADEA1", "#FDF1D7"] },
+      "grounded-ink": { "role": "neutral", "displayName": "Grounded Ink", "canonical": "#1A1E24", "tonalRamp": ["#111318", "#1A1E24", "#3E444D", "#5D646F", "#858C96", "#AEB4BE", "#D8DCE2", "#F6F5EF"] },
+      "warm-paper": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#FFFEFB", "tonalRamp": ["#292824", "#52514A", "#7B7970", "#A4A298", "#CDCBC1", "#E6E4DC", "#F8F7F2", "#FFFEFB"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Primary page message in either language." },
+      "headline": { "displayName": "Headline", "purpose": "Page and section hierarchy." },
+      "body": { "displayName": "Body", "purpose": "Plain-language educational and reporting guidance." },
+      "label": { "displayName": "Label", "purpose": "Controls, metadata, filters, and concise statuses." }
+    },
+    "shadows": [
+      { "name": "ambient-rest", "value": "0 1px 2px rgba(37,40,28,.05), 0 6px 20px rgba(37,40,28,.07)", "purpose": "Interactive agency results and bounded product surfaces." },
+      { "name": "ambient-lift", "value": "0 2px 4px rgba(37,40,28,.07), 0 14px 34px rgba(37,40,28,.12)", "purpose": "Hover state and open assistant panel only." }
+    ],
+    "motion": [
+      { "name": "state-ease", "value": "ease-out", "purpose": "Short color, border, and opacity state changes." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "560px" },
+      { "name": "columns", "value": "720px" },
+      { "name": "wide", "value": "900px" },
+      { "name": "navigation", "value": "1160px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single highest-priority action in a task area.",
+      "html": "<button class=\"ds-btn-primary\">Find where to report</button>",
+      "css": ".ds-btn-primary{min-height:48px;padding:.55em 1.5em;border:2px solid #C9372A;border-radius:10px;background:#C9372A;color:#FFFEFB;font:700 18px 'Noto Sans KR',sans-serif;cursor:pointer}.ds-btn-primary:hover{background:#B02C1F;border-color:#B02C1F}.ds-btn-primary:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Dark Button",
+      "kind": "button",
+      "refersTo": "button-dark",
+      "description": "High-contrast action on brand-colored or light surfaces.",
+      "html": "<button class=\"ds-btn-dark\">Read the guide</button>",
+      "css": ".ds-btn-dark{min-height:48px;padding:.55em 1.5em;border:2px solid #1A1E24;border-radius:10px;background:#1A1E24;color:#FFFEFB;font:700 18px 'Noto Sans KR',sans-serif;cursor:pointer}.ds-btn-dark:hover{background:#3E444D;border-color:#3E444D}.ds-btn-dark:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "description": "Compact filter control, one of the few approved pill uses.",
+      "html": "<button class=\"ds-chip\" aria-pressed=\"true\">Identity theft</button>",
+      "css": ".ds-chip{min-height:44px;padding:.3em 1.05em;border:2px solid #1A1E24;border-radius:999px;background:#1A1E24;color:#FFFEFB;font:600 16px 'Noto Sans KR',sans-serif}.ds-chip:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Large, literal data-entry control for older users.",
+      "html": "<label class=\"ds-label\">Search the directory<input class=\"ds-input\" type=\"search\" placeholder=\"Identity theft\"></label>",
+      "css": ".ds-label{display:grid;gap:6px;font:700 16px 'Noto Sans KR',sans-serif;color:#1A1E24}.ds-input{min-height:48px;padding:.6em .95em;border:2px solid #5D646F;border-radius:10px;background:#FFFEFB;color:#1A1E24;font:400 18px 'Noto Sans KR',sans-serif}.ds-input:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px;border-color:#1D4ED8}"
+    },
+    {
+      "name": "Editorial Guide Row",
+      "kind": "custom",
+      "description": "The preferred pattern for browsable educational content.",
+      "html": "<a class=\"ds-guide-row\" href=\"#\"><span>01</span><strong>Phishing and fake messages</strong><em>Read guide →</em></a>",
+      "css": ".ds-guide-row{display:grid;grid-template-columns:40px 1fr auto;gap:16px;align-items:center;min-height:96px;padding:16px 0;border-block:1px solid #E6E5DD;color:#1A1E24;text-decoration:none;font-family:'Noto Sans KR',sans-serif}.ds-guide-row span{color:#5D646F;font-size:14px;font-weight:800}.ds-guide-row strong{font-size:20px}.ds-guide-row em{font-size:15px;font-style:normal;font-weight:700}.ds-guide-row:hover{background:#EEF8D6}.ds-guide-row:focus-visible{outline:3px solid #1D4ED8;outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Neighborhood Safety Desk",
+    "overview": "A clear, well-prepared desk inside a trusted community center. Important forms and phone numbers are easy to find, warnings are direct, and no visual effect competes with the next safe action.",
+    "keyCharacteristics": ["Large bilingual typography", "Committed lime brand surfaces", "Red reserved for urgent or primary action", "Editorial rows for reading and navigation", "Restrained motion and visible focus"],
+    "rules": [
+      { "name": "The Three-Role Rule", "body": "Lime identifies the organization, red drives action, and yellow communicates caution.", "section": "colors" },
+      { "name": "The Korean Parity Rule", "body": "Solve Korean wrapping with width and deliberate line breaks before reducing type size.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Static information does not receive a shadow merely because it is inside a container.", "section": "elevation" }
+    ],
+    "dos": ["Do keep primary controls at least 48px high and every touch target at least 44px.", "Do put bank-first and account-protection steps before videos or educational detail.", "Do use real organizational information only."],
+    "donts": ["Don't use side-stripe borders greater than 1px as card accents.", "Don't build identical icon-card grids for unrelated content.", "Don't publish placeholder email addresses, empty team cards, fake testimonials, or fabricated staff imagery.", "Don't shrink Korean headlines until they feel secondary."]
+  }
+}

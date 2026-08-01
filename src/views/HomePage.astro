@@ -20,6 +20,7 @@ const chipColors = ['red', 'yellow', '', 'red'];
     <div class="container">
       <div class="inner">
         <div>
+          <p class="hero-context">{locale === 'ko' ? 'CRC · Consumer Resource Center' : 'CRC · 한인시민센터'}</p>
           <h1>
             {dict.hero.title1}<br />
             <span class="underline">{dict.hero.title2}</span>
@@ -42,7 +43,9 @@ const chipColors = ['red', 'yellow', '', 'red'];
         <div class="art" aria-hidden="true">
           <div class="sq-motif">
             <span style="background:var(--red)"></span>
-            <span class="label">한인<br />시민센터</span>
+            <span class="label">
+              {locale === 'ko' ? <><b>Consumer</b><b>Resource Center</b></> : <><b>한인</b><b>시민센터</b></>}
+            </span>
             <span style="background:var(--yellow)"></span>
             <span style="background:var(--red)"></span>
           </div>
@@ -67,15 +70,15 @@ const chipColors = ['red', 'yellow', '', 'red'];
           </a>
         </div>
         <div class="minors">
-          <div class="card">
-            <div class="icon-chip yellow" aria-hidden="true">
+          <div class="feature-minor">
+            <div class="feature-minor-icon yellow" aria-hidden="true">
               <Icon name="book" size={26} />
             </div>
             <h3>{dict.home.what2Title}</h3>
             <p>{dict.home.what2Body}</p>
           </div>
-          <div class="card">
-            <div class="icon-chip" aria-hidden="true">
+          <div class="feature-minor">
+            <div class="feature-minor-icon" aria-hidden="true">
               <Icon name="chat" size={26} />
             </div>
             <h3>{dict.home.what3Title}</h3>
@@ -137,20 +140,11 @@ const chipColors = ['red', 'yellow', '', 'red'];
           <div class="section-head">
             <h2>{dict.home.statsTitle}</h2>
           </div>
-          <div style="display:grid;gap:1.6rem;">
-            <div class="stat">
-              <div class="num">{dict.home.stat1Num}</div>
-              <div class="lbl">{dict.home.stat1Lbl}</div>
-            </div>
-            <div class="stat">
-              <div class="num">{dict.home.stat2Num}</div>
-              <div class="lbl">{dict.home.stat2Lbl}</div>
-            </div>
-            <div class="stat">
-              <div class="num">{dict.home.stat3Num}</div>
-              <div class="lbl">{dict.home.stat3Lbl}</div>
-            </div>
-          </div>
+          <dl class="fact-list">
+            <div><dt>{dict.home.stat1Num}</dt><dd>{dict.home.stat1Lbl}</dd></div>
+            <div><dt>{dict.home.stat2Num}</dt><dd>{dict.home.stat2Lbl}</dd></div>
+            <div><dt>{dict.home.stat3Num}</dt><dd>{dict.home.stat3Lbl}</dd></div>
+          </dl>
           <p class="stats-src">{dict.home.statsSrc}</p>
         </div>
       </div>
@@ -163,20 +157,12 @@ const chipColors = ['red', 'yellow', '', 'red'];
       <div class="section-head">
         <h2>{dict.home.learnTitle}</h2>
       </div>
-      <div class="grid cols-2">
+      <div class="home-guide-list">
         {featuredGuides.map((guide, i) => (
-          <a class="card-hover" href={localePath(locale, `/learn/${guide.slug}`)}>
-            <article class="card">
-              <div class:list={['icon-chip', chipColors[i % chipColors.length]]} aria-hidden="true">
-                <Icon name={guide.icon as any} size={26} />
-              </div>
-              <h3>{guide.title[locale]}</h3>
-              <p>{guide.tagline[locale]}</p>
-              <span style="font-weight:700;display:inline-flex;align-items:center;gap:0.4em;" class="mt-2">
-                {dict.learn.readGuide}
-                <Icon name="arrow-right" size={18} />
-              </span>
-            </article>
+          <a class="home-guide-link" href={localePath(locale, `/learn/${guide.slug}`)}>
+            <span class:list={['guide-dot', chipColors[i % chipColors.length]]} aria-hidden="true"><Icon name={guide.icon as any} size={24} /></span>
+            <span><strong>{guide.title[locale]}</strong><small>{guide.tagline[locale]}</small></span>
+            <Icon name="arrow-right" size={20} />
           </a>
         ))}
       </div>
@@ -189,7 +175,7 @@ const chipColors = ['red', 'yellow', '', 'red'];
   <!-- 6. Directory teaser -->
   <section class="section">
     <div class="container">
-      <div class="grid cols-2" style="align-items:center;">
+      <div class="directory-band">
         <div>
           <div class="section-head" style="margin-bottom:0;">
             <h2>{dict.home.dirTitle}</h2>
@@ -199,14 +185,7 @@ const chipColors = ['red', 'yellow', '', 'red'];
             <a class="btn outline" href={localePath(locale, '/directory')}>{dict.home.dirCta}</a>
           </div>
         </div>
-        <div aria-hidden="true" style="justify-self:center;width:min(240px,55vw);transform:rotate(-2deg);">
-          <div class="sq-motif">
-            <span style="background:var(--yellow)"></span>
-            <span style="background:var(--red)"></span>
-            <span style="background:var(--lime)"></span>
-            <span style="background:var(--paper);border:1px solid var(--line)"></span>
-          </div>
-        </div>
+        <div class="directory-mark" aria-hidden="true"><Icon name="search" size={46} /></div>
       </div>
     </div>
   </section>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Consumer Resource Center social preview</title>
+  <desc id="desc">Fraud help and scam education in English and Korean.</desc>
+  <rect width="1200" height="630" fill="#CDF07A"/>
+  <rect x="62" y="58" width="1076" height="514" rx="28" fill="#FFFEFB" stroke="#1A1E24" stroke-width="6"/>
+  <g transform="translate(784 126)">
+    <rect width="136" height="136" rx="10" fill="#E8493A"/>
+    <rect x="154" width="136" height="136" rx="10" fill="#CDF07A" stroke="#1A1E24" stroke-width="3"/>
+    <rect y="154" width="136" height="136" rx="10" fill="#F4B942"/>
+    <rect x="154" y="154" width="136" height="136" rx="10" fill="#E8493A"/>
+  </g>
+  <text x="120" y="148" fill="#B02C1F" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="28" font-weight="700">CONSUMER RESOURCE CENTER · 한인시민센터</text>
+  <text x="120" y="242" fill="#1A1E24" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="64" font-weight="800">Fraud help.</text>
+  <text x="120" y="316" fill="#1A1E24" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="64" font-weight="800">Clear next steps.</text>
+  <rect x="120" y="338" width="428" height="18" fill="#F4B942"/>
+  <text x="120" y="416" fill="#3E444D" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="32">Scam education and reporting guidance</text>
+  <text x="120" y="462" fill="#3E444D" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="32">in English and Korean.</text>
+  <text x="120" y="524" fill="#1A1E24" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="24" font-weight="700">Los Angeles · English + 한국어</text>
+</svg>

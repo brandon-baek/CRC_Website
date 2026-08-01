@@ -29,10 +29,11 @@ const concerns = scamGuides.map((guide) => guide.title[locale]);
     <div>
       <strong>{dict.contact.comingSoon}</strong>
       <p>{dict.contact.comingSoonBody}</p>
+      <p class="mt-2"><a class="btn dark" href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a></p>
     </div>
   </div>
 
-  <fieldset disabled data-intake-fields>
+  <fieldset hidden disabled data-intake-fields>
     <div class="field-row">
       <div class="field">
         <label for={`${page}-first`}>{dict.intake.firstName}</label>
@@ -172,6 +173,7 @@ const concerns = scamGuides.map((guide) => guide.title[locale]);
       .then((info) => {
         if (!info?.enabled) return;
         fields.disabled = false;
+        fields.hidden = false;
         if (disabledNotice) disabledNotice.hidden = true;
       })
       .catch(() => {

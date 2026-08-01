@@ -14,8 +14,8 @@ interface Props {
 const { locale } = Astro.props;
 const dict = t(locale);
 ---
-<div class="grid cols-2">
-  <div class="card">
+<div class="office-list">
+  <section>
     <h3>{dict.contact.officeLabel}</h3>
     <p class="contact-row mt-2">
       <Icon name="map-pin" />
@@ -25,8 +25,8 @@ const dict = t(locale);
       <Icon name="phone" />
       <a href={`tel:${org.phoneHref}`}>{org.phoneDisplay}</a>
     </p>
-  </div>
-  <div class="card">
+  </section>
+  <section>
     <h3>{dict.contact.hoursLabel}</h3>
     <p class="contact-row mt-2">
       <Icon name="clock" />
@@ -37,5 +37,5 @@ const dict = t(locale);
       </span>
     </p>
     <p class="muted mt-1">{dict.contact.hoursClosed}</p>
-  </div>
+  </section>
 </div>

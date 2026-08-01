@@ -111,7 +111,7 @@ export const agencies: Agency[] = [
     },
     bestFor: {
       en: 'Cybercrime, online scams, ransomware, business email compromise, cryptocurrency fraud, and internet-enabled financial crime.',
-      ko: '사이버 범죄, 온라인 사기, 랜섬웨어, 업무 이메일 침해(BEC), 암호화폐 사기 등 인터넷 관련 금융 범죄.',
+      ko: '사이버 범죄, 온라인 사기, 랜섬웨어, 업무 이메일 계정 탈취(BEC), 암호화폐 사기 등 인터넷 관련 금융 범죄.',
     },
     intake: {
       en: 'A detailed seven-part law-enforcement intake covering you, transactions, suspects, the incident narrative, and other agency reports. Analysts review and forward reports to the right agencies, but IC3 does not provide investigation status updates.',
@@ -135,7 +135,7 @@ export const agencies: Agency[] = [
       ko: '은행, 카드, 신용 보고, 채권 추심, 대출, 모기지, 송금, 가상화폐 서비스 관련 문제.',
     },
     intake: {
-      en: 'A comparatively closed-loop process: the CFPB screens your complaint and sends it to the company, provides status updates, and lets you review the response. Companies generally respond within 15 days, with up to 60 days for a final response.',
+      en: 'The CFPB reviews your complaint, sends it to the company, shows you status updates, and lets you read the company’s response. Companies generally respond within 15 days, with up to 60 days for a final response.',
       ko: '비교적 결과를 확인할 수 있는 절차입니다. CFPB가 민원을 검토해 해당 회사에 전달하고, 진행 상황을 알려주며, 회사의 답변을 직접 확인할 수 있습니다. 회사는 보통 15일 이내에 답변하며, 최종 답변은 최대 60일까지 걸릴 수 있습니다.',
     },
   },

@@ -63,6 +63,19 @@ const reportAgencies = guide.reportTo
       <div>
         <p>{guide.what[locale]}</p>
 
+        <nav class="guide-quick-report" aria-labelledby="quick-report-title">
+          <h2 id="quick-report-title">{dict.learn.whereReport}</h2>
+          <ul>
+            {reportAgencies.map((agency, i) => (
+              <li>
+                <span>{i === 0 && <span class="badge primary">{dict.wizard.recommended}</span>}{agency.name[locale]}</span>
+                <a href={agency.url} rel="noopener">{dict.wizard.visit}<Icon name="external" size={16} /></a>
+              </li>
+            ))}
+          </ul>
+          <a class="btn primary" href={localePath(locale, '/get-help')}>{dict.hero.ctaPrimary}</a>
+        </nav>
+
         {video && (
           <section class="guide-section mt-3">
             <h2>{dict.learn.videoTitle}</h2>
@@ -152,7 +165,7 @@ const reportAgencies = guide.reportTo
             }
           </ul>
           <p class="mt-2">
-            <a href={localePath(locale, '/get-help')}>{dict.nav.getHelp}</a>
+            <a class="btn primary" href={localePath(locale, '/get-help')}>{dict.hero.ctaPrimary}</a>
           </p>
         </section>
       </aside>

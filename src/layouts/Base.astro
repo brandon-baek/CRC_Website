@@ -45,18 +45,15 @@ const fullTitle = path === '/' ? `${dict.siteName} · ${dict.siteNameKo}` : `${t
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    {/*
-      TODO before launch: add a 1200x630 PNG at public/og-cover.png and point og:image
-      and twitter:image at it, then switch twitter:card to "summary_large_image".
-      Most social platforms do not render an SVG og:image, so we use the small-card
-      format with the logo for now (valid, just not a big preview).
-    */}
-    <meta property="og:image" content={new URL('/logo.svg', site)} />
+    <meta property="og:image" content={new URL('/og-cover.png', site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Consumer Resource Center: fraud help and clear next steps in English and Korean" />
     <meta property="og:locale" content={locale === 'ko' ? 'ko_KR' : 'en_US'} />
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={new URL('/logo.svg', site)} />
+    <meta name="twitter:image" content={new URL('/og-cover.png', site)} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

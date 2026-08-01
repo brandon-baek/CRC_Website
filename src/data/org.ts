@@ -17,13 +17,6 @@ export const org = {
   phoneDisplay: '(424) 253-5558',
   /** As dialled — used for the tel: link. */
   phoneHref: '+14242535558',
-
-  /**
-   * PLACEHOLDER: no real inbox exists yet. Rendered with `.placeholder-tag`
-   * styling so it is obvious on the page that it still needs replacing.
-   */
-  email: 'help@crcenter.org',
-  emailIsPlaceholder: true,
 } as const;
 
 /** One-line form, e.g. for the assistant and meta descriptions. */
