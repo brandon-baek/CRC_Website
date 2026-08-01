@@ -146,6 +146,8 @@ export const ui = {
       videoBy: 'Published by {source} · {duration}',
       videoNoteEn: 'This video is in English.',
       videoOpen: 'Open the original',
+      videoOpenLocal: 'Open video in a new tab',
+      videoUnsupported: 'Your browser does not support this video.',
     },
     news: {
       pageTitle: 'Fraud News & Alerts',
@@ -395,6 +397,8 @@ export const ui = {
       videoBy: '{source} 제작 · {duration}',
       videoNoteEn: '영어 영상입니다.',
       videoOpen: '원본 영상 보기',
+      videoOpenLocal: '새 창에서 영상 보기',
+      videoUnsupported: '이 브라우저에서는 영상을 재생할 수 없습니다.',
     },
     news: {
       pageTitle: '사기 소식과 주의보',

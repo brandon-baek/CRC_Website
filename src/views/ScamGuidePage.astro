@@ -13,16 +13,19 @@ interface Props {
 const { locale, guide } = Astro.props;
 const dict = t(locale);
 
-// Official public-service videos (FTC, USPIS, FBI, AARP). Korean-language
-// versions exist for only a few, so fall back to the English one and say so.
+// Official English public-service videos plus original Korean CRC productions.
+// If a Korean production is missing, fall back to English and say so.
 const video = guide.video ? (guide.video[locale] ?? guide.video.en) : null;
 const videoIsEnglishOnly = locale === 'ko' && guide.video != null && guide.video.ko == null;
+const videoIsLocal = video?.provider === 'local';
 
-const embedSrc = video
+const embedSrc = video && !videoIsLocal
   ? video.provider === 'youtube'
     ? `https://www.youtube-nocookie.com/embed/${video.id}?rel=0`
     : `https://player.vimeo.com/video/${video.id}?dnt=1`
   : null;
+const localPoster = videoIsLocal ? video.id.replace(/\.mp4$/, '.png') : null;
+const localCaptions = videoIsLocal ? video.id.replace(/\.mp4$/, '.ko.vtt') : null;
 
 /** 186 → "3:06" */
 function runtime(seconds: number): string {
@@ -64,21 +67,40 @@ const reportAgencies = guide.reportTo
           <section class="guide-section mt-3">
             <h2>{dict.learn.videoTitle}</h2>
             <div class="video-embed">
-              <iframe
-                src={embedSrc}
-                title={`${guide.title[locale]} — ${dict.learn.videoTitle}`}
-                loading="lazy"
-                allow="fullscreen; picture-in-picture"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen
-              ></iframe>
+              {videoIsLocal ? (
+                <video
+                  controls
+                  preload="metadata"
+                  poster={localPoster ?? undefined}
+                  aria-label={`${guide.title[locale]} — ${dict.learn.videoTitle}`}
+                >
+                  <source src={video.id} type="video/mp4" />
+                  <track
+                    kind="captions"
+                    src={localCaptions ?? undefined}
+                    srclang="ko"
+                    label="한국어"
+                    default
+                  />
+                  {dict.learn.videoUnsupported}
+                </video>
+              ) : (
+                <iframe
+                  src={embedSrc ?? undefined}
+                  title={`${guide.title[locale]} — ${dict.learn.videoTitle}`}
+                  loading="lazy"
+                  allow="fullscreen; picture-in-picture"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allowfullscreen
+                ></iframe>
+              )}
             </div>
             <p class="video-note">
               {videoCaption}
               {videoIsEnglishOnly && ` ${dict.learn.videoNoteEn}`}
               {' '}
               <a href={video.page} target="_blank" rel="noopener">
-                {dict.learn.videoOpen}
+                {videoIsLocal ? dict.learn.videoOpenLocal : dict.learn.videoOpen}
                 <Icon name="external" size={14} />
               </a>
             </p>

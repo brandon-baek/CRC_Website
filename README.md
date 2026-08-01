@@ -60,7 +60,8 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
 |---|---|
 | Reporting agencies (directory + wizard results) | `src/data/agencies.ts` |
 | Guided-helper questions & routing | `src/data/wizard.ts` |
-| Scam education guides (incl. the FTC video on each guide) | `src/data/scams.ts` |
+| Scam education guides and localized video references | `src/data/scams.ts` |
+| Original Korean video builder and validation | `scripts/video/` |
 | CRC press releases / announcements on the News page | `src/data/press.ts` |
 | FTC alert feed (source URL, parsing, how many show) | `src/data/ftcAlerts.ts` |
 | All UI text, both languages | `src/i18n/index.ts` |
@@ -82,8 +83,13 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
   results into static HTML, so the page stays fast and has no runtime dependency
   on the FTC. It refreshes on every deploy; if the feed is unreachable during a
   build, the page falls back to a link to consumer.ftc.gov instead of failing.
-- Every scam guide has one video, defined in `src/data/scams.ts`. The rules for
-  adding or swapping one (also written at the top of that file):
+- Every scam guide has localized video references in `src/data/scams.ts`. The
+  English references remain official third-party public-service videos. Korean
+  pages use original CRC productions generated from the Korean guide copy by
+  `scripts/video/build-korean-videos.mjs`; each production includes Korean
+  neural narration, localized graphics, a poster, and WebVTT captions.
+- The rules for adding or swapping an external video (also written at the top
+  of that file) are:
   - published by a government agency or a recognised consumer-protection body
     (FTC, USPIS, FBI, AARP) — never a re-upload of someone else's video;
   - at least 45 seconds, and actually explaining the scam;
@@ -94,6 +100,14 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
     - YouTube — the watch page must report `"playableInEmbed":true`.
   - Korean-language versions are used automatically when one exists (set `ko`);
     otherwise the English video plays with a note saying it is in English.
+
+Rebuild and validate the original Korean video set with:
+
+```bash
+pipx install edge-tts  # one-time local narration dependency
+npm run videos:ko
+npm run videos:ko:validate
+```
 
 ## The site assistant (bottom-right)
 

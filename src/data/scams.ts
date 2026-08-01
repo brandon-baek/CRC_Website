@@ -1,22 +1,22 @@
 import type { Locale } from '../i18n';
 
 /**
- * An official public-service video for a guide.
+ * A public-service video for a guide.
  *
  * Rules for anything added here:
- *  - published by a government agency or a recognised consumer-protection body
- *    (FTC, USPIS, FBI, AARP) — never a random re-upload;
+ *  - either an original CRC production, or published by a government agency or
+ *    recognised consumer-protection body (FTC, USPIS, FBI, AARP);
  *  - at least 45 seconds and actually about the scam, not a 30-second slogan;
  *  - embeddable off the publisher's own domain. Check before adding:
  *    Vimeo  → `https://player.vimeo.com/video/<id>` must return HTTP 200
  *             (many FTC videos are privacy-locked to ftc.gov and will 401);
  *    YouTube→ the watch page must report `"playableInEmbed":true`.
  */
-export type VideoProvider = 'youtube' | 'vimeo';
+export type VideoProvider = 'youtube' | 'vimeo' | 'local';
 
 export interface VideoRef {
   provider: VideoProvider;
-  /** YouTube video id, or the numeric Vimeo id. */
+  /** YouTube id, numeric Vimeo id, or root-relative local video path. */
   id: string;
   /** Public page for the video, used as the fallback link. */
   page: string;
@@ -47,6 +47,10 @@ const FBI: Record<Locale, string> = {
 const AARP: Record<Locale, string> = {
   en: 'AARP',
   ko: 'AARP(미국 은퇴자협회)',
+};
+const CRC: Record<Locale, string> = {
+  en: 'the Consumer Resource Center',
+  ko: '한인 시민센터',
 };
 
 export interface ScamGuide {
@@ -79,6 +83,13 @@ export const scamGuides: ScamGuide[] = [
         page: 'https://www.youtube.com/watch?v=dmjfdHquxyQ',
         seconds: 79,
         source: USPIS,
+      },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/phishing.mp4',
+        page: '/videos/ko/phishing.mp4',
+        seconds: 183,
+        source: CRC,
       },
     },
     title: {
@@ -154,6 +165,13 @@ export const scamGuides: ScamGuide[] = [
         seconds: 94,
         source: FTC,
       },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/government-impersonation.mp4',
+        page: '/videos/ko/government-impersonation.mp4',
+        seconds: 206,
+        source: CRC,
+      },
     },
     title: {
       en: 'Government Impersonation Calls',
@@ -227,6 +245,13 @@ export const scamGuides: ScamGuide[] = [
         page: 'https://consumer.ftc.gov/media/79939',
         seconds: 135,
         source: FTC,
+      },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/family-emergency.mp4',
+        page: '/videos/ko/family-emergency.mp4',
+        seconds: 181,
+        source: CRC,
       },
     },
     title: {
@@ -302,6 +327,13 @@ export const scamGuides: ScamGuide[] = [
         seconds: 153,
         source: AARP,
       },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/investment-crypto.mp4',
+        page: '/videos/ko/investment-crypto.mp4',
+        seconds: 195,
+        source: CRC,
+      },
     },
     title: {
       en: 'Investment & Crypto Scams',
@@ -375,6 +407,13 @@ export const scamGuides: ScamGuide[] = [
         page: 'https://www.youtube.com/watch?v=lxReHY2SBrw',
         seconds: 157,
         source: FBI,
+      },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/romance-scams.mp4',
+        page: '/videos/ko/romance-scams.mp4',
+        seconds: 184,
+        source: CRC,
       },
     },
     title: {
@@ -450,6 +489,13 @@ export const scamGuides: ScamGuide[] = [
         seconds: 186,
         source: FTC,
       },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/tech-support.mp4',
+        page: '/videos/ko/tech-support.mp4',
+        seconds: 198,
+        source: CRC,
+      },
     },
     title: {
       en: 'Tech Support Scams',
@@ -523,6 +569,13 @@ export const scamGuides: ScamGuide[] = [
         page: 'https://www.youtube.com/watch?v=k3yh9hjnE44',
         seconds: 77,
         source: FTC,
+      },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/identity-theft.mp4',
+        page: '/videos/ko/identity-theft.mp4',
+        seconds: 195,
+        source: CRC,
       },
     },
     title: {
@@ -598,6 +651,13 @@ export const scamGuides: ScamGuide[] = [
         seconds: 208,
         source: FTC,
       },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/online-shopping.mp4',
+        page: '/videos/ko/online-shopping.mp4',
+        seconds: 197,
+        source: CRC,
+      },
     },
     title: {
       en: 'Fake Online Stores',
@@ -671,6 +731,13 @@ export const scamGuides: ScamGuide[] = [
         page: 'https://consumer.ftc.gov/media/video-0184-avoid-work-home-scams',
         seconds: 180,
         source: FTC,
+      },
+      ko: {
+        provider: 'local',
+        id: '/videos/ko/job-scams.mp4',
+        page: '/videos/ko/job-scams.mp4',
+        seconds: 192,
+        source: CRC,
       },
     },
     title: {
@@ -746,14 +813,12 @@ export const scamGuides: ScamGuide[] = [
         seconds: 114,
         source: USPIS,
       },
-      // The FTC published this one in Korean: how scammers demand payment,
-      // which is the step where every prize and lottery scam gives itself away.
       ko: {
-        provider: 'vimeo',
-        id: '352064154',
-        page: 'https://consumer.ftc.gov/media/79837',
-        seconds: 139,
-        source: FTC,
+        provider: 'local',
+        id: '/videos/ko/mail-lottery.mp4',
+        page: '/videos/ko/mail-lottery.mp4',
+        seconds: 204,
+        source: CRC,
       },
     },
     title: {
