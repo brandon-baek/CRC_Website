@@ -35,7 +35,7 @@ export const ui = {
     skipToContent: 'Skip to main content',
     hero: {
       title1: 'Scammed? Suspicious?',
-      title2: 'We’ll point you to the right place.',
+      title2: 'We’ll Point You to the RIght Place.',
       lede: 'The Consumer Resource Center helps our community recognize fraud, protect themselves from scams, and report to the right agency, in English and Korean.',
       ctaPrimary: 'Find where to report',
       ctaSecondary: 'Learn to spot scams',
