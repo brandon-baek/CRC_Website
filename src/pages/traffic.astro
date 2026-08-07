@@ -1,0 +1,373 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  locale="en"
+  title="Traffic dashboard"
+  description="Private traffic analytics for Consumer Resource Center leadership."
+  path="/traffic"
+  noindex
+  hideChat
+>
+  <section class="traffic-shell" data-traffic-dashboard>
+    <div class="container">
+      <div class="traffic-heading">
+        <div>
+          <p class="eyebrow lime">Private leadership view</p>
+          <h1>Website traffic</h1>
+          <p class="traffic-intro">A clear, automatically updated view of how people are using crcnow.org.</p>
+        </div>
+        <div class="traffic-controls" aria-label="Dashboard period">
+          <button class="traffic-period is-active" type="button" data-days="7" aria-pressed="true">7 days</button>
+          <button class="traffic-period" type="button" data-days="30" aria-pressed="false">30 days</button>
+        </div>
+      </div>
+
+      <div class="traffic-status" data-status role="status">
+        <span class="traffic-spinner" aria-hidden="true"></span>
+        Loading current Cloudflare data…
+      </div>
+
+      <div data-dashboard-content hidden>
+        <div class="traffic-meta">
+          <p><span class="traffic-live-dot" aria-hidden="true"></span>Connected to Cloudflare Analytics</p>
+          <p data-updated></p>
+        </div>
+
+        <div class="traffic-metrics" aria-label="Traffic summary">
+          <article class="traffic-metric">
+            <p>Daily unique total</p>
+            <strong data-metric="dailyUniqueTotal">—</strong>
+            <small>Sum of each day’s unique visitors</small>
+          </article>
+          <article class="traffic-metric">
+            <p>Page views</p>
+            <strong data-metric="pageViews">—</strong>
+            <small>HTML pages viewed</small>
+          </article>
+          <article class="traffic-metric">
+            <p>Requests</p>
+            <strong data-metric="requests">—</strong>
+            <small>Pages, files, and API calls</small>
+          </article>
+          <article class="traffic-metric">
+            <p>Data served</p>
+            <strong data-metric="bytes">—</strong>
+            <small>Across all visitor requests</small>
+          </article>
+          <article class="traffic-metric">
+            <p>Cache hit rate</p>
+            <strong data-metric="cacheHitRate">—</strong>
+            <small>Served quickly from Cloudflare</small>
+          </article>
+          <article class="traffic-metric">
+            <p>Error response rate</p>
+            <strong data-metric="errorRate">—</strong>
+            <small>4xx and 5xx responses</small>
+          </article>
+        </div>
+
+        <section class="traffic-panel traffic-chart-panel" aria-labelledby="traffic-trend-title">
+          <div class="traffic-panel-head">
+            <div>
+              <p class="traffic-kicker">Selected period</p>
+              <h2 id="traffic-trend-title">Visitors and page views</h2>
+            </div>
+            <div class="traffic-legend" aria-hidden="true">
+              <span><i class="legend-visitors"></i>Daily unique visitors</span>
+              <span><i class="legend-views"></i>Page views</span>
+            </div>
+          </div>
+          <div class="traffic-chart" data-chart aria-label="Daily traffic chart"></div>
+        </section>
+
+        <div class="traffic-grid traffic-grid-wide">
+          <section class="traffic-panel" aria-labelledby="top-pages-title">
+            <div class="traffic-panel-head">
+              <div>
+                <p class="traffic-kicker">Live · last 24 hours</p>
+                <h2 id="top-pages-title">Popular pages</h2>
+              </div>
+            </div>
+            <div data-table="paths"></div>
+          </section>
+
+          <section class="traffic-panel" aria-labelledby="countries-title">
+            <div class="traffic-panel-head">
+              <div>
+                <p class="traffic-kicker">Selected period</p>
+                <h2 id="countries-title">Top countries</h2>
+              </div>
+            </div>
+            <div class="traffic-bars" data-bars="countries"></div>
+          </section>
+        </div>
+
+        <div class="traffic-grid">
+          <section class="traffic-panel" aria-labelledby="devices-title">
+            <div class="traffic-panel-head">
+              <div>
+                <p class="traffic-kicker">Live · last 24 hours</p>
+                <h2 id="devices-title">Devices</h2>
+              </div>
+            </div>
+            <div class="traffic-bars" data-bars="devices"></div>
+          </section>
+
+          <section class="traffic-panel" aria-labelledby="browsers-title">
+            <div class="traffic-panel-head">
+              <div>
+                <p class="traffic-kicker">Selected period</p>
+                <h2 id="browsers-title">Browsers</h2>
+              </div>
+            </div>
+            <div class="traffic-bars" data-bars="browsers"></div>
+          </section>
+
+          <section class="traffic-panel" aria-labelledby="health-title">
+            <div class="traffic-panel-head">
+              <div>
+                <p class="traffic-kicker">Selected period</p>
+                <h2 id="health-title">Response health</h2>
+              </div>
+            </div>
+            <div class="traffic-bars" data-bars="statuses"></div>
+          </section>
+        </div>
+
+        <p class="traffic-note">
+          Counts are aggregate Cloudflare measurements. “Daily unique total” adds each day’s unique visitor count, so a person who returns on multiple days can be counted more than once. No individual visitor profiles are shown.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  interface NamedValue { name: string; value: number }
+  interface TrafficData {
+    periodDays: number;
+    generatedAt: string;
+    summary: {
+      dailyUniqueTotal: number;
+      pageViews: number;
+      requests: number;
+      bytes: number;
+      cacheHitRate: number;
+      errorRate: number;
+    };
+    timeline: Array<{ date: string; visitors: number; pageViews: number; requests: number }>;
+    countries: NamedValue[];
+    browsers: NamedValue[];
+    statuses: NamedValue[];
+    live24h: {
+      paths: Array<{ path: string; visits: number; requests: number }>;
+      devices: NamedValue[];
+      statuses: NamedValue[];
+    };
+  }
+
+  const dashboard = document.querySelector<HTMLElement>('[data-traffic-dashboard]');
+  const status = dashboard?.querySelector<HTMLElement>('[data-status]');
+  const content = dashboard?.querySelector<HTMLElement>('[data-dashboard-content]');
+  const numberFormat = new Intl.NumberFormat('en-US');
+  const percentFormat = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
+
+  function escapeHtml(value: string): string {
+    return value.replace(/[&<>'"]/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
+    })[character] || character);
+  }
+
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${numberFormat.format(bytes)} B`;
+    const units = ['KB', 'MB', 'GB', 'TB'];
+    let value = bytes / 1024;
+    let unit = units[0];
+    for (let index = 1; index < units.length && value >= 1024; index += 1) {
+      value /= 1024;
+      unit = units[index];
+    }
+    return `${value.toFixed(value >= 10 ? 1 : 2)} ${unit}`;
+  }
+
+  function setMetric(name: string, value: string): void {
+    const node = dashboard?.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+    if (node) node.textContent = value;
+  }
+
+  function renderChart(data: TrafficData['timeline']): void {
+    const chart = dashboard?.querySelector<HTMLElement>('[data-chart]');
+    if (!chart) return;
+    if (!data.length) {
+      chart.innerHTML = '<p class="traffic-empty">No trend data is available yet.</p>';
+      return;
+    }
+
+    chart.style.setProperty('--chart-days', String(data.length));
+    const max = Math.max(1, ...data.flatMap((day) => [day.visitors, day.pageViews]));
+    chart.innerHTML = data.map((day) => {
+      const label = new Date(`${day.date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      const visitorsHeight = Math.max(2, (day.visitors / max) * 100);
+      const viewsHeight = Math.max(2, (day.pageViews / max) * 100);
+      return `<div class="traffic-chart-day" title="${escapeHtml(label)}: ${numberFormat.format(day.visitors)} daily unique visitors, ${numberFormat.format(day.pageViews)} page views">
+        <div class="traffic-chart-bars" aria-hidden="true">
+          <span class="chart-visitors" style="height:${visitorsHeight}%"></span>
+          <span class="chart-views" style="height:${viewsHeight}%"></span>
+        </div>
+        <span>${escapeHtml(label)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function renderBars(target: string, values: NamedValue[]): void {
+    const container = dashboard?.querySelector<HTMLElement>(`[data-bars="${target}"]`);
+    if (!container) return;
+    const visible = values.filter((item) => item.name && item.value > 0).slice(0, 8);
+    if (!visible.length) {
+      container.innerHTML = '<p class="traffic-empty">No data is available yet.</p>';
+      return;
+    }
+    const max = Math.max(...visible.map((item) => item.value), 1);
+    container.innerHTML = visible.map((item) => `<div class="traffic-bar-row">
+      <div class="traffic-bar-label"><span>${escapeHtml(item.name)}</span><strong>${numberFormat.format(item.value)}</strong></div>
+      <div class="traffic-bar-track" aria-hidden="true"><span style="width:${Math.max(3, (item.value / max) * 100)}%"></span></div>
+    </div>`).join('');
+  }
+
+  function renderPaths(paths: TrafficData['live24h']['paths']): void {
+    const container = dashboard?.querySelector<HTMLElement>('[data-table="paths"]');
+    if (!container) return;
+    if (!paths.length) {
+      container.innerHTML = '<p class="traffic-empty">No page visits are available yet.</p>';
+      return;
+    }
+    container.innerHTML = `<div class="traffic-table" role="table" aria-label="Popular pages">
+      <div class="traffic-table-row traffic-table-head" role="row"><span role="columnheader">Page</span><span role="columnheader">Visits</span><span role="columnheader">Requests</span></div>
+      ${paths.map((item) => `<div class="traffic-table-row" role="row"><span role="cell">${escapeHtml(item.path)}</span><strong role="cell">${numberFormat.format(item.visits)}</strong><span role="cell">${numberFormat.format(item.requests)}</span></div>`).join('')}
+    </div>`;
+  }
+
+  function render(data: TrafficData): void {
+    setMetric('dailyUniqueTotal', numberFormat.format(data.summary.dailyUniqueTotal));
+    setMetric('pageViews', numberFormat.format(data.summary.pageViews));
+    setMetric('requests', numberFormat.format(data.summary.requests));
+    setMetric('bytes', formatBytes(data.summary.bytes));
+    setMetric('cacheHitRate', percentFormat.format(data.summary.cacheHitRate));
+    setMetric('errorRate', percentFormat.format(data.summary.errorRate));
+
+    const updated = dashboard?.querySelector<HTMLElement>('[data-updated]');
+    if (updated) {
+      updated.textContent = `Updated ${new Date(data.generatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`;
+    }
+
+    renderChart(data.timeline);
+    renderPaths(data.live24h.paths);
+    renderBars('countries', data.countries);
+    renderBars('devices', data.live24h.devices);
+    renderBars('browsers', data.browsers);
+    renderBars('statuses', data.statuses);
+    if (status) status.hidden = true;
+    if (content) content.hidden = false;
+  }
+
+  async function loadTraffic(days: number): Promise<void> {
+    if (status) {
+      status.hidden = false;
+      status.classList.remove('is-error');
+      status.innerHTML = '<span class="traffic-spinner" aria-hidden="true"></span>Loading current Cloudflare data…';
+    }
+    if (content) content.hidden = true;
+
+    try {
+      const response = await fetch(`/traffic/data?days=${days}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('request_failed');
+      render(await response.json() as TrafficData);
+    } catch {
+      if (status) {
+        status.classList.add('is-error');
+        status.innerHTML = 'Traffic data could not be loaded right now. Please refresh in a moment.';
+      }
+    }
+  }
+
+  dashboard?.querySelectorAll<HTMLButtonElement>('[data-days]').forEach((button) => {
+    button.addEventListener('click', () => {
+      dashboard.querySelectorAll<HTMLButtonElement>('[data-days]').forEach((other) => {
+        const active = other === button;
+        other.classList.toggle('is-active', active);
+        other.setAttribute('aria-pressed', String(active));
+      });
+      void loadTraffic(Number(button.dataset.days));
+    });
+  });
+
+  void loadTraffic(7);
+</script>
+
+<style>
+  .traffic-shell { min-height: 70vh; padding-block: clamp(2.6rem, 6vw, 4.8rem); background: var(--paper-warm); }
+  .traffic-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 1.6rem; }
+  .traffic-heading h1 { font-size: var(--fs-2xl); }
+  .traffic-intro { margin-top: 0.65rem; color: var(--ink-soft); font-size: var(--fs-md); }
+  .traffic-controls { display: inline-flex; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--paper); box-shadow: var(--shadow); flex: none; }
+  .traffic-period { min-height: 42px; padding: 0.35rem 1rem; border: 0; border-radius: var(--radius-pill); background: transparent; font-weight: 700; cursor: pointer; }
+  .traffic-period.is-active { background: var(--ink); color: var(--paper-on-ink); }
+  .traffic-status { display: flex; align-items: center; justify-content: center; gap: 0.7rem; min-height: 180px; padding: 2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink-soft); text-align: center; }
+  .traffic-status.is-error { border-color: var(--red); background: var(--red-soft); color: var(--red-text); font-weight: 700; }
+  .traffic-spinner { width: 20px; height: 20px; border: 3px solid var(--line); border-top-color: var(--red-deep); border-radius: 50%; animation: traffic-spin 0.8s linear infinite; }
+  @keyframes traffic-spin { to { transform: rotate(360deg); } }
+  .traffic-meta { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--ink-mute); font-size: var(--fs-sm); }
+  .traffic-meta p { display: flex; align-items: center; gap: 0.45rem; }
+  .traffic-live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--lime-deep); box-shadow: 0 0 0 4px var(--lime-soft); }
+  .traffic-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  .traffic-metric { min-width: 0; padding: 1.25rem 1.35rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+  .traffic-metric p { color: var(--ink-mute); font-size: var(--fs-sm); font-weight: 700; }
+  .traffic-metric strong { display: block; margin-block: 0.18rem; font-size: clamp(1.6rem, 1.15rem + 1.6vw, 2.3rem); line-height: 1.15; letter-spacing: -0.04em; }
+  .traffic-metric small { color: var(--ink-mute); font-size: var(--fs-xs); }
+  .traffic-panel { min-width: 0; padding: 1.35rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+  .traffic-panel h2 { font-size: var(--fs-lg); }
+  .traffic-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+  .traffic-kicker { color: var(--red-text); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .traffic-chart-panel { margin-bottom: 1rem; }
+  .traffic-legend { display: flex; flex-wrap: wrap; gap: 0.8rem; color: var(--ink-mute); font-size: var(--fs-xs); }
+  .traffic-legend span { display: flex; align-items: center; gap: 0.35rem; }
+  .traffic-legend i { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-visitors { background: var(--red-deep); }
+  .legend-views { background: var(--lime-deep); }
+  .traffic-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(34px, 1fr)); align-items: end; gap: 0.45rem; min-height: 250px; padding-top: 1rem; border-bottom: 1px solid var(--line); }
+  .traffic-chart-day { display: grid; grid-template-rows: 190px auto; gap: 0.55rem; min-width: 0; color: var(--ink-mute); font-size: 0.68rem; text-align: center; }
+  .traffic-chart-bars { display: flex; align-items: flex-end; justify-content: center; gap: 3px; height: 190px; }
+  .traffic-chart-bars span { width: min(14px, 42%); min-height: 2px; border-radius: 4px 4px 0 0; }
+  .chart-visitors { background: var(--red-deep); }
+  .chart-views { background: var(--lime-deep); }
+  .traffic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  .traffic-grid-wide { grid-template-columns: 1.35fr 1fr; }
+  .traffic-bar-row + .traffic-bar-row { margin-top: 0.85rem; }
+  .traffic-bar-label { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.28rem; font-size: var(--fs-sm); }
+  .traffic-bar-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .traffic-bar-track { height: 8px; overflow: hidden; border-radius: var(--radius-pill); background: var(--paper-warm); }
+  .traffic-bar-track span { display: block; height: 100%; border-radius: inherit; background: var(--lime-deep); }
+  .traffic-table { width: 100%; }
+  .traffic-table-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px 82px; gap: 0.8rem; align-items: center; padding-block: 0.65rem; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+  .traffic-table-row > :not(:first-child) { text-align: right; }
+  .traffic-table-row > :first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .traffic-table-head { color: var(--ink-mute); font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .traffic-empty { color: var(--ink-mute); font-size: var(--fs-sm); }
+  .traffic-note { margin-top: 1.2rem; color: var(--ink-mute); font-size: var(--fs-xs); }
+  @media (max-width: 860px) {
+    .traffic-heading { align-items: flex-start; flex-direction: column; }
+    .traffic-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .traffic-grid, .traffic-grid-wide { grid-template-columns: 1fr; }
+    .traffic-legend { display: none; }
+  }
+  @media (max-width: 520px) {
+    .traffic-metrics { grid-template-columns: 1fr; }
+    .traffic-meta { flex-direction: column; }
+    .traffic-controls { width: 100%; }
+    .traffic-period { flex: 1; }
+    .traffic-table-row { grid-template-columns: minmax(0, 1fr) 58px 68px; gap: 0.5rem; }
+    .traffic-chart { overflow-x: auto; grid-template-columns: repeat(var(--chart-days, 7), minmax(38px, 1fr)); }
+  }
+</style>

@@ -13,8 +13,10 @@ interface Props {
   path: string;
   /** Keep the page out of search indexes (used by the 404 page). */
   noindex?: boolean;
+  /** Hide the public chat launcher on focused utility pages. */
+  hideChat?: boolean;
 }
-const { locale, title, description, path, noindex = false } = Astro.props;
+const { locale, title, description, path, noindex = false, hideChat = false } = Astro.props;
 const dict = t(locale);
 // `site` is always configured in astro.config.mjs; the fallback only matters if
 // that is ever removed. Never point it at a domain this project does not own.
@@ -31,7 +33,7 @@ const fullTitle = path === '/' ? `${dict.siteName} · ${dict.siteNameKo}` : `${t
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex, follow" />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     {!noindex && (
       <>
@@ -69,6 +71,6 @@ const fullTitle = path === '/' ? `${dict.siteName} · ${dict.siteNameKo}` : `${t
       <slot />
     </main>
     <Footer locale={locale} />
-    <ChatWidget locale={locale} />
+    {!hideChat && <ChatWidget locale={locale} />}
   </body>
 </html>

@@ -220,6 +220,19 @@ Create a Cloudflare D1 database, apply `migrations/0001_visitor_counter.sql`, an
 bind it to the Pages project as `VISITOR_DB` in both Production and Preview. The
 counter remains hidden if the binding is missing or temporarily unavailable.
 
+## Private traffic dashboard
+
+`/traffic` is a leadership-only Cloudflare analytics dashboard. Cloudflare
+Access must protect `crcnow.org/traffic*` and the Pages-domain equivalent, with
+only the approved email addresses in its Allow policy. The Function at
+`/traffic/data` also checks the production hostname and approved Access email
+before returning analytics.
+
+| Binding | Type | Purpose |
+|---|---|---|
+| `CLOUDFLARE_ANALYTICS_TOKEN` | secret | Token scoped only to `crcnow.org` with `Zone → Analytics → Read`. |
+| `CLOUDFLARE_ZONE_ID` | variable | Zone ID for `crcnow.org`. |
+
 ## Integrations that require organizational setup
 
 - **Online donations**: `/donate` truthfully says that online giving is not
