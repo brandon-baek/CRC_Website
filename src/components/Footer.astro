@@ -16,6 +16,17 @@ const year = new Date().getFullYear();
         <img src="/favicon.svg" alt="" width="52" height="52" style="border-radius:10px; margin-bottom:0.9rem;" />
         <h4>{dict.siteName} · <span lang={locale === 'en' ? 'ko' : 'en'}>{dict.siteNameKo}</span></h4>
         <p>{dict.footer.blurb}</p>
+        <p
+          class="visit-counter mt-1"
+          data-visit-counter
+          data-locale={locale}
+          hidden
+          aria-live="polite"
+        >
+          <span class="visit-counter-dot" aria-hidden="true"></span>
+          <span>{dict.footer.visits}</span>
+          <span data-visit-count></span>
+        </p>
       </div>
       <nav aria-label={dict.footer.quickLinks}>
         <h4>{dict.footer.quickLinks}</h4>
@@ -52,20 +63,7 @@ const year = new Date().getFullYear();
     </div>
     <div class="legal">
       <p>{dict.footer.disclaimer}</p>
-      <div class="footer-meta mt-1">
-        <p>© {year} {dict.footer.rights}</p>
-        <p
-          class="visit-counter"
-          data-visit-counter
-          data-locale={locale}
-          hidden
-          aria-live="polite"
-        >
-          <span class="visit-counter-dot" aria-hidden="true"></span>
-          <span>{dict.footer.visits}</span>
-          <span data-visit-count></span>
-        </p>
-      </div>
+      <p class="mt-1">© {year} {dict.footer.rights}</p>
     </div>
   </div>
 </footer>
