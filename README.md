@@ -225,8 +225,8 @@ counter remains hidden if the binding is missing or temporarily unavailable.
 `/traffic` is a leadership-only Cloudflare analytics dashboard. Cloudflare
 Access must protect `crcnow.org/traffic*` and the Pages-domain equivalent, with
 only the approved email addresses in its Allow policy. The Function at
-`/traffic/data` also checks the production hostname and approved Access email
-before returning analytics.
+`/traffic/data` also validates Cloudflare's signed Access token, production
+hostname, application audience, and approved email before returning analytics.
 
 | Binding | Type | Purpose |
 |---|---|---|

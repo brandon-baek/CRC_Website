@@ -3,7 +3,7 @@
  *
  * Cloudflare Access protects /traffic* before requests reach this Function.
  * This handler also fails closed unless the request uses the production host
- * and Access supplies an explicitly approved email address.
+ * and a signed Access application token identifies an approved email address.
  *
  * Secrets / variables:
  *   CLOUDFLARE_ANALYTICS_TOKEN  Zone Analytics:Read for crcnow.org only
@@ -78,7 +78,31 @@ interface GraphQLPayload {
   errors?: GraphQLError[];
 }
 
+interface AccessJwtHeader {
+  alg?: string;
+  kid?: string;
+}
+
+interface AccessJwtPayload {
+  aud?: string | string[];
+  email?: string;
+  exp?: number;
+  iss?: string;
+  nbf?: number;
+}
+
+interface AccessJwk extends JsonWebKey {
+  kid?: string;
+}
+
+interface AccessJwks {
+  keys?: AccessJwk[];
+}
+
 const GRAPHQL_ENDPOINT = 'https://api.cloudflare.com/client/v4/graphql';
+const ACCESS_ISSUER = 'https://falling-waterfall-002d.cloudflareaccess.com';
+const ACCESS_AUDIENCE = '55e55d95025e048c886b491575bc321c6963e47864d4a66eac1030a3abffb496';
+const ACCESS_CERTS_ENDPOINT = `${ACCESS_ISSUER}/cdn-cgi/access/certs`;
 const ALLOWED_HOSTS = new Set(['crcnow.org']);
 const ALLOWED_EMAILS = new Set([
   'documaninfo@gmail.com',
@@ -168,6 +192,89 @@ const QUERY = `
   }
 `;
 
+let accessKeys = new Map<string, CryptoKey>();
+let accessKeysExpireAt = 0;
+
+function decodeBase64Url(value: string): Uint8Array {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+  const decoded = atob(padded);
+  return Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+}
+
+function decodeJsonPart<T>(value: string): T | null {
+  try {
+    return JSON.parse(new TextDecoder().decode(decodeBase64Url(value))) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function getAccessKey(kid: string): Promise<CryptoKey | null> {
+  if (Date.now() < accessKeysExpireAt && accessKeys.has(kid)) return accessKeys.get(kid) ?? null;
+
+  const response = await fetch(ACCESS_CERTS_ENDPOINT, {
+    headers: { accept: 'application/json' },
+  });
+  if (!response.ok) return null;
+
+  const jwks = await response.json() as AccessJwks;
+  const nextKeys = new Map<string, CryptoKey>();
+  for (const jwk of jwks.keys ?? []) {
+    if (!jwk.kid || jwk.kty !== 'RSA') continue;
+    try {
+      const key = await crypto.subtle.importKey(
+        'jwk',
+        jwk,
+        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+        false,
+        ['verify'],
+      );
+      nextKeys.set(jwk.kid, key);
+    } catch {
+      // Ignore malformed or unsupported keys and continue with valid keys.
+    }
+  }
+
+  accessKeys = nextKeys;
+  accessKeysExpireAt = Date.now() + 10 * 60 * 1000;
+  return accessKeys.get(kid) ?? null;
+}
+
+async function verifiedAccessEmail(request: Request): Promise<string | null> {
+  const assertion = request.headers.get('cf-access-jwt-assertion');
+  if (!assertion) return null;
+
+  const parts = assertion.split('.');
+  if (parts.length !== 3) return null;
+  const header = decodeJsonPart<AccessJwtHeader>(parts[0]);
+  const payload = decodeJsonPart<AccessJwtPayload>(parts[1]);
+  if (!header?.kid || header.alg !== 'RS256' || !payload?.email) return null;
+
+  const key = await getAccessKey(header.kid);
+  if (!key) return null;
+
+  const validSignature = await crypto.subtle.verify(
+    'RSASSA-PKCS1-v1_5',
+    key,
+    decodeBase64Url(parts[2]),
+    new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
+  );
+  if (!validSignature) return null;
+
+  const now = Math.floor(Date.now() / 1000);
+  const audiences = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+  if (
+    payload.iss !== ACCESS_ISSUER
+    || !audiences.includes(ACCESS_AUDIENCE)
+    || !payload.exp
+    || payload.exp <= now
+    || (payload.nbf !== undefined && payload.nbf > now)
+  ) return null;
+
+  return payload.email.trim().toLowerCase();
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -202,7 +309,7 @@ export const onRequestGet = async ({ request, env }: EventContext): Promise<Resp
   const url = new URL(request.url);
   if (!ALLOWED_HOSTS.has(url.hostname)) return json({ error: 'not_found' }, 404);
 
-  const viewerEmail = request.headers.get('cf-access-authenticated-user-email')?.trim().toLowerCase();
+  const viewerEmail = await verifiedAccessEmail(request);
   if (!viewerEmail || !ALLOWED_EMAILS.has(viewerEmail)) return json({ error: 'forbidden' }, 403);
 
   if (!env.CLOUDFLARE_ANALYTICS_TOKEN || !env.CLOUDFLARE_ZONE_ID) {

@@ -1,0 +1,65 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const site = Astro.site ?? new URL('http://localhost:4321');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
+    />
+    <meta name="generator" content={Astro.generator} />
+    <meta property="og:image" content={new URL('/og-cover.png', site)} />
+  </head>
+  <body class="dashboard-body">
+    <a class="skip-link" href="#dashboard-main">Skip to dashboard</a>
+    <header class="dashboard-bar">
+      <div class="dashboard-bar-inner">
+        <div class="dashboard-brand" aria-label="Consumer Resource Center leadership analytics">
+          <img src="/favicon.svg" alt="" width="36" height="36" />
+          <span>
+            <strong>CRC Insights</strong>
+            <small>Leadership analytics</small>
+          </span>
+        </div>
+        <span class="dashboard-private"><i aria-hidden="true"></i>Private</span>
+      </div>
+    </header>
+    <main id="dashboard-main">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+  :global(.dashboard-body) { min-width: 320px; background: #f3f4ef; }
+  .dashboard-bar { border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, 0.94); }
+  .dashboard-bar-inner { width: min(1180px, calc(100% - 2rem)); min-height: 68px; margin-inline: auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .dashboard-brand { display: flex; align-items: center; gap: 0.7rem; }
+  .dashboard-brand img { border-radius: 9px; }
+  .dashboard-brand span { display: grid; line-height: 1.15; }
+  .dashboard-brand strong { font-size: 0.96rem; letter-spacing: -0.01em; }
+  .dashboard-brand small { margin-top: 0.18rem; color: var(--ink-mute); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .dashboard-private { display: inline-flex; align-items: center; gap: 0.42rem; padding: 0.38rem 0.7rem; border: 1px solid var(--line); border-radius: var(--radius-pill); color: var(--ink-soft); font-size: var(--fs-xs); font-weight: 700; }
+  .dashboard-private i { width: 7px; height: 7px; border-radius: 50%; background: var(--lime-deep); box-shadow: 0 0 0 3px var(--lime-soft); }
+  @media (max-width: 520px) {
+    .dashboard-bar-inner { width: min(100% - 1.2rem, 1180px); }
+    .dashboard-brand small { display: none; }
+  }
+</style>

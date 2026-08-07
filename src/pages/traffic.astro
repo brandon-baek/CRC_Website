@@ -1,14 +1,10 @@
 ---
-import Base from '../layouts/Base.astro';
+import Dashboard from '../layouts/Dashboard.astro';
 ---
 
-<Base
-  locale="en"
-  title="Traffic dashboard"
+<Dashboard
+  title="Traffic dashboard · CRC Insights"
   description="Private traffic analytics for Consumer Resource Center leadership."
-  path="/traffic"
-  noindex
-  hideChat
 >
   <section class="traffic-shell" data-traffic-dashboard>
     <div class="container">
@@ -142,7 +138,7 @@ import Base from '../layouts/Base.astro';
       </div>
     </div>
   </section>
-</Base>
+</Dashboard>
 
 <script>
   interface NamedValue { name: string; value: number }
@@ -307,7 +303,7 @@ import Base from '../layouts/Base.astro';
 </script>
 
 <style>
-  .traffic-shell { min-height: 70vh; padding-block: clamp(2.6rem, 6vw, 4.8rem); background: var(--paper-warm); }
+  .traffic-shell { min-height: calc(100vh - 68px); padding-block: clamp(2.4rem, 5vw, 4.2rem); background: #f3f4ef; }
   .traffic-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 1.6rem; }
   .traffic-heading h1 { font-size: var(--fs-2xl); }
   .traffic-intro { margin-top: 0.65rem; color: var(--ink-soft); font-size: var(--fs-md); }
