@@ -52,7 +52,71 @@ const year = new Date().getFullYear();
     </div>
     <div class="legal">
       <p>{dict.footer.disclaimer}</p>
-      <p class="mt-1">© {year} {dict.footer.rights}</p>
+      <div class="footer-meta mt-1">
+        <p>© {year} {dict.footer.rights}</p>
+        <p
+          class="visit-counter"
+          data-visit-counter
+          data-locale={locale}
+          hidden
+          aria-live="polite"
+        >
+          <span class="visit-counter-dot" aria-hidden="true"></span>
+          <span>{dict.footer.visits}</span>
+          <span data-visit-count></span>
+        </p>
+      </div>
     </div>
   </div>
 </footer>
+
+<script>
+  const SESSION_KEY = 'crc-visit-counted-at';
+  const SESSION_LENGTH_MS = 30 * 60 * 1000;
+
+  function hasActiveVisit(): boolean {
+    try {
+      const countedAt = Number(localStorage.getItem(SESSION_KEY));
+      return Number.isFinite(countedAt) && Date.now() - countedAt < SESSION_LENGTH_MS;
+    } catch {
+      return false;
+    }
+  }
+
+  function rememberVisit(): void {
+    try {
+      localStorage.setItem(SESSION_KEY, String(Date.now()));
+    } catch {
+      // Privacy settings may disable storage; the aggregate counter still works.
+    }
+  }
+
+  async function loadVisitCounter(): Promise<void> {
+    const counter = document.querySelector<HTMLElement>('[data-visit-counter]');
+    const countNode = counter?.querySelector<HTMLElement>('[data-visit-count]');
+    if (!counter || !countNode) return;
+
+    const shouldCount = !hasActiveVisit();
+
+    try {
+      const response = await fetch('/api/visits', {
+        method: shouldCount ? 'POST' : 'GET',
+        headers: shouldCount ? { 'content-type': 'application/json' } : undefined,
+        cache: 'no-store',
+      });
+      if (!response.ok) return;
+
+      const data = await response.json() as { enabled?: boolean; count?: number };
+      if (!data.enabled || !Number.isSafeInteger(data.count) || data.count! < 0) return;
+
+      if (shouldCount) rememberVisit();
+      const locale = counter.dataset.locale === 'ko' ? 'ko-KR' : 'en-US';
+      countNode.textContent = new Intl.NumberFormat(locale).format(data.count!);
+      counter.hidden = false;
+    } catch {
+      // The counter is decorative; keep it hidden if the service is unavailable.
+    }
+  }
+
+  void loadVisitCounter();
+</script>

@@ -209,6 +209,17 @@ the internet and the Sheet. The Sheet itself holds names, phone numbers, and
 people's accounts of being defrauded — **keep it shared with named staff only,
 never by link**.
 
+## Footer visit counter
+
+The footer displays a small bilingual aggregate visit count. The browser sends
+at most one increment every 30 minutes and stores only the last-counted time on
+that device. The server stores only the total, never IP addresses or visitor
+identifiers.
+
+Create a Cloudflare D1 database, apply `migrations/0001_visitor_counter.sql`, and
+bind it to the Pages project as `VISITOR_DB` in both Production and Preview. The
+counter remains hidden if the binding is missing or temporarily unavailable.
+
 ## Integrations that require organizational setup
 
 - **Online donations**: `/donate` truthfully says that online giving is not

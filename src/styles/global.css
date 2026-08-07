@@ -487,6 +487,37 @@ textarea.input { min-height: 130px; resize: vertical; }
   color: var(--footer-muted);
   font-size: var(--fs-xs);
 }
+.site-footer .footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+.site-footer .visit-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  width: fit-content;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--footer-line);
+  border-radius: 999px;
+  color: var(--footer-text);
+  font-variant-numeric: tabular-nums;
+}
+.site-footer .visit-counter[hidden] { display: none; }
+.site-footer .visit-counter-dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 0 2px rgba(190, 242, 100, 0.13);
+}
+.site-footer [data-visit-count] {
+  color: var(--paper-on-ink);
+  font-weight: 700;
+}
 /* ---------- Hero ---------- */
 .hero {
   background:
