@@ -384,11 +384,11 @@ import Dashboard from '../layouts/Dashboard.astro';
   .traffic-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 1.6rem; }
   .traffic-heading h1 { font-size: var(--fs-2xl); }
   .traffic-intro { margin-top: 0.65rem; color: var(--ink-soft); font-size: var(--fs-md); }
-  .traffic-range-tools { display: grid; justify-items: end; gap: 0.7rem; max-width: 100%; }
-  .traffic-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; padding: 4px; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); box-shadow: var(--shadow); }
-  .traffic-period { min-height: 42px; padding: 0.35rem 0.7rem; border: 0; border-radius: 11px; background: transparent; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .traffic-range-tools { display: grid; justify-items: end; gap: 0.7rem; width: min(500px, 48%); max-width: 100%; }
+  .traffic-controls { display: flex; flex-wrap: nowrap; justify-content: flex-end; gap: 3px; width: 100%; padding: 4px; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); box-shadow: var(--shadow); }
+  .traffic-period { flex: 1; min-height: 42px; padding: 0.35rem 0.45rem; border: 0; border-radius: 11px; background: transparent; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; white-space: nowrap; }
   .traffic-period.is-active { background: var(--ink); color: var(--paper-on-ink); }
-  .traffic-custom-range { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-end; gap: 0.65rem; padding: 0.8rem; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: var(--shadow); }
+  .traffic-custom-range { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-end; gap: 0.65rem; width: 100%; padding: 0.8rem; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: var(--shadow); }
   .traffic-custom-range[hidden] { display: none; }
   .traffic-custom-range label { display: grid; gap: 0.28rem; color: var(--ink-mute); font-size: var(--fs-xs); font-weight: 700; }
   .traffic-custom-range input { min-height: 40px; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: inherit; }
@@ -445,7 +445,7 @@ import Dashboard from '../layouts/Dashboard.astro';
   @media (max-width: 860px) {
     .traffic-heading { align-items: flex-start; flex-direction: column; }
     .traffic-range-tools { width: 100%; justify-items: stretch; }
-    .traffic-controls { justify-content: flex-start; }
+    .traffic-controls { flex-wrap: wrap; justify-content: flex-start; }
     .traffic-custom-range { justify-content: flex-start; }
     .traffic-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .traffic-grid, .traffic-grid-wide { grid-template-columns: 1fr; }
