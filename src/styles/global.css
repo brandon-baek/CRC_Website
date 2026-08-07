@@ -487,13 +487,6 @@ textarea.input { min-height: 130px; resize: vertical; }
   color: var(--footer-muted);
   font-size: var(--fs-xs);
 }
-.site-footer .footer-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1.5rem;
-}
 .site-footer .visit-counter {
   display: inline-flex;
   align-items: center;
