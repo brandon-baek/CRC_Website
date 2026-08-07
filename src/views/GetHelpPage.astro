@@ -126,29 +126,57 @@ const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
         <li>
           <Icon name="phone" size={22} />
           <div>
-            <strong>{dict.wizard.loss1Title}</strong>
-            <p>{dict.wizard.loss1Body}</p>
+            <strong>{locale === 'ko' ? '지금 바로 은행이나 카드사에 전화하세요' : dict.wizard.loss1Title}</strong>
+            {locale === 'ko' ? (
+              <p>
+                카드 사용을 정지해 달라고, 송금을 중단하거나 되돌려 달라고, 결제를 취소해 달라고 하세요.<br /><br />
+                몇 분 차이로 결과가 달라질 수 있습니다.
+              </p>
+            ) : (
+              <p>{dict.wizard.loss1Body}</p>
+            )}
           </div>
         </li>
         <li>
           <Icon name="alert" size={22} />
           <div>
-            <strong>{dict.wizard.loss2Title}</strong>
-            <p>{dict.wizard.loss2Body}</p>
+            <strong>{locale === 'ko' ? '사기꾼과 연락을 끊으세요' : dict.wizard.loss2Title}</strong>
+            {locale === 'ko' ? (
+              <p>
+                돈을 돌려주겠다고 해도, 겁을 줘도 더는 돈을 보내지 마세요.<br /><br />
+                “돈을 찾아주겠다”며 수수료를 요구하는 것도 사기입니다.
+              </p>
+            ) : (
+              <p>{dict.wizard.loss2Body}</p>
+            )}
           </div>
         </li>
         <li>
           <Icon name="book" size={22} />
           <div>
-            <strong>{dict.wizard.loss3Title}</strong>
-            <p>{dict.wizard.loss3Body}</p>
+            <strong>{locale === 'ko' ? '증거를 남겨두세요' : dict.wizard.loss3Title}</strong>
+            {locale === 'ko' ? (
+              <p>
+                화면 캡처, 문자, 전화번호, 영수증, 봉투, 코인 지갑 주소 등 관련 자료를 그대로 보관하세요.<br /><br />
+                아직 아무것도 지우지 마세요.
+              </p>
+            ) : (
+              <p>{dict.wizard.loss3Body}</p>
+            )}
           </div>
         </li>
         <li>
           <Icon name="shield" size={22} />
           <div>
-            <strong>{dict.wizard.loss4Title}</strong>
-            <p>{dict.wizard.loss4Body}</p>
+            <strong>{locale === 'ko' ? '계정을 지키세요' : dict.wizard.loss4Title}</strong>
+            {locale === 'ko' ? (
+              <p>
+                안전한 기기에서 비밀번호를 바꾸세요.<br /><br />
+                개인정보가 넘어갔다면 크레딧 동결도 고려해 보세요. 무료입니다.
+              </p>
+            ) : (
+              <p>{dict.wizard.loss4Body}</p>
+            )}
           </div>
         </li>
       </ol>
