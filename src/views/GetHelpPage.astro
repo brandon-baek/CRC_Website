@@ -111,10 +111,16 @@ const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
           {locale === 'en' ? (
             <>Just lost money?<br />Do these 4 things first.</>
           ) : (
-            dict.wizard.lossTitle
+            <>방금 돈을 잃으셨나요?<br />이 4가지부터 하세요.</>
           )}
         </h2>
-        <p class="sub">{dict.wizard.lossIntro}</p>
+        <p class="sub">
+          {locale === 'ko' ? (
+            <>신고는 그다음입니다.<br />지금 지킬 수 있는 것부터 먼저 지키셔야 합니다.</>
+          ) : (
+            dict.wizard.lossIntro
+          )}
+        </p>
       </div>
       <ol class="checklist" style="max-width:780px;">
         <li>
