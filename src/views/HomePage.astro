@@ -22,8 +22,18 @@ const chipColors = ['red', 'yellow', '', 'red'];
         <div>
           <p class="hero-context">{locale === 'ko' ? 'CRC · Consumer Resource Center' : 'CRC · 한인시민센터'}</p>
           <h1>
-            {dict.hero.title1}<br />
-            <span class="underline">{dict.hero.title2}</span>
+            {locale === 'ko' ? (
+              <>
+                사기를 당하셨나요?<br />
+                뭔가 이상한가요?<br />
+                <span class="underline">어디에 신고해야 하는지<br />알려드립니다.</span>
+              </>
+            ) : (
+              <>
+                {dict.hero.title1}<br />
+                <span class="underline">{dict.hero.title2}</span>
+              </>
+            )}
           </h1>
           <p class="lede">{dict.hero.lede}</p>
           <div class="actions">
