@@ -107,7 +107,13 @@ const payloadJson = JSON.stringify(payload).replace(/</g, '\\u003c');
   <section class="section warm">
     <div class="container">
       <div class="section-head" style="max-width:640px;">
-        <h2>{dict.wizard.lossTitle}</h2>
+        <h2>
+          {locale === 'en' ? (
+            <>Just lost money?<br />Do these 4 things first.</>
+          ) : (
+            dict.wizard.lossTitle
+          )}
+        </h2>
         <p class="sub">{dict.wizard.lossIntro}</p>
       </div>
       <ol class="checklist" style="max-width:780px;">
