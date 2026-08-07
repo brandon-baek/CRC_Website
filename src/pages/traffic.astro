@@ -14,9 +14,20 @@ import Dashboard from '../layouts/Dashboard.astro';
           <h1>Website traffic</h1>
           <p class="traffic-intro">A clear, automatically updated view of how people are using crcnow.org.</p>
         </div>
-        <div class="traffic-controls" aria-label="Dashboard period">
-          <button class="traffic-period is-active" type="button" data-days="7" aria-pressed="true">7 days</button>
-          <button class="traffic-period" type="button" data-days="30" aria-pressed="false">30 days</button>
+        <div class="traffic-range-tools">
+          <div class="traffic-controls" aria-label="Dashboard period">
+            <button class="traffic-period is-active" type="button" data-range="7" aria-pressed="true">7 days</button>
+            <button class="traffic-period" type="button" data-range="30" aria-pressed="false">30 days</button>
+            <button class="traffic-period" type="button" data-range="90" aria-pressed="false">90 days</button>
+            <button class="traffic-period" type="button" data-range="all" aria-pressed="false">All time</button>
+            <button class="traffic-period" type="button" data-range="custom" aria-pressed="false">Custom</button>
+          </div>
+          <form class="traffic-custom-range" data-custom-range hidden>
+            <label>From <input type="date" name="start" required /></label>
+            <label>To <input type="date" name="end" required /></label>
+            <button type="submit">Apply dates</button>
+            <p data-date-error role="alert" hidden></p>
+          </form>
         </div>
       </div>
 
@@ -28,7 +39,10 @@ import Dashboard from '../layouts/Dashboard.astro';
       <div data-dashboard-content hidden>
         <div class="traffic-meta">
           <p><span class="traffic-live-dot" aria-hidden="true"></span>Connected to Cloudflare Analytics</p>
-          <p data-updated></p>
+          <div>
+            <p data-range-summary></p>
+            <p data-updated></p>
+          </div>
         </div>
 
         <div class="traffic-metrics" aria-label="Traffic summary">
@@ -144,6 +158,11 @@ import Dashboard from '../layouts/Dashboard.astro';
   interface NamedValue { name: string; value: number }
   interface TrafficData {
     periodDays: number;
+    rangeMode: '7' | '30' | '90' | 'all' | 'custom';
+    rangeStart: string;
+    rangeEnd: string;
+    availableStart: string | null;
+    availableEnd: string | null;
     generatedAt: string;
     summary: {
       dailyUniqueTotal: number;
@@ -169,6 +188,15 @@ import Dashboard from '../layouts/Dashboard.astro';
   const content = dashboard?.querySelector<HTMLElement>('[data-dashboard-content]');
   const numberFormat = new Intl.NumberFormat('en-US');
   const percentFormat = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
+
+  function formatDate(date: string, includeYear = true): string {
+    return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: includeYear ? 'numeric' : undefined,
+      timeZone: 'UTC',
+    });
+  }
 
   function escapeHtml(value: string): string {
     return value.replace(/[&<>'"]/g, (character) => ({
@@ -202,9 +230,11 @@ import Dashboard from '../layouts/Dashboard.astro';
     }
 
     chart.style.setProperty('--chart-days', String(data.length));
+    chart.classList.toggle('is-dense', data.length > 31);
     const max = Math.max(1, ...data.flatMap((day) => [day.visitors, day.pageViews]));
-    chart.innerHTML = data.map((day) => {
-      const label = new Date(`${day.date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    chart.innerHTML = data.map((day, index) => {
+      const label = formatDate(day.date, false);
+      const showLabel = data.length <= 14 || index === 0 || index === Math.floor((data.length - 1) / 2) || index === data.length - 1;
       const visitorsHeight = Math.max(2, (day.visitors / max) * 100);
       const viewsHeight = Math.max(2, (day.pageViews / max) * 100);
       return `<div class="traffic-chart-day" title="${escapeHtml(label)}: ${numberFormat.format(day.visitors)} daily unique visitors, ${numberFormat.format(day.pageViews)} page views">
@@ -212,7 +242,7 @@ import Dashboard from '../layouts/Dashboard.astro';
           <span class="chart-visitors" style="height:${visitorsHeight}%"></span>
           <span class="chart-views" style="height:${viewsHeight}%"></span>
         </div>
-        <span>${escapeHtml(label)}</span>
+        <span class="traffic-chart-label${showLabel ? '' : ' is-hidden'}">${escapeHtml(label)}</span>
       </div>`;
     }).join('');
   }
@@ -257,6 +287,13 @@ import Dashboard from '../layouts/Dashboard.astro';
     if (updated) {
       updated.textContent = `Updated ${new Date(data.generatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`;
     }
+    const rangeSummary = dashboard?.querySelector<HTMLElement>('[data-range-summary]');
+    if (rangeSummary) {
+      const shownStart = data.availableStart ?? data.rangeStart;
+      const shownEnd = data.availableEnd ?? data.rangeEnd;
+      const prefix = data.rangeMode === 'all' ? 'All available history' : 'Showing';
+      rangeSummary.textContent = `${prefix}: ${formatDate(shownStart)} – ${formatDate(shownEnd)}`;
+    }
 
     renderChart(data.timeline);
     renderPaths(data.live24h.paths);
@@ -268,7 +305,7 @@ import Dashboard from '../layouts/Dashboard.astro';
     if (content) content.hidden = false;
   }
 
-  async function loadTraffic(days: number): Promise<void> {
+  async function loadTraffic(params: URLSearchParams): Promise<void> {
     if (status) {
       status.hidden = false;
       status.classList.remove('is-error');
@@ -277,7 +314,7 @@ import Dashboard from '../layouts/Dashboard.astro';
     if (content) content.hidden = true;
 
     try {
-      const response = await fetch(`/traffic/data?days=${days}`, { cache: 'no-store' });
+      const response = await fetch(`/traffic/data?${params.toString()}`, { cache: 'no-store' });
       if (!response.ok) throw new Error('request_failed');
       render(await response.json() as TrafficData);
     } catch {
@@ -288,40 +325,84 @@ import Dashboard from '../layouts/Dashboard.astro';
     }
   }
 
-  dashboard?.querySelectorAll<HTMLButtonElement>('[data-days]').forEach((button) => {
+  const customForm = dashboard?.querySelector<HTMLFormElement>('[data-custom-range]');
+  const customStart = customForm?.querySelector<HTMLInputElement>('input[name="start"]');
+  const customEnd = customForm?.querySelector<HTMLInputElement>('input[name="end"]');
+  const dateError = customForm?.querySelector<HTMLElement>('[data-date-error]');
+  const today = new Date().toISOString().slice(0, 10);
+  const defaultStart = new Date(Date.now() - 29 * 86_400_000).toISOString().slice(0, 10);
+  if (customStart) { customStart.max = today; customStart.value = defaultStart; }
+  if (customEnd) { customEnd.max = today; customEnd.value = today; }
+
+  function setActiveRange(activeButton: HTMLButtonElement): void {
+    dashboard?.querySelectorAll<HTMLButtonElement>('[data-range]').forEach((other) => {
+      const active = other === activeButton;
+      other.classList.toggle('is-active', active);
+      other.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  dashboard?.querySelectorAll<HTMLButtonElement>('[data-range]').forEach((button) => {
     button.addEventListener('click', () => {
-      dashboard.querySelectorAll<HTMLButtonElement>('[data-days]').forEach((other) => {
-        const active = other === button;
-        other.classList.toggle('is-active', active);
-        other.setAttribute('aria-pressed', String(active));
-      });
-      void loadTraffic(Number(button.dataset.days));
+      setActiveRange(button);
+      const range = button.dataset.range ?? '7';
+      if (customForm) customForm.hidden = range !== 'custom';
+      if (range !== 'custom') void loadTraffic(new URLSearchParams({ range }));
     });
   });
 
-  void loadTraffic(7);
+  customForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!customStart?.value || !customEnd?.value || customStart.value > customEnd.value) {
+      if (dateError) {
+        dateError.textContent = 'Choose a start date that is on or before the end date.';
+        dateError.hidden = false;
+      }
+      return;
+    }
+    const days = Math.floor((Date.parse(customEnd.value) - Date.parse(customStart.value)) / 86_400_000) + 1;
+    if (days > 366) {
+      if (dateError) {
+        dateError.textContent = 'Custom ranges can include up to 366 days.';
+        dateError.hidden = false;
+      }
+      return;
+    }
+    if (dateError) dateError.hidden = true;
+    void loadTraffic(new URLSearchParams({ range: 'custom', start: customStart.value, end: customEnd.value }));
+  });
+
+  void loadTraffic(new URLSearchParams({ range: '7' }));
 </script>
 
-<style>
+<style is:global>
   .traffic-shell { min-height: calc(100vh - 68px); padding-block: clamp(2.4rem, 5vw, 4.2rem); background: #f3f4ef; }
   .traffic-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 1.6rem; }
   .traffic-heading h1 { font-size: var(--fs-2xl); }
   .traffic-intro { margin-top: 0.65rem; color: var(--ink-soft); font-size: var(--fs-md); }
-  .traffic-controls { display: inline-flex; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--paper); box-shadow: var(--shadow); flex: none; }
-  .traffic-period { min-height: 42px; padding: 0.35rem 1rem; border: 0; border-radius: var(--radius-pill); background: transparent; font-weight: 700; cursor: pointer; }
+  .traffic-range-tools { display: grid; justify-items: end; gap: 0.7rem; max-width: 100%; }
+  .traffic-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; padding: 4px; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); box-shadow: var(--shadow); }
+  .traffic-period { min-height: 42px; padding: 0.35rem 0.9rem; border: 0; border-radius: 11px; background: transparent; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .traffic-period.is-active { background: var(--ink); color: var(--paper-on-ink); }
+  .traffic-custom-range { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-end; gap: 0.65rem; padding: 0.8rem; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: var(--shadow); }
+  .traffic-custom-range[hidden] { display: none; }
+  .traffic-custom-range label { display: grid; gap: 0.28rem; color: var(--ink-mute); font-size: var(--fs-xs); font-weight: 700; }
+  .traffic-custom-range input { min-height: 40px; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: inherit; }
+  .traffic-custom-range button { min-height: 40px; padding: 0.5rem 0.85rem; border: 0; border-radius: 9px; background: var(--red-deep); color: white; font-weight: 800; cursor: pointer; }
+  .traffic-custom-range [data-date-error] { flex-basis: 100%; color: var(--red-text); font-size: var(--fs-xs); font-weight: 700; }
   .traffic-status { display: flex; align-items: center; justify-content: center; gap: 0.7rem; min-height: 180px; padding: 2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink-soft); text-align: center; }
   .traffic-status.is-error { border-color: var(--red); background: var(--red-soft); color: var(--red-text); font-weight: 700; }
   .traffic-spinner { width: 20px; height: 20px; border: 3px solid var(--line); border-top-color: var(--red-deep); border-radius: 50%; animation: traffic-spin 0.8s linear infinite; }
   @keyframes traffic-spin { to { transform: rotate(360deg); } }
-  .traffic-meta { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--ink-mute); font-size: var(--fs-sm); }
+  .traffic-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; color: var(--ink-mute); font-size: var(--fs-sm); }
   .traffic-meta p { display: flex; align-items: center; gap: 0.45rem; }
+  .traffic-meta > div { display: grid; justify-items: end; gap: 0.18rem; text-align: right; }
   .traffic-live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--lime-deep); box-shadow: 0 0 0 4px var(--lime-soft); }
   .traffic-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-  .traffic-metric { min-width: 0; padding: 1.25rem 1.35rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+  .traffic-metric { min-width: 0; min-height: 156px; padding: 1.25rem 1.35rem; border: 1px solid var(--line); border-top: 3px solid var(--lime-deep); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); display: flex; flex-direction: column; }
   .traffic-metric p { color: var(--ink-mute); font-size: var(--fs-sm); font-weight: 700; }
-  .traffic-metric strong { display: block; margin-block: 0.18rem; font-size: clamp(1.6rem, 1.15rem + 1.6vw, 2.3rem); line-height: 1.15; letter-spacing: -0.04em; }
-  .traffic-metric small { color: var(--ink-mute); font-size: var(--fs-xs); }
+  .traffic-metric strong { display: block; max-width: 100%; margin-block: 0.55rem 0.65rem; overflow: hidden; font-size: clamp(1.55rem, 1.15rem + 1.5vw, 2.25rem); font-variant-numeric: tabular-nums; line-height: 1.05; letter-spacing: -0.035em; text-overflow: ellipsis; white-space: nowrap; }
+  .traffic-metric small { margin-top: auto; color: var(--ink-mute); font-size: var(--fs-xs); line-height: 1.4; }
   .traffic-panel { min-width: 0; padding: 1.35rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
   .traffic-panel h2 { font-size: var(--fs-lg); }
   .traffic-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
@@ -332,16 +413,21 @@ import Dashboard from '../layouts/Dashboard.astro';
   .traffic-legend i { width: 10px; height: 10px; border-radius: 2px; }
   .legend-visitors { background: var(--red-deep); }
   .legend-views { background: var(--lime-deep); }
-  .traffic-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(34px, 1fr)); align-items: end; gap: 0.45rem; min-height: 250px; padding-top: 1rem; border-bottom: 1px solid var(--line); }
+  .traffic-chart { display: grid; grid-template-columns: repeat(var(--chart-days, 7), minmax(3px, 1fr)); align-items: end; gap: clamp(2px, 0.45vw, 0.45rem); min-height: 250px; padding-top: 1rem; border-bottom: 1px solid var(--line); background-image: linear-gradient(to bottom, transparent 24%, var(--line) 25%, transparent 26%, transparent 49%, var(--line) 50%, transparent 51%, transparent 74%, var(--line) 75%, transparent 76%); }
   .traffic-chart-day { display: grid; grid-template-rows: 190px auto; gap: 0.55rem; min-width: 0; color: var(--ink-mute); font-size: 0.68rem; text-align: center; }
   .traffic-chart-bars { display: flex; align-items: flex-end; justify-content: center; gap: 3px; height: 190px; }
   .traffic-chart-bars span { width: min(14px, 42%); min-height: 2px; border-radius: 4px 4px 0 0; }
+  .traffic-chart.is-dense { gap: 2px; }
+  .traffic-chart.is-dense .traffic-chart-bars { gap: 1px; }
+  .traffic-chart.is-dense .traffic-chart-bars span { width: 46%; border-radius: 2px 2px 0 0; }
+  .traffic-chart-label.is-hidden { visibility: hidden; }
   .chart-visitors { background: var(--red-deep); }
   .chart-views { background: var(--lime-deep); }
   .traffic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
   .traffic-grid-wide { grid-template-columns: 1.35fr 1fr; }
   .traffic-bar-row + .traffic-bar-row { margin-top: 0.85rem; }
   .traffic-bar-label { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.28rem; font-size: var(--fs-sm); }
+  .traffic-bar-label strong { flex: none; min-width: 3ch; font-variant-numeric: tabular-nums; text-align: right; }
   .traffic-bar-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .traffic-bar-track { height: 8px; overflow: hidden; border-radius: var(--radius-pill); background: var(--paper-warm); }
   .traffic-bar-track span { display: block; height: 100%; border-radius: inherit; background: var(--lime-deep); }
@@ -354,6 +440,9 @@ import Dashboard from '../layouts/Dashboard.astro';
   .traffic-note { margin-top: 1.2rem; color: var(--ink-mute); font-size: var(--fs-xs); }
   @media (max-width: 860px) {
     .traffic-heading { align-items: flex-start; flex-direction: column; }
+    .traffic-range-tools { width: 100%; justify-items: stretch; }
+    .traffic-controls { justify-content: flex-start; }
+    .traffic-custom-range { justify-content: flex-start; }
     .traffic-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .traffic-grid, .traffic-grid-wide { grid-template-columns: 1fr; }
     .traffic-legend { display: none; }
@@ -361,9 +450,14 @@ import Dashboard from '../layouts/Dashboard.astro';
   @media (max-width: 520px) {
     .traffic-metrics { grid-template-columns: 1fr; }
     .traffic-meta { flex-direction: column; }
+    .traffic-meta > div { justify-items: start; text-align: left; }
     .traffic-controls { width: 100%; }
-    .traffic-period { flex: 1; }
+    .traffic-period { flex: 1 1 calc(33.333% - 6px); }
+    .traffic-custom-range label { flex: 1 1 calc(50% - 0.4rem); }
+    .traffic-custom-range input { width: 100%; }
+    .traffic-custom-range button { width: 100%; }
     .traffic-table-row { grid-template-columns: minmax(0, 1fr) 58px 68px; gap: 0.5rem; }
-    .traffic-chart { overflow-x: auto; grid-template-columns: repeat(var(--chart-days, 7), minmax(38px, 1fr)); }
+    .traffic-chart { overflow-x: auto; grid-template-columns: repeat(var(--chart-days, 7), minmax(12px, 1fr)); }
+    .traffic-chart:not(.is-dense) { grid-template-columns: repeat(var(--chart-days, 7), minmax(38px, 1fr)); }
   }
 </style>

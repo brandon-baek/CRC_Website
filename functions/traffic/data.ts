@@ -64,15 +64,17 @@ interface AdaptiveGroup {
   };
 }
 
+interface ZoneAnalytics {
+  days?: LegacyDay[];
+  paths?: AdaptiveGroup[];
+  devices?: AdaptiveGroup[];
+  liveStatuses?: AdaptiveGroup[];
+}
+
 interface GraphQLPayload {
   data?: {
     viewer?: {
-      zones?: Array<{
-        days?: LegacyDay[];
-        paths?: AdaptiveGroup[];
-        devices?: AdaptiveGroup[];
-        liveStatuses?: AdaptiveGroup[];
-      }>;
+      zones?: ZoneAnalytics[];
     };
   };
   errors?: GraphQLError[];
@@ -121,13 +123,14 @@ const PUBLIC_PAGE_PREFIXES = [
   '/ko',
 ];
 
-const QUERY = `
-  query TrafficDashboard(
+const ANALYTICS_START_DATE = '2026-07-01';
+const MAX_CUSTOM_DAYS = 366;
+
+const HISTORY_QUERY = `
+  query TrafficHistory(
     $zoneTag: string,
     $startDate: Date,
-    $endDate: Date,
-    $liveStart: Time,
-    $liveEnd: Time
+    $endDate: Date
   ) {
     viewer {
       zones(filter: { zoneTag: $zoneTag }) {
@@ -149,6 +152,19 @@ const QUERY = `
           }
           uniq { uniques }
         }
+      }
+    }
+  }
+`;
+
+const LIVE_QUERY = `
+  query TrafficLive(
+    $zoneTag: string,
+    $liveStart: Time,
+    $liveEnd: Time
+  ) {
+    viewer {
+      zones(filter: { zoneTag: $zoneTag }) {
         paths: httpRequestsAdaptiveGroups(
           limit: 30,
           orderBy: [sum_visits_DESC],
@@ -305,6 +321,88 @@ function isPublicContentPath(path: string): boolean {
   return PUBLIC_PAGE_PREFIXES.slice(1).some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 }
 
+const DAY_MS = 86_400_000;
+
+interface DateRange {
+  endDate: string;
+  mode: '7' | '30' | '90' | 'all' | 'custom';
+  periodDays: number;
+  startDate: string;
+}
+
+function parseDate(value: string | null): Date | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value ? null : parsed;
+}
+
+function isoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function resolveDateRange(url: URL, now: Date): DateRange | null {
+  const endOfToday = new Date(`${isoDate(now)}T00:00:00Z`);
+  const requestedMode = url.searchParams.get('range') ?? url.searchParams.get('days') ?? '7';
+  const mode = ['7', '30', '90', 'all', 'custom'].includes(requestedMode) ? requestedMode : '7';
+
+  if (mode === 'custom') {
+    const start = parseDate(url.searchParams.get('start'));
+    const end = parseDate(url.searchParams.get('end'));
+    if (!start || !end || start > end || end > endOfToday) return null;
+    const periodDays = Math.floor((end.getTime() - start.getTime()) / DAY_MS) + 1;
+    if (periodDays > MAX_CUSTOM_DAYS) return null;
+    return { startDate: isoDate(start), endDate: isoDate(end), periodDays, mode };
+  }
+
+  if (mode === 'all') {
+    const start = parseDate(ANALYTICS_START_DATE)!;
+    return {
+      startDate: ANALYTICS_START_DATE,
+      endDate: isoDate(endOfToday),
+      periodDays: Math.floor((endOfToday.getTime() - start.getTime()) / DAY_MS) + 1,
+      mode,
+    };
+  }
+
+  const periodDays = Number(mode);
+  const start = new Date(endOfToday.getTime() - (periodDays - 1) * DAY_MS);
+  return { startDate: isoDate(start), endDate: isoDate(endOfToday), periodDays, mode };
+}
+
+function chunkDateRange(startDate: string, endDate: string): Array<{ startDate: string; endDate: string }> {
+  const chunks: Array<{ startDate: string; endDate: string }> = [];
+  let cursor = parseDate(startDate)!;
+  const end = parseDate(endDate)!;
+  while (cursor <= end) {
+    const chunkEnd = new Date(Math.min(cursor.getTime() + 29 * DAY_MS, end.getTime()));
+    chunks.push({ startDate: isoDate(cursor), endDate: isoDate(chunkEnd) });
+    cursor = new Date(chunkEnd.getTime() + DAY_MS);
+  }
+  return chunks;
+}
+
+async function queryCloudflare(
+  token: string,
+  zoneTag: string,
+  query: string,
+  variables: Record<string, string>,
+): Promise<ZoneAnalytics> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ query, variables: { zoneTag, ...variables } }),
+  });
+  const payload = await response.json() as GraphQLPayload;
+  const zone = payload.data?.viewer?.zones?.[0];
+  if (!response.ok || payload.errors?.length || !zone) {
+    throw new Error(payload.errors?.map((error) => error.message).filter(Boolean).join('; ') || `HTTP ${response.status}`);
+  }
+  return zone;
+}
+
 export const onRequestGet = async ({ request, env }: EventContext): Promise<Response> => {
   const url = new URL(request.url);
   if (!ALLOWED_HOSTS.has(url.hostname)) return json({ error: 'not_found' }, 404);
@@ -316,40 +414,48 @@ export const onRequestGet = async ({ request, env }: EventContext): Promise<Resp
     return json({ error: 'analytics_unavailable' }, 503);
   }
 
-  const requestedDays = Number(url.searchParams.get('days'));
-  const days = requestedDays === 30 ? 30 : 7;
   const now = new Date();
-  const start = new Date(now.getTime() - (days - 1) * 86_400_000);
-  const liveStart = new Date(now.getTime() - 86_400_000);
+  const range = resolveDateRange(url, now);
+  if (!range) return json({ error: 'invalid_date_range' }, 400);
+  const liveStart = new Date(now.getTime() - DAY_MS);
 
   try {
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${env.CLOUDFLARE_ANALYTICS_TOKEN}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: QUERY,
-        variables: {
-          zoneTag: env.CLOUDFLARE_ZONE_ID,
-          startDate: start.toISOString().slice(0, 10),
-          endDate: now.toISOString().slice(0, 10),
-          liveStart: liveStart.toISOString(),
-          liveEnd: now.toISOString(),
-        },
-      }),
-    });
+    const historyChunks = chunkDateRange(range.startDate, range.endDate);
+    const [historyResults, liveResult] = await Promise.all([
+      Promise.allSettled(historyChunks.map((chunk) => queryCloudflare(
+        env.CLOUDFLARE_ANALYTICS_TOKEN!,
+        env.CLOUDFLARE_ZONE_ID!,
+        HISTORY_QUERY,
+        chunk,
+      ))),
+      queryCloudflare(
+        env.CLOUDFLARE_ANALYTICS_TOKEN!,
+        env.CLOUDFLARE_ZONE_ID!,
+        LIVE_QUERY,
+        { liveStart: liveStart.toISOString(), liveEnd: now.toISOString() },
+      ).catch(() => ({ paths: [], devices: [], liveStatuses: [] })),
+    ]);
 
-    const payload = await response.json() as GraphQLPayload;
-    const zone = payload.data?.viewer?.zones?.[0];
-    if (!response.ok || payload.errors?.length || !zone) {
-      console.warn('[traffic] Cloudflare analytics query failed.', {
-        status: response.status,
-        errors: payload.errors?.map((error) => error.message),
+    const successfulHistory = historyResults.filter((result) => result.status === 'fulfilled');
+    if (!successfulHistory.length) throw new Error('No historical analytics chunks were available.');
+    const failedHistory = historyResults.filter((result) => result.status === 'rejected');
+    if (failedHistory.length) {
+      console.warn('[traffic] Some requested historical chunks were unavailable.', {
+        failed: failedHistory.length,
+        requested: historyResults.length,
       });
-      return json({ error: 'analytics_unavailable' }, 502);
     }
+
+    const daysByDate = new Map<string, LegacyDay>();
+    for (const result of successfulHistory) {
+      if (result.status !== 'fulfilled') continue;
+      for (const day of result.value.days ?? []) {
+        const date = day.dimensions?.date;
+        if (date) daysByDate.set(date, day);
+      }
+    }
+    const historicalDays = [...daysByDate.values()]
+      .sort((a, b) => (a.dimensions?.date ?? '').localeCompare(b.dimensions?.date ?? ''));
 
     const countries = new Map<string, number>();
     const browsers = new Map<string, number>();
@@ -359,7 +465,7 @@ export const onRequestGet = async ({ request, env }: EventContext): Promise<Resp
     let bytes = 0;
     let cachedRequests = 0;
 
-    const timeline = (zone.days ?? []).map((day) => {
+    const timeline = historicalDays.map((day) => {
       const sum = day.sum ?? {};
       requests += sum.requests ?? 0;
       pageViews += sum.pageViews ?? 0;
@@ -384,7 +490,7 @@ export const onRequestGet = async ({ request, env }: EventContext): Promise<Resp
       .filter(([status]) => status.startsWith('4') || status.startsWith('5'))
       .reduce((total, [, value]) => total + value, 0);
 
-    const paths = (zone.paths ?? [])
+    const paths = (liveResult.paths ?? [])
       .map((group) => ({
         path: group.dimensions?.clientRequestPath ?? '',
         visits: group.sum?.visits ?? 0,
@@ -393,16 +499,21 @@ export const onRequestGet = async ({ request, env }: EventContext): Promise<Resp
       .filter((item) => item.path && item.visits > 0 && isPublicContentPath(item.path))
       .slice(0, 10);
 
-    const devices = (zone.devices ?? [])
+    const devices = (liveResult.devices ?? [])
       .map((group) => ({ name: group.dimensions?.clientDeviceType || 'Unknown', value: group.count ?? 0 }))
       .filter((item) => item.value > 0);
 
-    const liveStatuses = (zone.liveStatuses ?? [])
+    const liveStatuses = (liveResult.liveStatuses ?? [])
       .map((group) => ({ name: String(group.dimensions?.edgeResponseStatus ?? 'Unknown'), value: group.count ?? 0 }))
       .filter((item) => item.value > 0);
 
     return json({
-      periodDays: days,
+      periodDays: range.periodDays,
+      rangeMode: range.mode,
+      rangeStart: range.startDate,
+      rangeEnd: range.endDate,
+      availableStart: timeline[0]?.date ?? null,
+      availableEnd: timeline[timeline.length - 1]?.date ?? null,
       generatedAt: now.toISOString(),
       summary: {
         dailyUniqueTotal,

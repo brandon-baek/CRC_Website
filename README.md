@@ -227,6 +227,9 @@ Access must protect `crcnow.org/traffic*` and the Pages-domain equivalent, with
 only the approved email addresses in its Allow policy. The Function at
 `/traffic/data` also validates Cloudflare's signed Access token, production
 hostname, application audience, and approved email before returning analytics.
+The dashboard offers 7-, 30-, and 90-day presets, all available history since
+July 2026, and custom ranges up to 366 days. Longer requests are split into
+30-day Cloudflare GraphQL queries and combined server-side.
 
 | Binding | Type | Purpose |
 |---|---|---|
