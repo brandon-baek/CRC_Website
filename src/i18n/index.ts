@@ -97,7 +97,7 @@ export const ui = {
       contactCta: 'Contact CRC',
       noscript: 'This tool needs JavaScript. You can still find every reporting agency in our directory.',
       aiSoon: 'Prefer to type it out? Open the “Ask a question” button in the corner and describe what happened in your own words, in English or Korean.',
-      lossTitle: 'Just lost money? Do these four things first',
+      lossTitle: 'Just lost money? Do these 4 things first',
       lossIntro: 'Before anything else, protect what can still be protected. Then come back and report.',
       loss1Title: 'Call your bank or card company now',
       loss1Body: 'Ask them to freeze the card, stop or recall the transfer, and dispute the charges. Minutes matter.',
