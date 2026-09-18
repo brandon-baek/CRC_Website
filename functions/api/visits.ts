@@ -35,6 +35,10 @@ interface EventContext {
   env: Env;
 }
 
+// Owner-requested estimate for visits before tracking began, not measured analytics.
+// Add only when returning totals; the database continues storing tracked visits.
+const HISTORICAL_VISIT_ADJUSTMENT = 500;
+
 const CREATE_TABLE = `
   CREATE TABLE IF NOT EXISTS site_visits (
     id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -82,7 +86,7 @@ export const onRequestGet = async ({ env }: EventContext): Promise<Response> => 
     const count = await env.VISITOR_DB
       .prepare('SELECT count FROM site_visits WHERE id = 1')
       .first<number>('count');
-    return json({ enabled: true, count: count ?? 0 });
+    return json({ enabled: true, count: (count ?? 0) + HISTORICAL_VISIT_ADJUSTMENT });
   } catch (error) {
     console.warn('[visits] Could not read the counter.', error);
     return json({ enabled: false }, 503);
@@ -103,7 +107,7 @@ export const onRequestPost = async ({ request, env }: EventContext): Promise<Res
         RETURNING count
       `)
       .first<number>('count');
-    return json({ enabled: true, count: count ?? 0 });
+    return json({ enabled: true, count: (count ?? 0) + HISTORICAL_VISIT_ADJUSTMENT });
   } catch (error) {
     console.warn('[visits] Could not increment the counter.', error);
     return json({ enabled: false }, 503);
