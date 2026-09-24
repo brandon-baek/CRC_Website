@@ -97,7 +97,12 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
     Syndicated entertainment is excluded. These headline filters favor relevance
     and may miss some stories.
     Feed items are sorted by date and deduplicated before selecting up to eight
-    per source. Outlets' own RSS is no use here: front-page feeds from KTLA, ABC7,
+    per source. Matching headlines across newspapers appear only once, ignoring
+    differences in punctuation, quotation marks, and spacing. For duplicates,
+    build-time article image checks prefer a real photo over generic publisher
+    logos. If image status ties or cannot be checked, The Korea Times is the
+    stable fallback. Sources with no retained stories do not get empty filters.
+    Outlets' own RSS is no use here: front-page feeds from KTLA, ABC7,
     NBC LA, FOX 11, NPR and others yielded zero scam stories across 152 items,
     and their topic-tag feeds return nothing. Google's search feeds carry the
     same outlets and name the publisher per item. This is also the only route

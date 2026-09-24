@@ -1,5 +1,6 @@
 import type { Locale } from '../i18n';
 import { allowedEnglishPublishers, allowedKoreanPublishers } from './newsPublishers';
+import { deduplicateNews, headlineKey } from './newsDuplicates';
 
 /**
  * Fraud and cyber-risk news, gathered from trusted feeds at BUILD TIME and baked into
@@ -423,10 +424,7 @@ async function fetchFeed(url: string): Promise<string | null> {
 
 /** Loose key for spotting the same story twice: case, punctuation and spacing differ. */
 function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim();
+  return headlineKey(title);
 }
 
 function byDateDesc(a: NewsItem, b: NewsItem): number {
@@ -481,33 +479,10 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
     }),
   );
 
-  const items: NewsItem[] = [];
-  const liveSources: NewsSource[] = [];
-  const seenUrls = new Set<string>();
-  const seenTitles = new Set<string>();
-
-  results.forEach((result, index) => {
-    if (result.status !== 'fulfilled' || result.value.length === 0) {
-      console.warn(`[news] No items from "${newsSources[index].id}"; its tab is hidden.`);
-      return;
-    }
-    liveSources.push(newsSources[index]);
-    for (const item of result.value) {
-      // Two keys, because one story reaches us twice in different disguises:
-      // Google mints a unique redirect URL per item, so a story covered by
-      // several outlets — or caught by two of our queries — passes a URL check
-      // and still reads as a duplicate on the page.
-      // Keep each newspaper's coverage in its own filter, even if both carry
-      // the same syndicated headline. Broad agency/press feeds still dedupe.
-      const titleKey = newsSources[index].publisherDomain
-        ? `${item.sourceId}:${normalizeTitle(item.title)}`
-        : normalizeTitle(item.title);
-      if (seenUrls.has(item.url) || seenTitles.has(titleKey)) continue;
-      seenUrls.add(item.url);
-      seenTitles.add(titleKey);
-      items.push(item);
-    }
-  });
-
+  const candidates = results.flatMap((result) => result.status === 'fulfilled' ? result.value : []);
+  const items = await deduplicateNews(candidates, newsSources);
+  // A source whose only story lost a duplicate comparison must not leave an empty tab.
+  const retainedSources = new Set(items.map((item) => item.sourceId));
+  const liveSources = newsSources.filter((source) => retainedSources.has(source.id));
   return { items: items.sort(byDateDesc), liveSources };
 }
