@@ -56,41 +56,17 @@ const NATIONAL = [
   'The Wall Street Journal',
 ];
 
-/** Korean-American press. Several publish no RSS of their own but are indexed. */
+/** Only the two requested Korean-American newspapers; names observed in RSS. */
 const KOREAN_AMERICAN = [
+  'koreadaily.com',
   '미주중앙일보',
   '미주한국일보',
-  '미주조선일보',
-  '시애틀코리안데일리',
-  '한인포스트',
-  '재외동포신문',
-  '라디오코리아',
-  '동포저널',
-];
-
-/** Korea-domestic outlets, for 보이스피싱 coverage. */
-const KOREA = [
-  '연합뉴스',
-  '연합뉴스TV',
-  '동아일보',
-  '조선일보',
-  '중앙일보',
-  '한겨레',
-  '경향신문',
-  '뉴스1',
-  '한국경제',
-  '매일경제',
-  '머니투데이',
-  '파이낸셜뉴스',
-  '서울경제',
-  'KBS',
-  'MBC',
-  'SBS',
-  'YTN',
+  '미주한국일보 - 워싱턴 DC',
+  '한국일보 - 뉴욕',
 ];
 
 /** English-language coverage: local first, then national. */
 export const allowedEnglishPublishers = new Set([...LOCAL, ...NATIONAL]);
 
-/** Korean-language coverage, community papers and Korean outlets alike. */
-export const allowedKoreanPublishers = new Set([...KOREAN_AMERICAN, ...KOREA]);
+/** Korean-American newspapers, checked against each feed's publisher domain. */
+export const allowedKoreanPublishers = new Set(KOREAN_AMERICAN);

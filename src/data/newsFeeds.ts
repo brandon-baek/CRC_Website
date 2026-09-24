@@ -42,6 +42,10 @@ export interface NewsSource {
    * consumer scam page. If the headline is not about fraud, neither is the item.
    */
   keywords?: RegExp;
+  /** Require a US/community cue for Korean-American coverage. */
+  requiredKeywords?: RegExp;
+  /** Exclude syndicated entertainment headlines. */
+  excludeKeywords?: RegExp;
   /** Whether to show the feed's own summary text under the headline. */
   showSummary?: boolean;
   /** Items link to a PDF rather than a web page. */
@@ -59,6 +63,8 @@ export interface NewsSource {
    * and this page is about whom to trust. See src/data/newsPublishers.ts.
    */
   allowPublishers?: Set<string>;
+  /** Validate the RSS publisher URL as well as its display name. */
+  publisherDomain?: string;
   /** Language of the items, for the lang/hreflang attributes on each link. */
   lang?: Locale;
 }
@@ -78,8 +84,8 @@ export interface NewsItem {
  * Build a Google News search feed URL.
  *
  * `hl`/`gl`/`ceid` together decide both the interface language and which
- * edition is searched, which is how the same mechanism reaches Korean-American
- * papers (`gl=US`, `hl=ko`) and Korean domestic ones (`gl=KR`).
+ * edition is searched. The two Korean-American papers use the US edition and
+ * explicit site restrictions, with publisher domains verified during parsing.
  */
 function googleNews(query: string, hl: string, gl: string): string {
   return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${hl}&gl=${gl}&ceid=${gl}:${hl.split('-')[0]}`;
@@ -102,7 +108,12 @@ const FRAUD_TERMS =
  * consumer-fraud page when this was tried the obvious way. Match compounds.
  */
 const KO_FRAUD_TERMS =
-  /보이스피싱|스미싱|피싱|사기범|사기단|사기[\s·]?혐의|사기[\s·]?피해|사기[\s·]?사건|사기[\s·]?행각|금융[\s·]?사기|투자[\s·]?사기|전화[\s·]?사기|보험[\s·]?사기|중고[\s·]?거래[\s·]?사기|로맨스[\s·]?스캠|사칭|먹튀/;
+  /보이스피싱|스미싱|피싱|사기범|사기단|사기당|사기[\s·]?혐의|사기[\s·]?피해|사기[\s·]?사건|사기[\s·]?행각|금융[\s·]?사기|투자[\s·]?사기|전화[\s·]?사기|보험[\s·]?사기|중고[\s·]?거래[\s·]?사기|로맨스[\s·]?스캠|사칭|먹튀|신분[\s·]?도용|바가지|(?:^|[^\p{L}\p{N}])사기(?=$|[\s·….,!?])/u;
+
+// These US papers also syndicate overseas news. Keep community and consumer
+// headlines; this deliberately favors relevance over filling every available row.
+const KO_COMMUNITY_TERMS = /한인|미국|미주|북미|캘리포니아|가주|LA\b|뉴욕|뉴저지|워싱턴|텍사스|시카고|연방|달러|\d[\d,.]*\s*만?불|401\s*\(?k|메디케어|소셜|이민|공관|배심원|재산세|납세자|신용카드|차고문/i;
+const KO_ENTERTAINMENT_TERMS = /Oh!|오!쎈|연예|소속사|드라마|예능|방송작가|병역\s*기피/i;
 
 export const newsSources: NewsSource[] = [
   {
@@ -189,25 +200,29 @@ export const newsSources: NewsSource[] = [
     lang: 'en',
   },
   {
-    id: 'news-korean',
-    label: { en: 'Korean-American press', ko: '한인 뉴스' },
-    // Reaches 미주중앙일보 and 시애틀코리안데일리, which publish no RSS of their
-    // own — Google indexes them, which is why this route exists at all.
-    urls: [googleNews('한인 사기 OR 한인 보이스피싱 OR 한인 피싱', 'ko', 'US')],
-    homepage: 'https://news.google.com/search?q=%ED%95%9C%EC%9D%B8%20%EC%82%AC%EA%B8%B0&hl=ko',
+    id: 'news-koreadaily',
+    label: { en: 'Korea Daily', ko: '미주중앙일보' },
+    urls: [googleNews('site:koreadaily.com 사기', 'ko', 'US')],
+    homepage: 'https://www.koreadaily.com/',
     publisherPerItem: true,
     allowPublishers: allowedKoreanPublishers,
+    publisherDomain: 'koreadaily.com',
     keywords: KO_FRAUD_TERMS,
+    requiredKeywords: KO_COMMUNITY_TERMS,
+    excludeKeywords: KO_ENTERTAINMENT_TERMS,
     lang: 'ko',
   },
   {
-    id: 'news-korea',
-    label: { en: 'Korean press', ko: '한국 뉴스' },
-    urls: [googleNews('보이스피싱 OR 전화금융사기', 'ko', 'KR')],
-    homepage: 'https://news.google.com/search?q=%EB%B3%B4%EC%9D%B4%EC%8A%A4%ED%94%BC%EC%8B%B1&hl=ko',
+    id: 'news-koreatimes',
+    label: { en: 'The Korea Times (US)', ko: '미주한국일보' },
+    urls: [googleNews('site:koreatimes.com (사기 OR 피싱 OR 사칭 OR 스캠 OR 신분도용) (미국 OR 한인 OR LA OR 캘리포니아 OR 연방) -연예 -스포츠 when:180d', 'ko', 'US')],
+    homepage: 'https://www.koreatimes.com/',
     publisherPerItem: true,
     allowPublishers: allowedKoreanPublishers,
+    publisherDomain: 'koreatimes.com',
     keywords: KO_FRAUD_TERMS,
+    requiredKeywords: KO_COMMUNITY_TERMS,
+    excludeKeywords: KO_ENTERTAINMENT_TERMS,
     lang: 'ko',
   },
   /*
@@ -293,12 +308,23 @@ export function parseFeed(xml: string, source: NewsSource, limit: number): NewsI
       // The allowlist is the whole point of this branch: without it Google
       // hands us corporate blogs and content farms alongside the newspapers.
       if (!publisher || !source.allowPublishers?.has(publisher)) continue;
+      if (source.publisherDomain) {
+        const sourceUrl = block.match(/<source\b[^>]*\burl=["']([^"']+)["']/i)?.[1];
+        try {
+          const hostname = new URL(decodeEntities(sourceUrl ?? '')).hostname.toLowerCase();
+          if (hostname !== source.publisherDomain && !hostname.endsWith('.' + source.publisherDomain)) continue;
+        } catch {
+          continue;
+        }
+      }
       // Google appends " - Publisher" to every headline. Match on the known
       // publisher name rather than the last dash — headlines contain dashes.
       // Looped, because an outlet that already signs its own headline ends up
       // with the suffix twice and one pass leaves the other showing.
       const suffix = ` - ${publisher}`;
       while (title.endsWith(suffix)) title = title.slice(0, -suffix.length).trim();
+      // Use the newspaper's name rather than Google's hostname-style branding.
+      if (source.publisherDomain) publisher = source.label.ko;
     }
 
     let url: string | null = null;
@@ -316,6 +342,8 @@ export function parseFeed(xml: string, source: NewsSource, limit: number): NewsI
     if (!url || !title) continue;
 
     if (source.keywords && !source.keywords.test(title)) continue;
+    if (source.requiredKeywords && !source.requiredKeywords.test(title)) continue;
+    if (source.excludeKeywords?.test(title)) continue;
 
     const summary = clean(tagContent(block, 'description'));
 
@@ -428,10 +456,17 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
       const documents = await Promise.all(source.urls.map(fetchFeed));
       const items: NewsItem[] = [];
       for (const xml of documents) {
-        if (xml) items.push(...parseFeed(xml, source, perSource));
+        if (xml) items.push(...parseFeed(xml, source, Number.POSITIVE_INFINITY));
       }
       // Merged feeds (IC3) can exceed the cap once combined.
-      return items.sort(byDateDesc).slice(0, perSource);
+      // Google ranks by relevance. Sort and deduplicate before limiting rows.
+      const seen = new Set<string>();
+      return items.sort(byDateDesc).filter((item) => {
+        const key = normalizeTitle(item.title);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, perSource);
     }),
   );
 

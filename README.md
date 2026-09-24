@@ -88,12 +88,18 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
   - **Agencies**, each its own feed: FTC consumer alerts, FTC press, CFPB,
     FBI IC3, FBI press.
   - **Press coverage**, via Google News search feeds — LA/California scam
-    stories, national consumer warnings, the Korean-American papers, and Korean
-    outlets. Outlets' own RSS is no use here: front-page feeds from KTLA, ABC7,
+    stories, national consumer warnings, and the Korean-American newspapers
+    **Korea Daily (koreadaily.com)** and **The Korea Times (koreatimes.com)**.
+    Each Korean-American newspaper has its own filter and homepage link. Its
+    RSS publisher domain and name are checked, and headlines must concern fraud
+    or consumer protection with a US/community cue; syndicated entertainment is
+    excluded. These headline filters favor relevance and may miss some stories.
+    Feed items are sorted by date and deduplicated before selecting up to eight
+    per source. Outlets' own RSS is no use here: front-page feeds from KTLA, ABC7,
     NBC LA, FOX 11, NPR and others yielded zero scam stories across 152 items,
     and their topic-tag feeds return nothing. Google's search feeds carry the
     same outlets and name the publisher per item. This is also the only route
-    that reaches 미주중앙일보 and 시애틀코리안데일리, which publish no feed at all.
+    used here for 미주중앙일보 and 미주한국일보.
     Each item shows the outlet's own name; **links pass through Google's
     redirector** before landing on the publisher's article.
   - Press items are filtered twice: the outlet must be listed in
