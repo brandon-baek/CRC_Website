@@ -319,7 +319,7 @@ export const ui = {
       learn: '사기 예방 교육',
       learnShort: '예방 교육',
       news: '사기 소식',
-      newsShort: '소식',
+      newsShort: '최신뉴스',
       about: '센터 소개',
       aboutShort: '소개',
       contact: '문의하기',
