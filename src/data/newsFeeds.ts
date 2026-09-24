@@ -2,7 +2,7 @@ import type { Locale } from '../i18n';
 import { allowedEnglishPublishers, allowedKoreanPublishers } from './newsPublishers';
 
 /**
- * Fraud news, gathered from several trusted feeds at BUILD TIME and baked into
+ * Fraud and cyber-risk news, gathered from trusted feeds at BUILD TIME and baked into
  * the static News page. Rebuild (or redeploy) to refresh — Cloudflare Pages
  * rebuilds on every push, and a scheduled deploy hook keeps it fresher.
  *
@@ -42,7 +42,7 @@ export interface NewsSource {
    * consumer scam page. If the headline is not about fraud, neither is the item.
    */
   keywords?: RegExp;
-  /** Require a US/community cue for Korean-American coverage. */
+  /** Secondary relevance check, such as community context or cyber risk. */
   requiredKeywords?: RegExp;
   /** Exclude syndicated entertainment headlines. */
   excludeKeywords?: RegExp;
@@ -114,6 +114,17 @@ const KO_FRAUD_TERMS =
 // headlines; this deliberately favors relevance over filling every available row.
 const KO_COMMUNITY_TERMS = /한인|미국|미주|북미|캘리포니아|가주|LA\b|뉴욕|뉴저지|워싱턴|텍사스|시카고|연방|달러|\d[\d,.]*\s*만?불|401\s*\(?k|메디케어|소셜|이민|공관|배심원|재산세|납세자|신용카드|차고문/i;
 const KO_ENTERTAINMENT_TERMS = /Oh!|오!쎈|연예|소속사|드라마|예능|방송작가|병역\s*기피/i;
+
+// Hacking and stolen personal/account data can enable identity theft and scams,
+// even when a headline does not yet mention fraud or a US location. Do not
+// match a bare "유출" or "탈취": those also describe product leaks and trade disputes.
+const KO_CYBER_TERMS = /해킹|해커|랜섬웨어|악성코드|피싱|(?:개인|신상|고객|회원|계정|금융|카드|결제)\s*(?:정보|데이터)(?:가|를|의)?\s*(?:유출|탈취|도용)|(?:계정|비밀번호|패스워드)\s*(?:정보\s*)?(?:유출|탈취|도용)/i;
+const KO_NEWS_TERMS = new RegExp(`${KO_FRAUD_TERMS.source}|${KO_CYBER_TERMS.source}`, 'iu');
+const KO_COMMUNITY_OR_CYBER_TERMS = new RegExp(`${KO_COMMUNITY_TERMS.source}|${KO_CYBER_TERMS.source}`, 'i');
+
+function koreanCyberFeed(domain: string): string {
+  return googleNews(`site:${domain} (해킹 OR 해커 OR 개인정보 유출 OR 정보유출 OR 랜섬웨어 OR 계정 탈취) when:180d`, 'ko', 'US');
+}
 
 export const newsSources: NewsSource[] = [
   {
@@ -202,26 +213,26 @@ export const newsSources: NewsSource[] = [
   {
     id: 'news-koreadaily',
     label: { en: 'Korea Daily', ko: '미주중앙일보' },
-    urls: [googleNews('site:koreadaily.com 사기', 'ko', 'US')],
+    urls: [googleNews('site:koreadaily.com 사기', 'ko', 'US'), koreanCyberFeed('koreadaily.com')],
     homepage: 'https://www.koreadaily.com/',
     publisherPerItem: true,
     allowPublishers: allowedKoreanPublishers,
     publisherDomain: 'koreadaily.com',
-    keywords: KO_FRAUD_TERMS,
-    requiredKeywords: KO_COMMUNITY_TERMS,
+    keywords: KO_NEWS_TERMS,
+    requiredKeywords: KO_COMMUNITY_OR_CYBER_TERMS,
     excludeKeywords: KO_ENTERTAINMENT_TERMS,
     lang: 'ko',
   },
   {
     id: 'news-koreatimes',
     label: { en: 'The Korea Times (US)', ko: '미주한국일보' },
-    urls: [googleNews('site:koreatimes.com (사기 OR 피싱 OR 사칭 OR 스캠 OR 신분도용) (미국 OR 한인 OR LA OR 캘리포니아 OR 연방) -연예 -스포츠 when:180d', 'ko', 'US')],
+    urls: [googleNews('site:koreatimes.com (사기 OR 피싱 OR 사칭 OR 스캠 OR 신분도용) (미국 OR 한인 OR LA OR 캘리포니아 OR 연방) -연예 -스포츠 when:180d', 'ko', 'US'), koreanCyberFeed('koreatimes.com')],
     homepage: 'https://www.koreatimes.com/',
     publisherPerItem: true,
     allowPublishers: allowedKoreanPublishers,
     publisherDomain: 'koreatimes.com',
-    keywords: KO_FRAUD_TERMS,
-    requiredKeywords: KO_COMMUNITY_TERMS,
+    keywords: KO_NEWS_TERMS,
+    requiredKeywords: KO_COMMUNITY_OR_CYBER_TERMS,
     excludeKeywords: KO_ENTERTAINMENT_TERMS,
     lang: 'ko',
   },
@@ -486,7 +497,11 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
       // Google mints a unique redirect URL per item, so a story covered by
       // several outlets — or caught by two of our queries — passes a URL check
       // and still reads as a duplicate on the page.
-      const titleKey = normalizeTitle(item.title);
+      // Keep each newspaper's coverage in its own filter, even if both carry
+      // the same syndicated headline. Broad agency/press feeds still dedupe.
+      const titleKey = newsSources[index].publisherDomain
+        ? `${item.sourceId}:${normalizeTitle(item.title)}`
+        : normalizeTitle(item.title);
       if (seenUrls.has(item.url) || seenTitles.has(titleKey)) continue;
       seenUrls.add(item.url);
       seenTitles.add(titleKey);

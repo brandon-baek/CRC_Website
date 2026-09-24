@@ -153,7 +153,7 @@ export const ui = {
       pageTitle: 'Fraud News & Alerts',
       pageLede: 'The newest scam alerts from federal agencies and reporting from news outlets here and in the Korean-American community, plus announcements from the Consumer Resource Center.',
       feedTitle: 'Latest fraud alerts and coverage',
-      feedLede: 'U.S. agency alerts and scam reporting, including Korean-American coverage from Korea Daily and The Korea Times. Filter by source to find news for your community.',
+      feedLede: 'U.S. agency alerts and reporting on scams, hacking, and data breaches, including Korean-American coverage from Korea Daily and The Korea Times. Filter by source to find news for your community.',
       /* Korean only: most sources here publish in English. */
       englishNote: '',
       filterLabel: 'Filter by source',
@@ -447,7 +447,7 @@ export const ui = {
       pageTitle: '사기 소식과 주의보',
       pageLede: '미국 연방 소비자 보호 기관과 수사기관이 알리는 최신 사기 주의보와, 한인시민센터 소식을 함께 전해드립니다.',
       feedTitle: '최신 사기 주의보와 관련 보도',
-      feedLede: '미국 기관의 주의보와 사기 관련 보도, 미주중앙일보·미주한국일보의 한인사회 소식을 함께 모았습니다. 출처별로 골라 보세요.',
+      feedLede: '미국 기관의 주의보와 사기·해킹·개인정보 유출 관련 보도, 미주중앙일보·미주한국일보의 한인사회 소식을 함께 모았습니다. 출처별로 골라 보세요.',
       englishNote: '미주중앙일보·미주한국일보 기사는 한국어이며, 미국 기관과 영어권 언론 기사는 영어입니다.',
       filterLabel: '기관별로 보기',
       all: '전체',

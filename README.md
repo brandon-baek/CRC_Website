@@ -91,9 +91,11 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
     stories, national consumer warnings, and the Korean-American newspapers
     **Korea Daily (koreadaily.com)** and **The Korea Times (koreatimes.com)**.
     Each Korean-American newspaper has its own filter and homepage link. Its
-    RSS publisher domain and name are checked, and headlines must concern fraud
-    or consumer protection with a US/community cue; syndicated entertainment is
-    excluded. These headline filters favor relevance and may miss some stories.
+    RSS publisher domain and name are checked. Headlines cover fraud or consumer
+    protection with a US/community cue, plus hacking, personal-data breaches,
+    account theft, malware, and ransomware even without a location in the title.
+    Syndicated entertainment is excluded. These headline filters favor relevance
+    and may miss some stories.
     Feed items are sorted by date and deduplicated before selecting up to eight
     per source. Outlets' own RSS is no use here: front-page feeds from KTLA, ABC7,
     NBC LA, FOX 11, NPR and others yielded zero scam stories across 152 items,
