@@ -221,7 +221,7 @@ export const ui = {
         { day: 'Mon–Thu', time: '10:00 AM – 3:00 PM' },
         { day: 'Sat', time: '1:00 PM – 3:00 PM' },
       ],
-      hoursClosed: 'Closed Friday and Sunday.',
+      hoursClosed: 'By appointment only. Closed Friday and Sunday.',
     },
     intake: {
       title: 'Talk to someone',
@@ -514,7 +514,7 @@ export const ui = {
         { day: '월–목', time: '10:00 AM – 3:00 PM' },
         { day: '토', time: '1:00 PM – 3:00 PM' },
       ],
-      hoursClosed: '금요일과 일요일은 쉽니다.',
+      hoursClosed: '사전 예약 필수. 금요일과 일요일은 쉽니다.',
     },
     intake: {
       title: '상담 요청하기',
