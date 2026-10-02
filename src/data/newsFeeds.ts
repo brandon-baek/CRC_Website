@@ -240,7 +240,7 @@ export const newsSources: NewsSource[] = [
   {
     id: 'news-radiokorea',
     label: { en: 'Radio Korea', ko: '라디오코리아' },
-    urls: [googleNews('site:radiokorea.com (사기 OR 피싱 OR 사칭 OR 스캠 OR 신분도용) when:180d', 'ko', 'US'), koreanCyberFeed('radiokorea.com')],
+    urls: [googleNews('site:radiokorea.com 사기', 'ko', 'US'), googleNews('site:radiokorea.com (사기 OR 피싱 OR 사칭 OR 스캠 OR 신분도용) when:180d', 'ko', 'US'), koreanCyberFeed('radiokorea.com')],
     homepage: 'https://www.radiokorea.com/news/',
     publisherPerItem: true,
     allowPublishers: allowedKoreanPublishers,
