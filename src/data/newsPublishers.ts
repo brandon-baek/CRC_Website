@@ -56,13 +56,17 @@ const NATIONAL = [
   'The Wall Street Journal',
 ];
 
-/** Only the two requested Korean-American newspapers; names observed in RSS. */
+/** Requested Korean-American outlets; names observed in RSS. */
 const KOREAN_AMERICAN = [
   'koreadaily.com',
   '미주중앙일보',
   '미주한국일보',
+  'koreatimes.com',
+  'la.koreatimes.com',
   '미주한국일보 - 워싱턴 DC',
+  '미주한국일보 - 뉴욕',
   '한국일보 - 뉴욕',
+  '라디오코리아',
 ];
 
 /** English-language coverage: local first, then national. */

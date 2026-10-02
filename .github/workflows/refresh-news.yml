@@ -1,0 +1,61 @@
+name: Refresh news
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/refresh-news.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-news
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Request a fresh Cloudflare Pages build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          node --input-type=module <<'NODE'
+          const root = `https://api.github.com/repos/${process.env.GH_REPO}`;
+          async function api(path, method = 'GET', body) {
+            const response = await fetch(root + path, {
+              method,
+              headers: {
+                Authorization: `Bearer ${process.env.GH_TOKEN}`,
+                Accept: 'application/vnd.github+json',
+                'Content-Type': 'application/json',
+                'X-GitHub-Api-Version': '2022-11-28',
+              },
+              body: body === undefined ? undefined : JSON.stringify(body),
+              signal: AbortSignal.timeout(30000),
+            });
+            if (!response.ok) throw new Error(`${method} ${path}: HTTP ${response.status}`);
+            return response.json();
+          }
+          // A real file change triggers the existing Cloudflare Git integration.
+          // Read main immediately before writing; never force over a concurrent edit.
+          const parent = await api('/commits/main');
+          const refreshedAt = new Date().toISOString();
+          const tree = await api('/git/trees', 'POST', {
+            base_tree: parent.commit.tree.sha,
+            tree: [{ path: 'public/news-refresh.json', mode: '100644', type: 'blob',
+              content: JSON.stringify({ refreshedAt }) + '\n' }],
+          });
+          const commit = await api('/git/commits', 'POST', {
+            message: `Refresh news feeds (${refreshedAt})`,
+            tree: tree.sha,
+            parents: [parent.sha],
+          });
+          await api('/git/refs/heads/main', 'PATCH', { sha: commit.sha, force: false });
+          console.log(`Requested news refresh: ${commit.sha}`);
+          NODE

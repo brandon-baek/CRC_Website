@@ -84,13 +84,21 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
 - The News page gathers everything **at build time** and bakes it into static
   HTML, so the page stays fast and has no runtime dependency on any source. It
   refreshes on every deploy, and readers filter by source with the chip row.
+  `.github/workflows/refresh-news.yml` requests a new build every six hours
+  (00:17, 06:17, 12:17, 18:17 UTC), and can also be run manually in Actions.
+  It updates `public/news-refresh.json` using the repository's built-in token;
+  the existing Cloudflare Git integration then fetches and republishes the feeds.
+  The workflow never force-pushes. GitHub may delay scheduled runs; monitor Actions
+  and the Cloudflare Pages check for failures. Feed freshness also depends on
+  Google's indexing and each publisher's availability.
   Two kinds of source feed it:
   - **Agencies**, each its own feed: FTC consumer alerts, FTC press, CFPB,
     FBI IC3, FBI press.
   - **Press coverage**, via Google News search feeds — LA/California scam
     stories, national consumer warnings, and the Korean-American newspapers
-    **Korea Daily (koreadaily.com)** and **The Korea Times (koreatimes.com)**.
-    Each Korean-American newspaper has its own filter and homepage link. Its
+    **Korea Daily (koreadaily.com)**, **The Korea Times (koreatimes.com)**, and
+    **Radio Korea (radiokorea.com)**.
+    Each Korean-American outlet has its own filter and homepage link. Its
     RSS publisher domain and name are checked. Headlines cover fraud or consumer
     protection with a US/community cue, plus hacking, personal-data breaches,
     account theft, malware, and ransomware even without a location in the title.
@@ -106,7 +114,7 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
     NBC LA, FOX 11, NPR and others yielded zero scam stories across 152 items,
     and their topic-tag feeds return nothing. Google's search feeds carry the
     same outlets and name the publisher per item. This is also the only route
-    used here for 미주중앙일보 and 미주한국일보.
+    used here for 미주중앙일보, 미주한국일보, and 라디오코리아.
     Each item shows the outlet's own name; **links pass through Google's
     redirector** before landing on the publisher's article.
   - Press items are filtered twice: the outlet must be listed in

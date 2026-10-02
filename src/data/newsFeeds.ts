@@ -5,7 +5,7 @@ import { deduplicateNews, headlineKey } from './newsDuplicates';
 /**
  * Fraud and cyber-risk news, gathered from trusted feeds at BUILD TIME and baked into
  * the static News page. Rebuild (or redeploy) to refresh — Cloudflare Pages
- * rebuilds on every push, and a scheduled deploy hook keeps it fresher.
+ * rebuilds on every push; refresh-news.yml triggers a refresh every six hours.
  *
  * Two kinds of source feed this page:
  *   - Government agencies, each its own feed (FTC, CFPB, FBI).
@@ -85,7 +85,7 @@ export interface NewsItem {
  * Build a Google News search feed URL.
  *
  * `hl`/`gl`/`ceid` together decide both the interface language and which
- * edition is searched. The two Korean-American papers use the US edition and
+ * edition is searched. The Korean-American outlets use the US edition and
  * explicit site restrictions, with publisher domains verified during parsing.
  */
 function googleNews(query: string, hl: string, gl: string): string {
@@ -232,6 +232,19 @@ export const newsSources: NewsSource[] = [
     publisherPerItem: true,
     allowPublishers: allowedKoreanPublishers,
     publisherDomain: 'koreatimes.com',
+    keywords: KO_NEWS_TERMS,
+    requiredKeywords: KO_COMMUNITY_OR_CYBER_TERMS,
+    excludeKeywords: KO_ENTERTAINMENT_TERMS,
+    lang: 'ko',
+  },
+  {
+    id: 'news-radiokorea',
+    label: { en: 'Radio Korea', ko: '라디오코리아' },
+    urls: [googleNews('site:radiokorea.com (사기 OR 피싱 OR 사칭 OR 스캠 OR 신분도용) when:180d', 'ko', 'US'), koreanCyberFeed('radiokorea.com')],
+    homepage: 'https://www.radiokorea.com/news/',
+    publisherPerItem: true,
+    allowPublishers: allowedKoreanPublishers,
+    publisherDomain: 'radiokorea.com',
     keywords: KO_NEWS_TERMS,
     requiredKeywords: KO_COMMUNITY_OR_CYBER_TERMS,
     excludeKeywords: KO_ENTERTAINMENT_TERMS,
