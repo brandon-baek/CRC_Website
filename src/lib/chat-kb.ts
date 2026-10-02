@@ -142,7 +142,7 @@ export function buildKb(locale: Locale): ChatKb {
   const visiting = [
     `${d.contact.officeLabel}: ${orgAddress}.`,
     `${d.contact.phone}: ${org.phoneDisplay}.`,
-    `${d.contact.hoursLabel}: ${hours}. ${d.contact.hoursClosed}`,
+    `${d.contact.hoursLabel}: ${hours}. ${d.contact.appointmentOnly} ${d.contact.hoursClosed}`,
   ].join(' ');
 
   /* ---------- Site pages (navigation intents) ---------- */
