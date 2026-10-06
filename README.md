@@ -89,6 +89,10 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
   table with topic filters, source selection, search, and a show-more button.
   Article photos are used when available; topic illustrations cover missing or
   failed images. All table rows remain accessible without JavaScript.
+  Builds retain recent stories from the last public `/news-feed.json` snapshot
+  (with a checked-in seed as a backup) so a temporary source failure does not
+  empty the page. Original publication dates stay visible; retained items expire
+  after 180 days. Newly fetched versions take precedence over saved headlines.
   `.github/workflows/refresh-news.yml` requests a new build every six hours
   (00:17, 06:17, 12:17, 18:17 UTC), and can also be run manually in Actions.
   It updates `public/news-refresh.json` using the repository's built-in token;

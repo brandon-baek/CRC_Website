@@ -2,6 +2,8 @@ import type { Locale } from '../i18n';
 import { allowedEnglishPublishers, allowedKoreanPublishers } from './newsPublishers';
 import { deduplicateNews, headlineKey } from './newsDuplicates';
 import { fetchRadioKorea } from './radioKorea';
+import fallbackNews from './newsFallback.json';
+import { retainedNews } from './newsHistory';
 
 /**
  * Fraud and cyber-risk news, gathered from trusted feeds at BUILD TIME and baked into
@@ -474,6 +476,12 @@ export function fetchAllNews(perSource = 8): Promise<NewsFeedResult> {
 }
 
 async function gatherNews(perSource: number): Promise<NewsFeedResult> {
+  // Preserve recent stories if a publisher or Google temporarily fails at build time.
+  let previous = retainedNews(fallbackNews, newsSources);
+  try {
+    const response = await fetch('https://crcnow.org/news-feed.json', { signal: AbortSignal.timeout(8000) });
+    if (response.ok) previous = [...retainedNews(await response.json(), newsSources), ...previous];
+  } catch { /* The checked-in snapshot also supports the first deploy and offline builds. */ }
   const results = await Promise.allSettled(
     newsSources.map(async (source) => {
       const [documents, direct] = await Promise.all([
@@ -485,6 +493,8 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
       for (const xml of documents) {
         if (xml) items.push(...parseFeed(xml, source, Number.POSITIVE_INFINITY).filter((item) => !directTitles.has(normalizeTitle(item.title))));
       }
+      const currentTitles = new Set(items.map((item) => normalizeTitle(item.title)));
+      items.push(...previous.filter((item) => item.sourceId === source.id && !currentTitles.has(normalizeTitle(item.title))));
       // Merged feeds (IC3) can exceed the cap once combined.
       // Google ranks by relevance. Sort and deduplicate before limiting rows.
       const seen = new Set<string>();

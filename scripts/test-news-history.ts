@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { retainedNews } from '../src/data/newsHistory.ts';
+import type { NewsSource } from '../src/data/newsFeeds.ts';
+const sources: NewsSource[] = [{ id: 'radio', label: { en: 'Radio', ko: '라디오' }, urls: [], homepage: 'https://www.radiokorea.com/news/', publisherDomain: 'radiokorea.com', publisherPerItem: true }];
+const now = Date.parse('2026-10-06T12:00:00Z');
+const item = { sourceId: 'radio', title: 'Scam warning', url: 'https://www.radiokorea.com/news/article.php?uid=505899', date: '2026-10-05T18:17:00Z', summary: '' };
+assert.deepEqual(retainedNews({ items: [item] }, sources, now), [item]);
+for (const patch of [{ date: '2025-01-01' }, { date: 'invalid' }, { date: '2027-01-01' }, { sourceId: 'unknown' }, { url: 'javascript:alert(1)' }, { url: 'https://radiokorea.com.evil.example/a' }, { url: 'https://user:pass@radiokorea.com/a' }]) assert.equal(retainedNews({ items: [{ ...item, ...patch }] }, sources, now).length, 0);
+assert.deepEqual(retainedNews(null, sources, now), []);
+assert.equal(retainedNews({ items: [null, item] }, sources, now).length, 1);
+console.log('PASS: original dates retained; expired, future, malformed, unknown-source and unsafe-link items rejected.');
