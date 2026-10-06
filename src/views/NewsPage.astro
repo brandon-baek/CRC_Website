@@ -1,210 +1,125 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
-import { t, localePath, type Locale } from '../i18n';
-import { fetchAllNews, type NewsSource } from '../data/newsFeeds';
+import { t, type Locale } from '../i18n';
+import { fetchAllNews, newsSources } from '../data/newsFeeds';
+import { featuredArticleImage } from '../data/newsDuplicates';
+import { localizedNews, featuredNews, newsTopic, newsTopics } from '../data/newsPresentation';
 import { sortedPressPosts } from '../data/press';
-
-interface Props {
-  locale: Locale;
-}
+import '../styles/news.css';
+interface Props { locale: Locale; }
 const { locale } = Astro.props;
-const dict = t(locale);
-
-// Fetched once at build time; see src/data/newsFeeds.ts.
-const { items: allItems, liveSources } = await fetchAllNews();
-
-const sourceById = new Map<string, NewsSource>(liveSources.map((s) => [s.id, s]));
-
-/*
- * The reader's own language first, then everything else, each still newest
- * first. Sorting purely by date put four Korean headlines in the first eight on
- * the English page — the Korean outlets simply publish more often — which is a
- * poor greeting for a reader who cannot read them. Nothing is hidden: the other
- * language is further down the same list, and its chips filter straight to it.
- */
-const items = [...allItems].sort((a, b) => {
-  const aOwn = (sourceById.get(a.sourceId)?.lang ?? 'en') === locale ? 0 : 1;
-  const bOwn = (sourceById.get(b.sourceId)?.lang ?? 'en') === locale ? 0 : 1;
-  if (aOwn !== bOwn) return aOwn - bOwn;
-  if (a.date && b.date) return b.date.localeCompare(a.date);
-  return a.date ? -1 : b.date ? 1 : 0;
-});
-
-const dateFormat = new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
+const copy = t(locale).news;
+const { items: allItems } = await fetchAllNews();
+const items = localizedNews(allItems, newsSources, locale);
+const sourceById = new Map(newsSources.map((source) => [source.id, source]));
+const sources = newsSources.filter((source) => items.some((item) => item.sourceId === source.id));
+const availableTopics = newsTopics.filter((topic) => items.some((item) => newsTopic(item.title).id === topic.id));
+const featured = featuredNews(items);
+const images = await Promise.all(featured.map((item) => featuredArticleImage(item, sourceById.get(item.sourceId)!)));
+const moreHeadlines = items.filter((item) => !featured.includes(item)).slice(0, 4);
+const dateFormat = new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 const formatDate = (iso: string) => dateFormat.format(new Date(iso));
-const initialVisible = 8;
+const sourceName = (item: typeof items[number]) => item.publisher ?? sourceById.get(item.sourceId)?.label[locale];
 ---
-<Base
-  locale={locale}
-  title={dict.news.pageTitle}
-  description={dict.news.pageLede}
-  path="/news"
->
-  <!-- 1. Header -->
-  <section class="section warm tight">
-    <div class="container">
-      <div class="section-head" style="margin-bottom:0;">
-        <h1>{dict.news.pageTitle}</h1>
-        <p class="muted mt-2" style="font-size:var(--fs-md);">{dict.news.pageLede}</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 2. Agency feeds, filterable by source -->
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <h2>{dict.news.feedTitle}</h2>
-        <p class="muted mt-1" style="font-size:var(--fs-sm);">
-          {dict.news.feedLede}
-          {/* Only set on the Korean page: these articles are all in English. */}
-          {dict.news.englishNote && <> <span>{dict.news.englishNote}</span></>}
-        </p>
-      </div>
-
-      {items.length > 0 ? (
-        <>
-          <div class="dir-chips news-filters" role="group" aria-label={dict.news.filterLabel}>
-            <button type="button" class="chip" data-source="" aria-pressed="true">
-              {dict.news.all}
-            </button>
-            {liveSources.map((source) => (
-              <button type="button" class="chip" data-source={source.id} aria-pressed="false">
-                {source.label[locale]}
-              </button>
-            ))}
+<Base locale={locale} title={copy.pageTitle} description={copy.pageLede} path="/news">
+  <section class="section crc-news-top"><div class="container">
+    <header class="crc-news-heading"><h1>{copy.pageTitle}</h1><span class="crc-news-rule" aria-hidden="true"></span><p class="muted">{copy.feedLede}</p></header>
+    {items.length > 0 ? <div class="crc-news-feature-grid">
+      {featured.map((item, index) => {
+        const topic = newsTopic(item.title);
+        return <article class="crc-news-card">
+          <div class={`crc-news-art topic-${topic.id}`} aria-hidden="true">
+            <Icon name={topic.icon} size={66} />
+            {images[index] && <img src={images[index]!} alt="" width="600" height="340" loading="lazy" referrerpolicy="no-referrer" data-news-photo />}
+            <span class="crc-news-topic">{topic[locale]}</span>
           </div>
+          <div class="crc-news-card-body">
+            <h2><a href={item.url} target="_blank" rel="noopener noreferrer" lang={locale} hreflang={locale}>{item.title}</a></h2>
+            <p class="crc-news-card-note">{copy.readAt.replace('{source}', sourceName(item) ?? '')}</p>
+            <div class="crc-news-card-meta"><span>{sourceName(item)}</span>{item.date && <time datetime={item.date}>{formatDate(item.date)}</time>}</div>
+          </div>
+        </article>;
+      })}
+      {moreHeadlines.length > 0 && <aside class="crc-news-sidebar" aria-labelledby="more-headlines-title">
+        <h2 id="more-headlines-title">{copy.moreHeadlines}</h2><ol>
+          {moreHeadlines.map((item, index) => <li><span class="crc-news-number" aria-hidden="true">{index + 1}</span><div>
+            <a href={item.url} target="_blank" rel="noopener noreferrer" lang={locale}>{item.title}</a>
+            <p>{sourceName(item)}{item.date && <> · <time datetime={item.date}>{formatDate(item.date)}</time></>}</p>
+          </div></li>)}
+        </ol>
+      </aside>}
+    </div> : <div class="notice"><Icon name="alert" /><p>{copy.empty}</p></div>}
+  </div></section>
 
-          <p
-            class="dir-count mt-2"
-            id="news-count"
-            aria-live="polite"
-            data-template={dict.news.showing}
-          >
-            {dict.news.showing.replace('{n}', String(Math.min(initialVisible, items.length))).replace('{total}', String(items.length))}
-          </p>
-
-          <ul class="news-list" id="news-list">
-            {items.map((item, index) => {
-              const source = sourceById.get(item.sourceId);
-              return (
-                <li class:list={['news-item', { featured: index === 0 }]} data-source={item.sourceId}>
-                  <p class="date">
-                    {/* The outlet when we know it — "Los Angeles Times", never "Google News". */}
-                    <span class="badge plain">{item.publisher ?? source?.label[locale]}</span>
-                    {item.date && <span>{formatDate(item.date)}</span>}
-                    {source?.linksToPdf && <span class="badge plain">{dict.news.pdf}</span>}
-                  </p>
-                  <h3>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener"
-                      hreflang={source?.lang ?? 'en'}
-                      lang={source?.lang ?? 'en'}
-                    >
-                      {item.title}
-                    </a>
-                  </h3>
-                  {item.summary && <p lang={source?.lang ?? 'en'}>{item.summary}</p>}
-                </li>
-              );
-            })}
-          </ul>
-
-          {items.length > initialVisible && (
-            <p class="center mt-3">
-              <button type="button" class="btn outline" data-news-more>{dict.news.showMore}</button>
-            </p>
-          )}
-
-          <p class="mt-3 news-sources">
-            {liveSources.map((source) => (
-              <a class="btn outline" href={source.homepage} target="_blank" rel="noopener">
-                {source.label[locale]}
-                <Icon name="external" size={16} />
-              </a>
-            ))}
-          </p>
-        </>
-      ) : (
-        <div class="notice">
-          <Icon name="alert" />
-          <p>{dict.news.empty}</p>
-        </div>
-      )}
+  {items.length > 0 && <section class="section crc-news-library" aria-labelledby="all-news-title"><div class="container" data-news-browser>
+    <h2 id="all-news-title">{copy.allNews}</h2>
+    <div class="crc-news-filters" role="group" aria-label={copy.topicFilter}>
+      <button type="button" class="chip" data-topic="" aria-pressed="true">{copy.all}</button>
+      {availableTopics.map((topic) => <button type="button" class="chip" data-topic={topic.id} aria-pressed="false">{topic[locale]}</button>)}
     </div>
-  </section>
-
-  <!-- 3. CRC press releases, only when there is something to publish -->
-  {sortedPressPosts.length > 0 && (
-    <section class="section warm">
-      <div class="container">
-        <div class="section-head">
-          <h2>{dict.news.pressTitle}</h2>
-          <p class="muted mt-1" style="font-size:var(--fs-sm);">{dict.news.pressLede}</p>
-        </div>
-        <ul class="news-list">
-          {sortedPressPosts.map((post) => (
-            <li class="news-item">
-              <p class="date">{formatDate(post.date)}</p>
-              <h3>
-                {post.url ? <a href={post.url}>{post.title[locale]}</a> : post.title[locale]}
-              </h3>
-              <p>{post.summary[locale]}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  )}
-
+    <div class="crc-news-controls">
+      <div class="crc-news-search"><label for="news-search">{copy.searchLabel}</label><div><Icon name="search" size={20} /><input type="search" id="news-search" placeholder={copy.searchPlaceholder} autocomplete="off" /></div></div>
+      <div class="crc-news-source-select"><label for="news-source">{copy.sourceColumn}</label><select id="news-source"><option value="">{copy.allSources}</option>{sources.map((source) => <option value={source.id}>{source.label[locale]}</option>)}</select></div>
+    </div>
+    <p class="crc-news-count" id="news-count" aria-live="polite" data-template={copy.showing}>{copy.showing.replace('{n}', String(items.length)).replace('{total}', String(items.length))}</p>
+    <table class="crc-news-table">
+      <caption class="sr-only">{copy.allNews}</caption>
+      <thead><tr><th scope="col">{copy.categoryColumn}</th><th scope="col">{copy.headlineColumn}</th><th scope="col">{copy.sourceColumn}</th><th scope="col">{copy.dateColumn}</th></tr></thead>
+      <tbody>{items.map((item) => {
+        const topic = newsTopic(item.title);
+        return <tr data-news-row data-category={topic.id} data-source={item.sourceId} data-search={`${item.title} ${sourceName(item)} ${topic[locale]}`}>
+          <td class="crc-news-category"><span class={`crc-news-tag topic-${topic.id}`}>{topic[locale]}</span></td>
+          <td class="crc-news-headline"><a href={item.url} target="_blank" rel="noopener noreferrer" lang={locale} hreflang={locale}>{item.title}</a>{sourceById.get(item.sourceId)?.linksToPdf && <span class="crc-news-pdf">{copy.pdf}</span>}</td>
+          <td class="crc-news-source">{sourceName(item)}</td>
+          <td class="crc-news-date">{item.date ? <time datetime={item.date}>{formatDate(item.date)}</time> : '—'}</td>
+        </tr>;
+      })}</tbody>
+    </table>
+    <p class="notice mt-2" data-news-empty hidden>{copy.noMatches}</p>
+    <div class="center mt-3"><button type="button" class="btn outline" data-news-more hidden>{copy.showMore}</button></div>
+    <details class="crc-news-source-links"><summary>{copy.visitSources}</summary><div class="news-sources mt-2">{sources.map((source) => <a class="btn outline" href={source.homepage} target="_blank" rel="noopener noreferrer">{source.label[locale]}<Icon name="external" size={16} /></a>)}</div></details>
+  </div></section>}
+  {items.length === 0 && <section class="section"><div class="container news-sources">{newsSources.filter((source) => (source.lang ?? 'en') === locale).map((source) => <a class="btn outline" href={source.homepage} target="_blank" rel="noopener noreferrer">{source.label[locale]}</a>)}</div></section>}
+  {sortedPressPosts.length > 0 && <section class="section warm"><div class="container"><h2>{copy.pressTitle}</h2><p class="muted mt-1">{copy.pressLede}</p>
+    <ul class="news-list mt-3">{sortedPressPosts.map((post) => <li class="news-item"><p class="date">{formatDate(post.date)}</p><h3>{post.url ? <a href={post.url}>{post.title[locale]}</a> : post.title[locale]}</h3><p>{post.summary[locale]}</p></li>)}</ul>
+  </div></section>}
   <script>
-    /* Same chip-filter approach as the directory: everything is rendered at
-       build time and the script only toggles visibility, so the full list is
-       still there with JavaScript off. */
-    const chips = document.querySelector('.news-filters');
-    const list = document.getElementById('news-list');
-    const count = document.getElementById('news-count');
-    const more = document.querySelector<HTMLButtonElement>('[data-news-more]');
-    if (chips && list && count) {
-      const buttons = Array.from(chips.querySelectorAll('.chip'));
-      const entries = Array.from(list.querySelectorAll<HTMLElement>('[data-source]'));
-      const pageSize = 8;
-      let active = '';
-      let visibleLimit = pageSize;
-
-      const apply = () => {
-        const matching = entries.filter((entry) => !active || entry.getAttribute('data-source') === active);
-        entries.forEach((entry) => {
-          const index = matching.indexOf(entry);
-          entry.hidden = index < 0 || index >= visibleLimit;
-        });
-        const shown = Math.min(visibleLimit, matching.length);
-        const template = count.getAttribute('data-template') || '{n} / {total}';
-        count.textContent = template.replace('{n}', String(shown)).replace('{total}', String(matching.length));
-        if (more) more.hidden = shown >= matching.length;
-      };
-
-      chips.addEventListener('click', (event) => {
-        const chip = (event.target as HTMLElement).closest('.chip');
-        if (!chip) return;
-        active = chip.getAttribute('data-source') || '';
-        visibleLimit = pageSize;
-        buttons.forEach((b) => b.setAttribute('aria-pressed', b === chip ? 'true' : 'false'));
+    import { matchesNewsFilter } from '../data/newsPresentation';
+    document.querySelectorAll<HTMLImageElement>('[data-news-photo]').forEach((image) => {
+      const fallback = () => { image.hidden = true; };
+      image.addEventListener('error', fallback);
+      if (image.complete && image.naturalWidth === 0) fallback();
+    });
+    const browser = document.querySelector<HTMLElement>('[data-news-browser]');
+    if (browser) {
+      const rows = Array.from(browser.querySelectorAll<HTMLTableRowElement>('[data-news-row]'));
+      const buttons = Array.from(browser.querySelectorAll<HTMLButtonElement>('[data-topic]'));
+      const search = browser.querySelector<HTMLInputElement>('#news-search')!;
+      const source = browser.querySelector<HTMLSelectElement>('#news-source')!;
+      const count = browser.querySelector<HTMLElement>('#news-count')!;
+      const empty = browser.querySelector<HTMLElement>('[data-news-empty]')!;
+      const more = browser.querySelector<HTMLButtonElement>('[data-news-more]')!;
+      const pageSize = 12;
+      let category = '';
+      let limit = pageSize;
+      function apply() {
+        const matching = rows.filter((row) => matchesNewsFilter(row.dataset.search ?? '', row.dataset.category ?? '', row.dataset.source ?? '', search.value, category, source.value));
+        const visible = new Set(matching.slice(0, limit));
+        rows.forEach((row) => { row.hidden = !visible.has(row); });
+        count.textContent = (count.dataset.template ?? '{n} / {total}').replace('{n}', String(visible.size)).replace('{total}', String(matching.length));
+        empty.hidden = matching.length > 0;
+        more.hidden = limit >= matching.length;
+      }
+      buttons.forEach((button) => button.addEventListener('click', () => {
+        category = button.dataset.topic ?? '';
+        buttons.forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+        limit = pageSize;
         apply();
-      });
-
-      more?.addEventListener('click', () => {
-        visibleLimit += pageSize;
-        apply();
-      });
-
+      }));
+      search.addEventListener('input', () => { limit = pageSize; apply(); });
+      source.addEventListener('change', () => { limit = pageSize; apply(); });
+      more.addEventListener('click', () => { limit += pageSize; apply(); });
       apply();
     }
   </script>

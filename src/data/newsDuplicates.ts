@@ -25,13 +25,17 @@ function attributes(tag: string): Record<string, string> {
 
 /** Article-image metadata only: page ads, navigation images and logos do not count. */
 export function hasArticleImage(html: string): boolean {
+  return articleImageUrl(html) !== null;
+}
+
+function articleImageUrl(html: string): string | null {
   for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
     const attrs = attributes(tag);
     if (!/^(?:og:image(?::url)?|twitter:image(?::src)?)$/i.test(attrs.property ?? attrs.name ?? '')) continue;
     const image = attrs.content ?? '';
-    if (/^https?:\/\//i.test(image) && !/logo|favicon|placeholder|default|no[-_]?image|blank|spacer/i.test(image)) return true;
+    if (/^https?:\/\//i.test(image) && !/logo|favicon|placeholder|default|no[-_]?image|blank|spacer/i.test(image)) return image;
   }
-  return false;
+  return null;
 }
 
 function publisherUrl(value: string, domain: string): boolean {
@@ -96,12 +100,13 @@ async function resolveArticle(item: NewsItem, domain: string): Promise<string | 
 }
 
 export type ImageCheck = (item: NewsItem, source: NewsSource) => Promise<boolean | null>;
-export const inspectArticleImage: ImageCheck = async (item, source) => {
-  if (!source.publisherDomain) return null;
+async function articlePage(item: NewsItem, source: NewsSource): Promise<string | null> {
   try {
-    const url = await resolveArticle(item, source.publisherDomain);
+    const domain = source.publisherDomain ?? new URL(source.homepage).hostname;
+    if (!source.publisherDomain && source.publisherPerItem) return null;
+    const url = await resolveArticle(item, domain);
     if (!url) return null;
-    const page = await readPage(url, source.publisherDomain);
+    const page = await readPage(url, domain);
     if (!page) return null;
     // Do not interpret a challenge/error page as an article without a photo.
     const titles = [page.html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? ''];
@@ -110,11 +115,23 @@ export const inspectArticleImage: ImageCheck = async (item, source) => {
       if (/^(?:og:title|twitter:title|title)$/i.test(attrs.property ?? attrs.name ?? '')) titles.push(attrs.content ?? '');
     }
     if (!titles.some((title) => headlineKey(unescapeHtml(title)).includes(headlineKey(item.title)))) return null;
-    return hasArticleImage(page.html);
+    return page.html;
   } catch {
     return null;
   }
+}
+
+export const inspectArticleImage: ImageCheck = async (item, source) => {
+  const html = await articlePage(item, source);
+  return html === null ? null : hasArticleImage(html);
 };
+
+/** Only featured cards request thumbnails; a missing photo uses a topic illustration. */
+export async function featuredArticleImage(item: NewsItem, source: NewsSource): Promise<string | null> {
+  const html = await articlePage(item, source);
+  const image = html ? articleImageUrl(html) : null;
+  return image?.startsWith('https://') ? image : null;
+}
 
 /** One row per headline across outlets. Inspect only duplicate newspaper stories. */
 export async function deduplicateNews(

@@ -83,7 +83,12 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
   Results reference agency ids from `src/data/agencies.ts`.
 - The News page gathers everything **at build time** and bakes it into static
   HTML, so the page stays fast and has no runtime dependency on any source. It
-  refreshes on every deploy, and readers filter by source with the chip row.
+  refreshes on every deploy. Korean pages show only Korean-language sources;
+  English pages show only English-language sources. The overview uses three
+  featured cards and a separate list of recent headlines, followed by a news
+  table with topic filters, source selection, search, and a show-more button.
+  Article photos are used when available; topic illustrations cover missing or
+  failed images. All table rows remain accessible without JavaScript.
   `.github/workflows/refresh-news.yml` requests a new build every six hours
   (00:17, 06:17, 12:17, 18:17 UTC), and can also be run manually in Actions.
   It updates `public/news-refresh.json` using the repository's built-in token;
