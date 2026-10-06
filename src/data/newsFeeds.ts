@@ -4,6 +4,7 @@ import { deduplicateNews, headlineKey } from './newsDuplicates';
 import { fetchRadioKorea } from './radioKorea';
 import fallbackNews from './newsFallback.json';
 import { retainedNews } from './newsHistory';
+import { US_COMMUNITY_TERMS } from './newsLocality';
 
 /**
  * Fraud and cyber-risk news, gathered from trusted feeds at BUILD TIME and baked into
@@ -114,17 +115,17 @@ const FRAUD_TERMS =
 const KO_FRAUD_TERMS =
   /보이스피싱|스미싱|피싱|사기범|사기단|사기당|사기[\s·]?혐의|사기[\s·]?피해|사기[\s·]?사건|사기[\s·]?행각|금융[\s·]?사기|투자[\s·]?사기|전화[\s·]?사기|보험[\s·]?사기|중고[\s·]?거래[\s·]?사기|로맨스[\s·]?스캠|사칭|먹튀|신분[\s·]?도용|바가지|(?:^|[^\p{L}\p{N}])사기(?=$|[\s·….,!?])/u;
 
-// These US papers also syndicate overseas news. Keep community and consumer
-// headlines; this deliberately favors relevance over filling every available row.
-const KO_COMMUNITY_TERMS = /한인|미국|미주|북미|캘리포니아|가주|LA\b|뉴욕|뉴저지|워싱턴|텍사스|시카고|연방|달러|\d[\d,.]*\s*만?불|401\s*\(?k|메디케어|소셜|이민|공관|배심원|재산세|납세자|신용카드|차고문/i;
+// Korean-American outlets also syndicate Korea-domestic and overseas stories.
+// Require a US/local-community cue, including for cyber news. Generic hacking,
+// dollar amounts, credit cards, or consumer topics do not establish local relevance.
+const KO_COMMUNITY_TERMS = US_COMMUNITY_TERMS;
 const KO_ENTERTAINMENT_TERMS = /Oh!|오!쎈|연예|소속사|드라마|예능|방송작가|병역\s*기피/i;
 
-// Hacking and stolen personal/account data can enable identity theft and scams,
-// even when a headline does not yet mention fraud or a US location. Do not
+// Hacking and stolen personal/account data can enable identity theft and scams.
+// These still require a US/community cue. Do not
 // match a bare "유출" or "탈취": those also describe product leaks and trade disputes.
 const KO_CYBER_TERMS = /해킹|해커|랜섬웨어|악성코드|피싱|(?:개인|신상|고객|회원|계정|금융|카드|결제)\s*(?:정보|데이터)(?:가|를|의)?\s*(?:유출|탈취|도용)|(?:계정|비밀번호|패스워드)\s*(?:정보\s*)?(?:유출|탈취|도용)/i;
 const KO_NEWS_TERMS = new RegExp(`${KO_FRAUD_TERMS.source}|${KO_CYBER_TERMS.source}`, 'iu');
-const KO_COMMUNITY_OR_CYBER_TERMS = new RegExp(`${KO_COMMUNITY_TERMS.source}|${KO_CYBER_TERMS.source}`, 'i');
 
 function koreanCyberFeed(domain: string): string {
   return googleNews(`site:${domain} (해킹 OR 해커 OR 개인정보 유출 OR 정보유출 OR 랜섬웨어 OR 계정 탈취) when:180d`, 'ko', 'US');
@@ -223,7 +224,7 @@ export const newsSources: NewsSource[] = [
     allowPublishers: allowedKoreanPublishers,
     publisherDomain: 'koreadaily.com',
     keywords: KO_NEWS_TERMS,
-    requiredKeywords: KO_COMMUNITY_OR_CYBER_TERMS,
+    requiredKeywords: KO_COMMUNITY_TERMS,
     excludeKeywords: KO_ENTERTAINMENT_TERMS,
     lang: 'ko',
   },
@@ -236,7 +237,7 @@ export const newsSources: NewsSource[] = [
     allowPublishers: allowedKoreanPublishers,
     publisherDomain: 'koreatimes.com',
     keywords: KO_NEWS_TERMS,
-    requiredKeywords: KO_COMMUNITY_OR_CYBER_TERMS,
+    requiredKeywords: KO_COMMUNITY_TERMS,
     excludeKeywords: KO_ENTERTAINMENT_TERMS,
     lang: 'ko',
   },
@@ -249,7 +250,7 @@ export const newsSources: NewsSource[] = [
     allowPublishers: allowedKoreanPublishers,
     publisherDomain: 'radiokorea.com',
     keywords: KO_NEWS_TERMS,
-    requiredKeywords: KO_COMMUNITY_OR_CYBER_TERMS,
+    requiredKeywords: KO_COMMUNITY_TERMS,
     excludeKeywords: KO_ENTERTAINMENT_TERMS,
     lang: 'ko',
   },

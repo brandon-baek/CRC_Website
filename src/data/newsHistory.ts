@@ -9,6 +9,10 @@ export function retainedNews(value: unknown, sources: NewsSource[], now = Date.n
     const source = sourceById.get(item.sourceId);
     const date = Date.parse(item.date);
     if (!source || !Number.isFinite(date) || date < now - 180 * 86400000 || date > now + 86400000) return false;
+    // Reapply today's editorial rules so removed subjects cannot reappear from a cache.
+    if (source.keywords && !source.keywords.test(item.title)) return false;
+    if (source.requiredKeywords && !source.requiredKeywords.test(item.title)) return false;
+    if (source.excludeKeywords?.test(item.title)) return false;
     try {
       const url = new URL(item.url);
       const domain = (source.publisherDomain ?? new URL(source.homepage).hostname).replace(/^www\./, '');

@@ -109,8 +109,10 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
     **Radio Korea (radiokorea.com)**.
     Each Korean-American outlet has its own filter and homepage link. Its
     RSS publisher domain and name are checked. Headlines cover fraud or consumer
-    protection with a US/community cue, plus hacking, personal-data breaches,
-    account theft, malware, and ransomware even without a location in the title.
+    protection, hacking, personal-data breaches, account theft, malware, and
+    ransomware, always with a US/local-community cue in the headline. Cyber
+    vocabulary alone no longer admits Korea-domestic stories. The same current
+    rules apply to retained snapshots, so excluded stories cannot reappear.
     Syndicated entertainment is excluded. These headline filters favor relevance
     and may miss some stories.
     Feed items are sorted by date and deduplicated before selecting up to eight
@@ -138,8 +140,8 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
     farms next to newspapers), **and** the headline must be about fraud. Both
     are needed — an allowed outlet's healthcare-policy story still matches the
     word "fraud".
-  - Failures are contained per source: a feed that is unreachable, empty, or has
-    no fraud stories right now simply loses its chip, and the page still renders.
+  - Failures are contained per source: recent retained stories cover unavailable
+    feeds; a source with no current or eligible retained stories loses its filter.
     That is normal — the CFPB tab in particular comes and goes, since its
     newsroom is mostly rulemaking and only its fraud headlines are kept.
 - Every scam guide has localized video references in `src/data/scams.ts`. The

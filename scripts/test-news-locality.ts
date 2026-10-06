@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import { US_COMMUNITY_TERMS } from '../src/data/newsLocality.ts';
+import { retainedNews } from '../src/data/newsHistory.ts';
+import { fetchRadioKorea } from '../src/data/radioKorea.ts';
+import type { NewsSource } from '../src/data/newsFeeds.ts';
+const removed = '이억원 "AI활용 해킹 가능성…금융권 최고수준 경각심 가져야"(종합)';
+const local = 'LA 은퇴 노인 전화사기로 500만 달러 피해…6개월간 속여 돈 빼내';
+for (const title of [removed, '신한은행 개인정보 유출 경고', '서울 투자사기 피해', '日 최대 차량공유업체 개인정보 유출', '500만 달러 투자사기 피해']) assert(!US_COMMUNITY_TERMS.test(title), title);
+for (const title of [local, '해커 조직 FBI요원 신상정보 해킹', '가주 투자사기 주의', '미국 신분 도용 피해 급증', '한인 영주권 사기 주의']) assert(US_COMMUNITY_TERMS.test(title), title);
+const source: NewsSource = { id: 'news-radiokorea', label: { en: 'Radio Korea', ko: '라디오코리아' }, urls: [], homepage: 'https://www.radiokorea.com/news/', keywords: /사기|해킹/, requiredKeywords: US_COMMUNITY_TERMS };
+const saved = [removed, local].map((title, i) => ({ sourceId: source.id, title, url: `https://www.radiokorea.com/news/article.php?uid=${i}`, date: '2026-10-05T18:17:00Z', summary: '' }));
+assert.deepEqual(retainedNews({ items: saved }, [source], Date.parse('2026-10-06')), [saved[1]], 'cached Korea-domestic article cannot return');
+let articleRequested = false;
+const result = await fetchRadioKorea(source, async (url) => {
+  if (url.includes('article.php')) articleRequested = true;
+  return `<a href="/news/article.php?uid=505842">${removed}</a>`;
+});
+assert.deepEqual(result, []);
+assert.equal(articleRequested, false);
+console.log('PASS: flagged South Korea story rejected in direct discovery and saved feeds; US-local and FBI examples retained.');
