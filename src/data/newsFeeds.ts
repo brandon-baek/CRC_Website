@@ -1,6 +1,7 @@
 import type { Locale } from '../i18n';
 import { allowedEnglishPublishers, allowedKoreanPublishers } from './newsPublishers';
 import { deduplicateNews, headlineKey } from './newsDuplicates';
+import { fetchRadioKorea } from './radioKorea';
 
 /**
  * Fraud and cyber-risk news, gathered from trusted feeds at BUILD TIME and baked into
@@ -475,10 +476,14 @@ export function fetchAllNews(perSource = 8): Promise<NewsFeedResult> {
 async function gatherNews(perSource: number): Promise<NewsFeedResult> {
   const results = await Promise.allSettled(
     newsSources.map(async (source) => {
-      const documents = await Promise.all(source.urls.map(fetchFeed));
-      const items: NewsItem[] = [];
+      const [documents, direct] = await Promise.all([
+        Promise.all(source.urls.map(fetchFeed)),
+        source.id === 'news-radiokorea' ? fetchRadioKorea(source, fetchFeed) : Promise.resolve([]),
+      ]);
+      const items: NewsItem[] = [...direct];
+      const directTitles = new Set(direct.map((item) => normalizeTitle(item.title)));
       for (const xml of documents) {
-        if (xml) items.push(...parseFeed(xml, source, Number.POSITIVE_INFINITY));
+        if (xml) items.push(...parseFeed(xml, source, Number.POSITIVE_INFINITY).filter((item) => !directTitles.has(normalizeTitle(item.title))));
       }
       // Merged feeds (IC3) can exceed the cap once combined.
       // Google ranks by relevance. Sort and deduplicate before limiting rows.

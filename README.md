@@ -114,9 +114,16 @@ This is the exact path the Pages build runs; if it passes locally it will pass t
     NBC LA, FOX 11, NPR and others yielded zero scam stories across 152 items,
     and their topic-tag feeds return nothing. Google's search feeds carry the
     same outlets and name the publisher per item. This is also the only route
-    used here for 미주중앙일보, 미주한국일보, and 라디오코리아.
-    Each item shows the outlet's own name; **links pass through Google's
-    redirector** before landing on the publisher's article.
+    used here for 미주중앙일보 and 미주한국일보. Radio Korea also checks its own
+    news homepage, three local-news listing pages, immigration page, and IT page
+    during each build, so recent stories need not wait for Google's index.
+    `src/data/radioKorea.ts` filters listing headlines before fetching up to 24
+    article pages with four workers, then validates the article headline and
+    original Los Angeles publication time. Direct links win over matching RSS
+    items; Google RSS remains a fallback. A failed listing or article does not
+    discard successful results. This is a bounded recent-news scan, not an archive.
+    Each item shows the outlet's own name; RSS links pass through Google's
+    redirector, while directly discovered Radio Korea stories link to the article.
   - Press items are filtered twice: the outlet must be listed in
     `src/data/newsPublishers.ts` (Google indexes corporate blogs and content
     farms next to newspapers), **and** the headline must be about fraud. Both
