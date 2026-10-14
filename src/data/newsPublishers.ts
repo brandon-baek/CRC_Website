@@ -67,6 +67,10 @@ const KOREAN_AMERICAN = [
   '미주한국일보 - 뉴욕',
   '한국일보 - 뉴욕',
   '라디오코리아',
+  'Koreatown Press',
+  '코리아타운 프레스',
+  '코리아타운프레스',
+  'koreatownpress.org',
 ];
 
 /** English-language coverage: local first, then national. */

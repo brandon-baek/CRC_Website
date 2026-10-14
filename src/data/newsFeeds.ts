@@ -1,6 +1,7 @@
 import type { Locale } from '../i18n';
 import { allowedEnglishPublishers, allowedKoreanPublishers } from './newsPublishers';
 import { deduplicateNews, headlineKey } from './newsDuplicates';
+import { fetchKoreatownPress } from './koreatownPress';
 import { fetchRadioKorea } from './radioKorea';
 import fallbackNews from './newsFallback.json';
 import { retainedNews } from './newsHistory';
@@ -92,7 +93,7 @@ export interface NewsItem {
  * edition is searched. The Korean-American outlets use the US edition and
  * explicit site restrictions, with publisher domains verified during parsing.
  */
-function googleNews(query: string, hl: string, gl: string): string {
+export function googleNews(query: string, hl: string, gl: string): string {
   return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${hl}&gl=${gl}&ceid=${gl}:${hl.split('-')[0]}`;
 }
 
@@ -125,7 +126,7 @@ const KO_ENTERTAINMENT_TERMS = /Oh!|오!쎈|연예|소속사|드라마|예능|�
 // These still require a US/community cue. Do not
 // match a bare "유출" or "탈취": those also describe product leaks and trade disputes.
 const KO_CYBER_TERMS = /해킹|해커|랜섬웨어|악성코드|피싱|(?:개인|신상|고객|회원|계정|금융|카드|결제)\s*(?:정보|데이터)(?:가|를|의)?\s*(?:유출|탈취|도용)|(?:계정|비밀번호|패스워드)\s*(?:정보\s*)?(?:유출|탈취|도용)/i;
-const KO_NEWS_TERMS = new RegExp(`${KO_FRAUD_TERMS.source}|${KO_CYBER_TERMS.source}`, 'iu');
+export const KO_NEWS_TERMS = new RegExp(`${KO_FRAUD_TERMS.source}|${KO_CYBER_TERMS.source}`, 'iu');
 
 function koreanCyberFeed(domain: string): string {
   return googleNews(`site:${domain} (해킹 OR 해커 OR 개인정보 유출 OR 정보유출 OR 랜섬웨어 OR 계정 탈취) when:180d`, 'ko', 'US');
@@ -252,6 +253,16 @@ export const newsSources: NewsSource[] = [
     keywords: KO_NEWS_TERMS,
     requiredKeywords: KO_COMMUNITY_TERMS,
     excludeKeywords: KO_ENTERTAINMENT_TERMS,
+    lang: 'ko',
+  },
+  {
+    id: 'news-koreatownpress',
+    label: { en: 'Koreatown Press', ko: '코리아타운프레스' },
+    urls: [],
+    homepage: 'https://koreatownpress.org/',
+    publisherDomain: 'koreatownpress.org',
+    keywords: new RegExp(`${KO_NEWS_TERMS.source}|환불|리콜|소비자|벌금`, 'iu'),
+    excludeKeywords: /취임식|이취임|창립|기금모금|후원행사|지지선언|정당|선거운동|현역의원/,
     lang: 'ko',
   },
   /*
@@ -426,7 +437,7 @@ async function fetchOnce(url: string): Promise<{ body: string } | { retryable: b
  * and serves the retry — measured, not guessed. One retry costs a second on a
  * build and is the difference between having that source and losing it.
  */
-async function fetchFeed(url: string): Promise<string | null> {
+export async function fetchFeed(url: string): Promise<string | null> {
   const first = await fetchOnce(url);
   if ('body' in first) return first.body;
   if (!first.retryable) return null;
@@ -487,7 +498,7 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
     newsSources.map(async (source) => {
       const [documents, direct] = await Promise.all([
         Promise.all(source.urls.map(fetchFeed)),
-        source.id === 'news-radiokorea' ? fetchRadioKorea(source, fetchFeed) : Promise.resolve([]),
+        source.id === 'news-radiokorea' ? fetchRadioKorea(source, fetchFeed) : source.id === 'news-koreatownpress' ? fetchKoreatownPress(source, fetchFeed) : Promise.resolve([]),
       ]);
       const items: NewsItem[] = [...direct];
       const directTitles = new Set(direct.map((item) => normalizeTitle(item.title)));
@@ -504,7 +515,7 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
-      }).slice(0, perSource);
+      });
     }),
   );
 
@@ -513,5 +524,5 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
   // A source whose only story lost a duplicate comparison must not leave an empty tab.
   const retainedSources = new Set(items.map((item) => item.sourceId));
   const liveSources = newsSources.filter((source) => retainedSources.has(source.id));
-  return { items: items.sort(byDateDesc), liveSources };
+  return { items: items.sort(byDateDesc).filter((item, index, rows) => rows.slice(0, index).filter(row => row.sourceId === item.sourceId).length < perSource), liveSources };
 }

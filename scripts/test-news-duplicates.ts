@@ -1,39 +1,17 @@
-// Run with: node --experimental-strip-types scripts/test-news-duplicates.ts
 import assert from 'node:assert/strict';
-import { deduplicateNews, headlineKey, hasArticleImage } from '../src/data/newsDuplicates.ts';
-import type { NewsItem, NewsSource } from '../src/data/newsFeeds.ts';
-
-const sources: NewsSource[] = ['koreadaily', 'koreatimes'].map((name) => ({
-  id: `news-${name}`, label: { en: name, ko: name }, urls: [],
-  homepage: `https://${name}.com`, publisherDomain: `${name}.com`,
-}));
-const daily: NewsItem = { sourceId: 'news-koreadaily', title: '해커 조직 "FBI요원 신상정보 해킹"…FBI "수사중"', url: 'https://koreadaily.com/a', summary: '', date: '2026-09-24' };
-const times: NewsItem = { ...daily, sourceId: 'news-koreatimes', title: '해커 조직 “FBI요원 신상정보 해킹”…FBI “수사중”', url: 'https://koreatimes.com/b', date: '2026-09-23' };
-assert.equal(headlineKey(daily.title), headlineKey(times.title));
-assert.equal(headlineKey('한인 투자사기'), headlineKey('한인  투자 사기'));
-assert.notEqual(headlineKey('피해자 100명'), headlineKey('피해자 200명'));
-assert.equal(hasArticleImage('<meta property="og:image" content="https://www.koreadaily.com/images/logo/sns-logo.png">'), false);
-assert.equal(hasArticleImage('<img src="https://ads.example/banner.jpg">'), false);
-assert.equal(hasArticleImage('<meta content="https://mimg.koreatimes.com/article/photo.jpg" property="og:image">'), true);
-assert.equal(hasArticleImage("<meta name='twitter:image' content='https://koreadaily.com/photo.jpg'>"), true);
-
-for (const reversed of [false, true]) {
-  const items = reversed ? [times, daily] : [daily, times];
-  let result = await deduplicateNews(items, sources, async item => item.sourceId === times.sourceId);
-  assert.equal(result.length, 1);
-  assert.equal(result[0].sourceId, times.sourceId, 'article photo beats newer publication date');
-  result = await deduplicateNews(items, sources, async item => item.sourceId === daily.sourceId);
-  assert.equal(result[0].sourceId, daily.sourceId, 'Korea Daily wins when it alone has the photo');
-  for (const state of [true, false, null]) {
-    result = await deduplicateNews(items, sources, async () => state);
-    assert.equal(result[0].sourceId, times.sourceId, 'deterministic tie/failure fallback');
-  }
-  result = await deduplicateNews(items, sources, async () => { throw Error('offline'); });
-  assert.equal(result.length, 1, 'network errors never restore duplicate rows');
-}
-let checks = 0;
-const unique = { ...daily, title: '다른 사건', url: 'https://koreadaily.com/c' };
-const result = await deduplicateNews([daily, times, unique], sources, async () => { checks++; return false; });
-assert.equal(result.length, 2);
-assert.equal(checks, 2, 'do not fetch unique stories just to inspect their images');
-console.log('PASS: duplicate matching, image preference in both directions, logo exclusion, ties, failures, and unique stories.');
+import { deduplicateNews, sameStory, hasArticleImage } from '../src/data/newsDuplicates.ts';
+import type { NewsItem } from '../src/data/newsFeeds.ts';
+const first:NewsItem={sourceId:'news-koreatownpress',title:'해커 조직 “FBI요원 수천명 신상정보 해킹”…FBI “철저 수사중”',url:'https://koreatownpress.org/news/usa/fbi',date:'2026-10-14T08:00:00Z',summary:''};
+const second={...first,sourceId:'news-koreatimes',title:'해커 조직 "FBI요원 수천명 신상정보 해킹"…FBI "철저 수사중"',url:'https://koreatimes.com/article/2',date:'2026-10-14T09:00:00Z'};
+for(const items of [[first,second],[second,first]])assert.deepEqual(await deduplicateNews(items,[]),[first]);
+assert.deepEqual(await deduplicateNews([first,{...first,date:null,url:'https://example.com/missing'}],[]),[first]);
+assert.equal((await deduplicateNews([first,{...first,date:'bad',url:'https://example.com/bad'}],[])).length,1);
+assert.equal((await deduplicateNews([{...first,date:null},{...second,date:null}],[]))[0].url,(await deduplicateNews([{...second,date:null},{...first,date:null}],[]))[0].url);
+assert(!sameStory({...first,title:'LA 한인 투자사기 피해 100명 확인'},{...second,title:'LA 한인 투자사기 피해 200명 확인'}));
+assert(!sameStory({...first,title:'LA 한인 은퇴자 전화사기 주의'},{...second,title:'LA 한인 식당 주인 보험사기 기소'}));
+assert(sameStory(first,{...second,title:first.title+' 속보'}));
+assert(sameStory({...first,title:'연방사회보장국, 2027 소셜연금 3.6% 인상'},{...second,title:'소셜시큐리티 연금 2027년 COLA 3.6% 인상, 월평균 약 75달러 올라'}));
+assert(!sameStory({...first,title:'소셜연금 3.6% 인상 전망'},{...second,title:'소셜시큐리티 연금 3.6% 인상'}));
+assert.equal((await deduplicateNews([first,{...first,title:'수정된 제목',date:'2026-10-14T10:00:00Z'}],[])).length,1);
+assert(hasArticleImage('<meta property="og:image" content="https://example.com/photo.jpg">'));
+console.log('PASS: earliest publication, neutral outlet policy, missing dates, input order, syndicated titles, different incidents and same URL.');

@@ -1,0 +1,57 @@
+import { fetchFeed, googleNews, newsSources, parseFeed, type NewsItem, type NewsSource } from './newsFeeds';
+import { deduplicateNews } from './newsDuplicates';
+import { fetchKoreatownPress } from './koreatownPress';
+import { fetchRadioKorea } from './radioKorea';
+import { US_COMMUNITY_TERMS } from './newsLocality';
+import { retainedNews } from './newsHistory';
+import fallback from './dailyFallback.json';
+
+export const DAILY_TOPICS = /경제|물가|금리|고용|일자리|주택|렌트|임대|보험|의료|병원|건강|메디|연금|소셜|은퇴|세금|세액|환불|리콜|소비자|전기|수도|공과금|교통|도로|차선|버스|메트로|공항|항공|산불|폭염|강풍|날씨|해변|상어|안전|경보|주의|지원|혜택|신청|이민|영주권|시민권|공연|콘서트|문화|박물관|도서관|사기|피싱|해킹|스캠|주가|증시|장학|학자금|학비|파산/i;
+export const DAILY_EXCLUDES = /단체\s*소식|이취임|취임식|정기총회|창립\s*기념|이사회|축제재단|동문회|향우회|한인회|상공회의소|설명회|어워즈|박람회.*참여|퍼레이드|기금\s*모금|후원\s*행사|지지\s*선언|선거\s*운동|대선\s*후보|후보.*인터뷰|\[인터뷰\].*후보|후보\s*지지|결선|공방|정가|현역의원|트럼프\s*책임|오피니언|사설|칼럼|기고|정당|방송작가|병역\s*기피|소속사|드라마|예능/;
+export const dailySources: NewsSource[] = newsSources.filter(s => s.lang === 'ko').map(source => ({
+  ...source,
+  urls: source.id === 'news-koreatownpress' ? [] : [googleNews(`site:${source.publisherDomain} (경제 OR 사회 OR 생활 OR 연금 OR 보험 OR 환불 OR 교통 OR 건강 OR 문화) when:7d`, 'ko', 'US')],
+  keywords: DAILY_TOPICS,
+  requiredKeywords: source.id === 'news-koreatownpress' ? undefined : US_COMMUNITY_TERMS,
+  excludeKeywords: DAILY_EXCLUDES,
+}));
+const englishSources: NewsSource[] = newsSources.filter(s => s.id === 'news-la').map(s => ({...s, id:'daily-la',
+  urls:[googleNews('California benefits when:7d','en-US','US'),googleNews('"Los Angeles" housing when:7d','en-US','US')],
+  keywords:/benefit|housing|recall|traffic|retirement|health|insurance|utility|heat|fire|tax/i,
+  allowPublishers:new Set([...s.allowPublishers!, 'KQED', 'Sacramento Bee', 'The Desert Sun']),
+  excludeKeywords:/^Opinion\b|^Editorial\b|campaign endorsement/i,
+}));
+
+let pending: Promise<{items:NewsItem[];fortune:NewsItem|null;stocks:NewsItem|null}>;
+export function fetchDailyNews() { return pending ??= gather(); }
+async function gather() {
+  const sources = [...dailySources, ...englishSources];
+  let previous: NewsItem[]=retainedNews(fallback,sources);
+  try {
+    const response=await fetch('https://crcnow.org/daily-feed.json',{signal:AbortSignal.timeout(8000)});
+    if(response.ok) previous=[...retainedNews(await response.json(),sources),...previous];
+  } catch { /* A first preview has no saved bulletin. */ }
+  const groups=await Promise.all(sources.map(async source=> {
+    const [documents,direct]=await Promise.all([
+      Promise.all(source.urls.map(fetchFeed)),
+      source.id==='news-koreatownpress'?fetchKoreatownPress(source,fetchFeed):source.id==='news-radiokorea'?fetchRadioKorea(source,fetchFeed):Promise.resolve([]),
+    ]);
+    return [...direct,...documents.flatMap(xml=>xml?parseFeed(xml,source,100):[])];
+  }));
+  const cutoff=Date.now()-7*86400000;
+  const candidates=[...groups.flat(),...previous].filter(item=> item.date && Date.parse(item.date)>=cutoff && Date.parse(item.date)<=Date.now()+3600000);
+  const items=(await deduplicateNews(candidates,sources)).sort((a,b)=>(b.date??'').localeCompare(a.date??''));
+  const latestLink=async(id:string,query:string)=> {
+    const source=newsSources.find(s=>s.id===id)!;
+    const xml=await fetchFeed(googleNews(`site:${source.publisherDomain} ${query} when:7d`,'ko','US'));
+    const rows=xml?parseFeed(xml,{...source,keywords:new RegExp(query),requiredKeywords:undefined,excludeKeywords:undefined},30).sort((a,b)=>(b.date??'').localeCompare(a.date??'')):[];
+    if(id==='news-koreadaily') {
+      const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'numeric',day:'numeric'}).formatToParts(new Date());
+      const month=parts.find(p=>p.type==='month')!.value,day=parts.find(p=>p.type==='day')!.value;
+      return rows.find(item=>new RegExp(`${month}월\\s*${day}일`).test(item.title))??null;
+    }
+    return rows[0]??null;
+  };
+  const [fortune,stocks]=await Promise.all([latestLink('news-koreadaily','오늘의 운세'),latestLink('news-radiokorea','증권소식')]);
+  return {items,fortune,stocks};
+}

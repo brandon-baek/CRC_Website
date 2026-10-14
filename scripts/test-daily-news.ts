@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { parseKoreatownPress } from '../src/data/koreatownPress.ts';
+import { DAILY_TOPICS, DAILY_EXCLUDES, dailySources } from '../src/data/dailyNews.ts';
+const article=(path:string,date='2026-10-14T11:39:00.000Z')=>`<article><a href="${path}"><h3>아마존 프라임 가입자들, 최고 200달러까지 환불</h3></a><time data-content-field="datePublished" datetime="${date}"></time></article>`;
+assert.equal(parseKoreatownPress(article('/news/usa/amazon-refund'))[0].date,'2026-10-14T11:39:00.000Z');
+for(const path of ['/news/korea/test','/news/world/test','/opinion/test','/news/press-release/test','https://evil.example/news/usa/test'])assert.equal(parseKoreatownPress(article(path)).length,0);
+assert.equal(parseKoreatownPress(article('/news/usa/test','2026-10-14T11:39:00')).length,0,'no guessed timezone');
+assert.equal(dailySources.length,4);
+assert(DAILY_TOPICS.test('소셜시큐리티 연금 인상'));
+assert(DAILY_TOPICS.test('LA 공연과 문화 행사'));
+assert(DAILY_EXCLUDES.test('LA 한인축제재단 이사회 지원'));
+assert(DAILY_EXCLUDES.test('대선 후보 지지 선언'));
+assert(!DAILY_EXCLUDES.test('연방 정부 메디케어 혜택 변경'));
+console.log('PASS: four daily sources, original timestamp, local categories, blocked domains, organization/political promotion exclusions, useful policy retained.');

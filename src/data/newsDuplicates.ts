@@ -133,41 +133,47 @@ export async function featuredArticleImage(item: NewsItem, source: NewsSource): 
   return image?.startsWith('https://') ? image : null;
 }
 
-/** One row per headline across outlets. Inspect only duplicate newspaper stories. */
-export async function deduplicateNews(
-  items: NewsItem[], sources: NewsSource[], check: ImageCheck = inspectArticleImage,
-): Promise<NewsItem[]> {
-  const sourceById = new Map(sources.map((source) => [source.id, source]));
-  const groups = new Map<string, NewsItem[]>();
-  for (const item of items) {
-    const key = headlineKey(item.title);
-    const group = groups.get(key) ?? [];
-    if (!group.some((existing) => existing.url === item.url)) group.push(item);
-    groups.set(key, group);
-  }
-  const winners: NewsItem[] = [];
-  // Sequential groups bound network concurrency to the number of duplicates
-  // in one group (normally two), without fetching every unique news article.
-  for (const group of groups.values()) {
-    const publishers = new Set(group.map((item) => sourceById.get(item.sourceId)?.publisherDomain).filter(Boolean));
-    if (group.length < 2 || publishers.size < 2) { winners.push(group[0]); continue; }
-    const imageStates = await Promise.all(group.map(async (item) => {
-      try { return await check(item, sourceById.get(item.sourceId)!); } catch { return null; }
-    }));
-    const rank = (index: number) => imageStates[index] === true ? 2 : imageStates[index] === null ? 1 : 0;
-    const ranked = group.map((item, index) => ({ item, index })).sort((a, b) =>
-      rank(b.index) - rank(a.index)
-      // CRC's chosen outlet for the example also provides a stable tie-breaker
-      // when images are equal or article metadata cannot be retrieved.
-      || Number(b.item.sourceId === 'news-koreatimes') - Number(a.item.sourceId === 'news-koreatimes')
-      || (b.item.date ?? '').localeCompare(a.item.date ?? '')
-      || a.item.url.localeCompare(b.item.url));
-    winners.push(ranked[0].item);
-  }
-  const seenUrls = new Set<string>();
-  return winners.filter((item) => {
-    if (seenUrls.has(item.url)) return false;
-    seenUrls.add(item.url);
-    return true;
+/** Conservative story match: punctuation changes, or near-identical syndicated headlines.
+ * Different amounts remain distinct. Large rewrites need an editorial override;
+ * broad topic matches would incorrectly hide separate incidents.
+ */
+export function sameStory(a: NewsItem, b: NewsItem): boolean {
+  if (a.url === b.url) return true;
+  const x = headlineKey(a.title), y = headlineKey(b.title);
+  const eventKey = (title:string) => {
+    // Narrow recurring events whose Korean headlines routinely use different names.
+    // Forecasts are separate from announced changes; don't hide a material update.
+    if (/(?:소셜|사회보장)/.test(title) && /연금|COLA/i.test(title) && /인상|오른|조정/.test(title) && !/전망|예상|오르나|추정|위기/.test(title)) {
+      const rate=title.match(/\d+(?:\.\d+)?\s*%/)?.[0].replace(/\s/g,'');
+      if(rate)return 'social-security-cola:'+rate;
+    }
+    if(/아마존.*프라임/.test(title)&&/환불/.test(title))return 'amazon-prime-refund';
+    if(/아마존/.test(title)&&/타이레놀|진통제/.test(title)&&/리콜/.test(title))return 'amazon-painkiller-recall';
+    if(/노벨\s*경제학상/.test(title)&&/미국|미국인|美|스탠퍼드/.test(title))return 'nobel-economics-us';
+    return null;
+  };
+  const event=eventKey(a.title);
+  if(event&&event===eventKey(b.title)&&a.date&&b.date&&Math.abs(Date.parse(a.date)-Date.parse(b.date))<3*86400000)return true;
+  if (x === y) return true;
+  if (a.sourceId !== b.sourceId && a.date && b.date && Math.abs(Date.parse(a.date)-Date.parse(b.date)) > 3*86400000) return false;
+  if (Math.min(x.length, y.length) < 22) return false;
+  if (JSON.stringify(x.match(/\d+/g)) !== JSON.stringify(y.match(/\d+/g))) return false;
+  const grams = (s: string) => new Set(Array.from({length:s.length-2}, (_,i) => s.slice(i,i+3)));
+  const gx = grams(x), gy = grams(y);
+  const overlap = [...gx].filter(g => gy.has(g)).length;
+  return overlap / Math.max(gx.size, gy.size) >= .86;
+}
+
+/** Earliest known publication wins. Missing dates sort last; URL breaks ties.
+ * No outlet preference, photo preference, or network-response-order preference.
+ */
+export async function deduplicateNews(items: NewsItem[], _sources: NewsSource[]): Promise<NewsItem[]> {
+  const stamp = (item: NewsItem) => item.date && Number.isFinite(Date.parse(item.date)) ? Date.parse(item.date) : Number.POSITIVE_INFINITY;
+  const ordered = [...items].sort((a,b) => {
+    const x=stamp(a), y=stamp(b);
+    return (x < y ? -1 : x > y ? 1 : 0) || a.url.localeCompare(b.url) || a.sourceId.localeCompare(b.sourceId);
   });
+  const winners: NewsItem[] = [];
+  for (const item of ordered) if (!winners.some(winner => sameStory(winner,item))) winners.push(item);
+  return winners;
 }

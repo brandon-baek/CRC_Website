@@ -17,6 +17,7 @@ const links = [
   { href: '/directory', label: dict.nav.directoryShort },
   { href: '/learn', label: dict.nav.learnShort },
   { href: '/news', label: dict.nav.newsShort },
+  { href: '/daily', label: dict.nav.daily },
   { href: '/about', label: dict.nav.aboutShort },
   { href: '/contact', label: dict.nav.contact },
 ];
@@ -74,7 +75,7 @@ function isCurrent(href: string, exact = false): boolean {
           href={localePath(locale, l.href)}
           aria-current={isCurrent(l.href, l.exact) ? 'page' : undefined}
         >
-          {l.label}
+          <span class="nav-short">{l.label}</span>{l.href === '/news' && <span class="nav-full">{locale === 'ko' ? '사기·소비자 피해 뉴스' : 'Fraud & Consumer News'}</span>}
         </a>
       ))}
       <a

@@ -1,0 +1,30 @@
+.daily-page { padding-top:2rem; }
+.daily-heading { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; border-bottom:2px solid #0f5132; padding-bottom:.8rem; margin-bottom:1.5rem; }
+.daily-heading h1 { font-size:clamp(1.5rem,3vw,2rem); }
+.daily-heading time,.daily-quick-links .quick-date { font-size:13px; color:#485d70; white-space:nowrap; margin-left:0; }
+.daily-layout { display:grid; grid-template-columns:minmax(300px,360px) minmax(0,1fr); gap:2.5rem; align-items:start; }
+.daily-tools { min-width:0; }
+.daily-quick-links { margin-bottom:1.1rem; }
+.daily-quick-links a { display:flex; align-items:baseline; gap:.55rem; padding:.65rem 0; border-bottom:1px solid #dbe2dc; color:#0f5132; }
+.daily-quick-links strong { font-size:18px; white-space:nowrap; }
+.daily-quick-links span { margin-left:auto; }
+.daily-image-grid { display:grid; gap:1rem; }
+.daily-image-grid a { display:block; overflow:hidden; position:relative; }
+.daily-image-grid img { display:block; width:100%; height:auto; }
+.daily-weather { aspect-ratio:329/106; }
+.daily-weather img { width:124.924012%; max-width:none; }
+.daily-rates { aspect-ratio:333/142; }
+.daily-rates img { transform:translateY(-14.457831%); }
+.daily-image-date { display:block; text-align:right; font-size:11px; color:#485d70; margin-top:.4rem; }
+.daily-stories ol { list-style:none; margin:0; padding:0; }
+.daily-stories li { padding:1rem .3rem; border-bottom:1px solid #dbe2dc; text-align:center; }
+.daily-stories li:first-child { padding-top:.35rem; }
+.daily-stories a { display:block; color:#0f5132; font-size:20px; font-weight:600; line-height:1.65; text-decoration:underline; text-underline-offset:4px; overflow-wrap:anywhere; }
+.daily-stories li:nth-child(even) a { color:#1e4280; }
+@media(max-width:800px) {
+ .daily-layout { grid-template-columns:1fr; gap:1.5rem; }
+ .daily-tools { max-width:480px; width:100%; margin:auto; }
+ .daily-stories a { font-size:18px; }
+ .daily-stories li { padding:.85rem 0; }
+ .daily-heading { margin-bottom:.75rem; }
+}

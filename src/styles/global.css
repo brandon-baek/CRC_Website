@@ -915,3 +915,18 @@ textarea.input { min-height: 130px; resize: vertical; }
 .mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; } .mt-3 { margin-top: 1.6rem; } .mt-4 { margin-top: 2.4rem; }
 .center { text-align: center; }
 .muted { color: var(--ink-mute); }
+
+/* Two clear news destinations without squeezing the desktop navigation. */
+.nav-full { display:none; }
+@media(min-width: 801px) {
+  .site-header .bar { flex-wrap:wrap; gap:.35rem 1rem; padding-block:.6rem; }
+  .site-header .lang-switch.in-bar { display:inline-flex; margin:0; }
+  .site-header .site-nav { display:flex; position:static; flex-direction:row; flex-basis:100%; flex-wrap:wrap; justify-content:center; padding:0; border:0; box-shadow:none; background:transparent; gap:.2rem; }
+  .site-header .site-nav a { font-size:.85rem; min-height:44px; }
+  .site-header .site-nav .in-nav, .site-header .nav-toggle { display:none; }
+}
+@media(max-width:800px) {
+  .site-nav a[href$="/news"] .nav-short {display:none}
+  .site-nav .nav-full {display:inline}
+  .site-nav { max-height:calc(100dvh - 72px); overflow-y:auto; }
+}
