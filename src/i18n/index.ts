@@ -26,7 +26,7 @@ export const ui = {
       learnShort: 'Learn',
       news: 'Fraud News',
       newsShort: 'Fraud News',
-      daily: 'Daily Living',
+      daily: 'Daily News',
       about: 'About Us',
       aboutShort: 'About',
       contact: 'Contact',
