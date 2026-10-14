@@ -1,14 +1,25 @@
-import { writeFile } from 'node:fs/promises';
+import { writeFile,readFile } from 'node:fs/promises';
 import { collectDailyNews } from '../src/data/dailyNews';
-import { captureDailyImages } from './daily-capture/capture.mjs';
+import { refreshMode } from './daily-window.mjs';
 
 const now=new Date();
-// Publish one complete edition, never a mixture of new labels and old captures.
-const [news,visuals]=await Promise.all([collectDailyNews(now),captureDailyImages(now)]);
+const saved=JSON.parse(await readFile('src/data/dailyEdition.json','utf8'));
+const mode=process.env.DAILY_MODE==='hold'?'hold':refreshMode(saved,now);
+const news=await collectDailyNews(now);
 if(!news.liveItemCount || !news.items.some(item=>item.sourceId==='daily-la') || !news.items.some(item=>item.sourceId!=='daily-la')) {
-  throw Error('Daily news sources did not return a complete bilingual edition');
+  throw Error('Daily news sources did not return a complete bilingual collection');
 }
-if(!news.fortune) console.warn('Today’s fortune has not been published/indexed; no older fortune will be substituted.');
-if(!news.stocks) console.warn('No recent Radio Korea stock report is available.');
-await writeFile('src/data/dailyEdition.json',JSON.stringify({...news,timeZone:'America/Los_Angeles',...visuals})+'\n');
-console.log(`Daily edition ready: ${news.editionDate}; ${news.items.length} stories; stock report ${news.stocks?.date??'unavailable'}`);
+// Keep discoveries even when they leave the publisher's front page overnight.
+await writeFile('src/data/dailyPending.json',JSON.stringify(news)+'\n');
+await writeFile('.daily-refresh-plan.json',JSON.stringify({mode,generatedAt:news.generatedAt})+'\n');
+if(mode==='hold') {
+  console.log('Outside 6am-5pm Pacific: discoveries saved; displayed edition unchanged.');
+} else {
+  let visuals={images:saved?.images,sourceChecks:saved?.sourceChecks};
+  if(mode==='full') {
+    const {captureDailyImages}=await import('./daily-capture/capture.mjs');
+    visuals=await captureDailyImages(now);
+  }
+  await writeFile('src/data/dailyEdition.json',JSON.stringify({...news,timeZone:'America/Los_Angeles',...visuals})+'\n');
+  console.log(`${mode} update ready: ${news.editionDate}; ${news.items.length} stories; stock report ${news.stocks?.date??'unavailable'}`);
+}

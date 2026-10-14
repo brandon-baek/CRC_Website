@@ -1,10 +1,11 @@
-name: Daily bulletin at 6am Pacific
+name: Daily bulletin and daytime news
 on:
   schedule:
     - cron: '0 6 * * *'
       timezone: America/Los_Angeles
-    # Retry only if the edition or today's fortune was unavailable at 6am.
-    - cron: '20 6,7 * * *'
+    - cron: '7,37 6-16 * * *'
+      timezone: America/Los_Angeles
+    - cron: '7 0-5,17-23 * * *'
       timezone: America/Los_Angeles
   workflow_dispatch:
   push:
@@ -13,6 +14,7 @@ on:
       - '.github/workflows/refresh-daily.yml'
       - 'scripts/refresh-daily.ts'
       - 'scripts/publish-daily.mjs'
+      - 'scripts/daily-window.mjs'
       - 'scripts/daily-capture/**'
       - 'src/data/dailySchedule.ts'
 permissions:
@@ -26,40 +28,40 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - name: Check whether a retry is needed
+      - name: Determine morning, daytime, or overnight mode
         id: edition
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          SCHEDULE: ${{ github.event.schedule }}
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
+          import {refreshMode} from './scripts/daily-window.mjs';
           const saved=JSON.parse(fs.readFileSync('src/data/dailyEdition.json','utf8'));
-          const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-          const retry=process.env.EVENT_NAME==='schedule' && process.env.SCHEDULE==='20 6,7 * * *';
-          const needed=!retry || saved?.editionDate!==today || !saved?.fortune;
-          fs.appendFileSync(process.env.GITHUB_OUTPUT,`needed=${needed}\n`);
+          const mode=refreshMode(saved);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`mode=${mode}\n`);
+          console.log(`Refresh mode: ${mode}`);
           NODE
-      - name: Install capture tools
-        if: steps.edition.outputs.needed == 'true'
+      - name: Install news tools
+        run: npm ci
+      - name: Install image capture tools for the morning package
+        if: steps.edition.outputs.mode == 'full'
         run: |
-          npm ci
           npm ci --prefix scripts/daily-capture
           node scripts/daily-capture/node_modules/playwright/cli.js install --with-deps chromium
-      - name: Collect the complete daily package
-        if: steps.edition.outputs.needed == 'true'
+      - name: Collect or hold the latest news
+        env:
+          DAILY_MODE: ${{ steps.edition.outputs.mode }}
         run: node node_modules/tsx/dist/cli.mjs scripts/refresh-daily.ts
-      - name: Validate the website with the new edition
-        if: steps.edition.outputs.needed == 'true'
-        run: |
-          node node_modules/tsx/dist/cli.mjs scripts/test-daily-schedule.ts
-          npm run build
-      - name: Save the edition and trigger Cloudflare Pages
-        if: steps.edition.outputs.needed == 'true'
+      - name: Validate schedule and stock-report handling
+        run: node node_modules/tsx/dist/cli.mjs scripts/test-daily-schedule.ts
+      - name: Validate the website before publishing
+        if: steps.edition.outputs.mode != 'hold'
+        run: npm run build
+      - name: Publish daytime news or save overnight discoveries
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

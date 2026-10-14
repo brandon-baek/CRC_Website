@@ -3,6 +3,7 @@ import { deduplicateNews } from './newsDuplicates';
 import { fetchKoreatownPress } from './koreatownPress';
 import { fetchRadioKorea } from './radioKorea';
 import savedEdition from './dailyEdition.json';
+import heldEdition from './dailyPending.json';
 import { editionDate, isTodaysFortune, latestStockReport } from './dailySchedule';
 import { US_COMMUNITY_TERMS } from './newsLocality';
 import { retainedNews } from './newsHistory';
@@ -27,7 +28,7 @@ const englishSources: NewsSource[] = newsSources.filter(s => s.id === 'news-la')
 
 export interface DailyNews { items:NewsItem[]; fortune:NewsItem|null; stocks:NewsItem|null; generatedAt?:string; editionDate?:string; liveItemCount?:number }
 let pending: Promise<DailyNews>;
-// Ordinary site builds must not mix a new headline list with yesterday's images.
+// Ordinary builds only display the published edition; held stories stay out of the page.
 export function fetchDailyNews(): Promise<DailyNews> {
   const saved = savedEdition as DailyNews | null;
   return pending ??= saved?.generatedAt ? Promise.resolve({...saved, items:saved.items.filter(item=>!isExcludedNews(item))}) : collectDailyNews();
@@ -36,6 +37,10 @@ export async function collectDailyNews(now = new Date(), saved:DailyNews|null = 
   const sources = [...dailySources, ...englishSources];
   let previous: NewsItem[]=retainedNews(fallback,sources);
   let previousStocks: NewsItem[] = saved?.stocks ? [saved.stocks] : [];
+  const held=heldEdition as DailyNews|null;
+  const previousFortunes=[saved?.fortune,held?.fortune].filter((item):item is NewsItem=>!!item);
+  if(held) previous=[...retainedNews(held,sources),...previous];
+  if(held?.stocks) previousStocks.push(held.stocks);
   if(saved) previous = [...retainedNews(saved,sources), ...previous];
   try {
     const response=await fetch('https://crcnow.org/daily-feed.json',{signal:AbortSignal.timeout(8000)});
@@ -64,7 +69,7 @@ export async function collectDailyNews(now = new Date(), saved:DailyNews|null = 
     ]);
     const rows=[...direct,...(xml?parseFeed(xml,linkSource,30):[])].sort((a,b)=>(b.date??'').localeCompare(a.date??''));
     if(id==='news-koreadaily') {
-      return rows.find(item=>isTodaysFortune(item,now))??null;
+      return [...rows,...previousFortunes].find(item=>isTodaysFortune(item,now))??null;
     }
     return latestStockReport([...rows,...previousStocks],now);
   };

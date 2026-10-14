@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { editionDate, isTodaysFortune, latestStockReport } from '../src/data/dailySchedule';
 import type { NewsItem } from '../src/data/newsFeeds';
 import { forecastDays } from './daily-capture/weather.mjs';
+import { refreshMode,canPublishEdition,isPublishingWindow } from './daily-window.mjs';
 
 const friday:NewsItem={sourceId:'news-radiokorea',title:'오늘의 증권소식(10월 16일)',date:'2026-10-16T21:30:00Z',url:'https://www.radiokorea.com/news/article.php?uid=123',summary:''};
 for(const date of ['2026-10-17T13:00:00Z','2026-10-18T13:00:00Z','2026-10-19T13:00:00Z']) {
@@ -30,3 +31,21 @@ assert.throws(()=>forecastDays(forecast,new Date('2026-10-16T13:00:00Z')),/outda
 assert.throws(()=>forecastDays({properties:{...forecast.properties,periods:periods.filter(p=>p.isDaytime)}},new Date('2026-10-14T13:00:00Z')),/missing temperatures/);
 assert.throws(()=>forecastDays({properties:{...forecast.properties,periods:periods.map(p=>({...p,temperatureUnit:'C'}))}},new Date('2026-10-14T13:00:00Z')),/missing temperatures/);
 console.log('PASS: four-day source forecast, matching overnight lows, stale/missing/Celsius data rejected.');
+const current={editionDate:'2026-10-14',generatedAt:'2026-10-14T13:00:00Z',images:{capturedAt:'2026-10-14T13:00:00Z'}};
+assert.equal(refreshMode(current,new Date('2026-10-14T12:59:59Z')),'hold','5:59am holds');
+assert.equal(refreshMode(null,new Date('2026-10-14T13:00:00Z')),'full','6am opens full package');
+assert.equal(refreshMode(current,new Date('2026-10-14T23:59:59Z')),'news','4:59pm refreshes news');
+assert.equal(refreshMode(current,new Date('2026-10-15T00:00:00Z')),'hold','5pm freezes');
+assert.equal(refreshMode(current,new Date('2026-10-15T07:00:00Z')),'hold','midnight does not release queue');
+assert.equal(refreshMode(current,new Date('2026-10-15T12:59:59Z')),'hold');
+assert.equal(refreshMode(current,new Date('2026-10-15T13:00:00Z')),'full','next 6am releases morning package');
+const late={...current,generatedAt:'2026-10-14T23:58:00Z'};
+assert(canPublishEdition(late,new Date('2026-10-14T23:59:59Z')));
+assert(!canPublishEdition(late,new Date('2026-10-15T00:00:00Z')),'in-flight build cannot publish after cutoff');
+assert(!canPublishEdition(late,new Date('2026-10-15T13:00:00Z')),'yesterday delayed job cannot replace morning edition');
+assert.equal(isPublishingWindow(new Date('2026-11-02T13:59:59Z')),false,'winter 5:59am PST');
+assert.equal(isPublishingWindow(new Date('2026-11-02T14:00:00Z')),true,'winter 6am PST');
+assert.equal(isPublishingWindow(new Date('2026-11-03T01:00:00Z')),false,'winter 5pm PST');
+assert.equal(isPublishingWindow(new Date('2026-11-01T08:30:00Z')),false,'first fall-back 1:30am');
+assert.equal(isPublishingWindow(new Date('2026-11-01T09:30:00Z')),false,'second fall-back 1:30am');
+console.log('PASS: 6am opening, daytime updates, 5pm freeze, overnight hold, next-day release, delayed job guard, DST.');

@@ -1,31 +1,41 @@
-# Daily bulletin
+# Daily bulletin schedule
 
-`refresh-daily.yml` starts every day at 06:00 America/Los_Angeles (PST in winter,
-PDT in summer). GitHub schedules are best effort; the source capture and Cloudflare
-build take additional time. 06:20 and 07:20 runs retry a missing edition or fortune.
-Manual runs and changes to the collector also refresh the package.
+All times use America/Los_Angeles, automatically following PST/PDT.
 
-The collector renders four days of official NWS Los Angeles forecast data in °F.
-Bing does not reliably return its weather box to unattended servers. It captures
-USD/KRW from the Wise widget used by Korea Times, and the three official California
-Lottery cards. The rate is a reference conversion rate, not a bank cash rate.
-Original source URLs, observed values, and capture timestamps are recorded in the
-edition for diagnosis. No screenshot is generated from invented numbers.
+- 06:00: collect the full morning package: news, today's fortune, latest Radio Korea
+  stock report, four-day weather, USD/KRW, and three lottery jackpots.
+- 06:07 through 16:37: check news every 30 minutes. Update headlines, fortune, and
+  the stock report while keeping the morning's utility images. If the morning
+  package failed, these runs retry the full package until it succeeds.
+- 17:00 until 06:00: keep the displayed daily edition frozen. Hourly collections
+  save discoveries to `src/data/dailyPending.json` for the next morning. The queue
+  is merged with the next collection, re-filtered and deduplicated, and is never
+  returned by the public daily-feed endpoint or displayed by ordinary site builds.
 
-News uses the existing local-topic, editorial, language and duplicate filters.
-Today's fortune must match the Los Angeles calendar date. Radio Korea stocks use
-the newest published report available by capture time, including Friday on weekends
-and the preceding trading day before a new report is released. The original date
-remains visible. Missing fortune links are omitted, never replaced with yesterday's.
+GitHub scheduling and Cloudflare deployment take time and can be delayed. The
+publisher rechecks the local time after the build and immediately before updating
+GitHub; jobs that overrun 17:00 save only their queue. A Cloudflare deployment already
+started before 17:00 may finish shortly afterward. Manual/code-change runs obey the
+same window, and obsolete previous-day jobs cannot replace a newer morning edition.
 
-The generated `src/data/dailyEdition.json` contains the complete package. It is
-written only after all three captures validate, and committed only after the site
-build succeeds. A source/capture failure leaves the previous edition and its date
-intact. Capture requests retry up to three times. Workflow failures appear in
-GitHub Actions and use the repository's existing notification settings.
+The morning weather display uses official NWS data. Rates are captured from the
+Wise USD/KRW widget used by Korea Times (a reference conversion rate, not a bank
+cash rate). The three lottery cards are captured from California Lottery. Captures
+validate source dates/values and retry up to three times. Morning publication waits
+for all three captures and a successful build; failures keep the previous dated
+edition. The daytime news checks then retry a missing morning package.
 
-The six-hour fraud-news workflow is unchanged. Other site builds read the saved
-daily edition, so images and headlines stay together. To refresh manually, run
-**Daily bulletin at 6am Pacific** in GitHub Actions. No developer computer or paid
-API credentials are required. The preview branch `codex/daily-refresh` runs the
-same capture and publishes only to that branch.
+Today's fortune must match the Los Angeles date. Stock reports keep their original
+publication date: Friday remains over the weekend and into Monday morning until a
+new report is available. New weekday reports can appear during daytime updates.
+All existing source, locality, language, editorial, and duplicate filters apply.
+
+`dailyEdition.json` is the displayed snapshot. `dailyPending.json` is the collected
+news cache, including stories held overnight. Both are updated through the GitHub
+API without overwriting concurrent site edits. Only the morning snapshot refreshes
+weather/rate/lottery images. The existing six-hour fraud-news workflow is unchanged.
+
+Run **Daily bulletin and daytime news** in GitHub Actions to collect manually.
+No developer computer or paid API credentials are required. Workflow failures use
+the repository's existing notifications. The preview branch `codex/daily-refresh`
+runs the same workflow and writes only to that branch.
