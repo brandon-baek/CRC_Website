@@ -9,7 +9,7 @@ const {locale}=Astro.props;
 const ko=locale==='ko';
 const {items:all,fortune,stocks}=await fetchDailyNews();
 const items=all.filter(item=>ko?item.sourceId!=='daily-la':item.sourceId==='daily-la').slice(0,40);
-const title=ko?'오늘의 생활정보':'Daily Living';
+const title=ko?'오늘의 생활정보':'Daily News';
 const dateFormat=new Intl.DateTimeFormat(ko?'ko-KR':'en-US',{month:'long',day:'numeric',timeZone:'America/Los_Angeles'});
 const latest=items.find(item=>item.date)?.date;
 const links=[{item:fortune,title:'오늘의 운세'},{item:stocks,title:'오늘의 증권소식'}];
