@@ -261,7 +261,7 @@ export const newsSources: NewsSource[] = [
     urls: [],
     homepage: 'https://koreatownpress.org/',
     publisherDomain: 'koreatownpress.org',
-    keywords: new RegExp(`${KO_NEWS_TERMS.source}|환불|리콜|소비자|벌금`, 'iu'),
+    keywords: new RegExp(`${KO_NEWS_TERMS.source}|환불|리콜|소비자|(?:은행|Bank).*벌금`, 'iu'),
     excludeKeywords: /취임식|이취임|창립|기금모금|후원행사|지지선언|정당|선거운동|현역의원/,
     lang: 'ko',
   },
