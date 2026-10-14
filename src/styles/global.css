@@ -926,6 +926,15 @@ textarea.input { min-height: 130px; resize: vertical; }
   .site-header .site-nav .in-nav, .site-header .nav-toggle { display:none; }
 }
 @media(max-width:800px) {
+  /* Keep the language control first and visible on phones. */
+  .site-header .bar { display:grid; grid-template-columns:auto minmax(0,1fr) 44px; gap:.45rem; padding-block:.35rem; }
+  .site-header .lang-switch.in-bar { order:-1; margin:0; padding-inline:.55em; font-size:14px; }
+  .site-header .brand { min-width:0; margin:0; gap:.3rem; justify-self:center; }
+  .site-header .brand .mark { width:28px; height:28px; flex-shrink:0; }
+  .site-header .brand .name { font-size:.8rem; white-space:normal; line-height:1.15; }
+  .site-header .brand .name small { font-size:.62rem; line-height:1.1; }
+  .site-header .nav-toggle { min-width:44px; width:44px; }
+
   .site-nav a[href$="/news"] .nav-short {display:none}
   .site-nav .nav-full {display:inline}
   .site-nav { max-height:calc(100dvh - 72px); overflow-y:auto; }
