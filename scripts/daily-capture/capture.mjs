@@ -1,8 +1,9 @@
 import { chromium } from 'playwright';
 import sharp from 'sharp';
+import { weather,weatherLink } from './weather.mjs';
 
 export const SOURCES = {
-  weather: 'https://www.bing.com/search?q=los+angeles+weather&setlang=en-US',
+  weather: weatherLink,
   // This is the Wise converter embedded by Korea Times, cropped below KRW.
   rates: 'https://wise.com/gb/currency-converter/fx-widget/table?sourceCurrency=USD&targetCurrencies=KRW%2CGBP%2CEUR%2CJPY',
   lottery: 'https://www.calottery.com/',
@@ -13,29 +14,6 @@ async function readyImages(locator) {
     await Promise.all([...el.querySelectorAll('img')].map(img => img.decode()));
     await document.fonts.ready;
   });
-}
-
-async function weather(page, now) {
-  await page.goto(SOURCES.weather, { waitUntil: 'domcontentloaded' });
-  const first = page.locator('.day-box-btn[data-day="0"]');
-  await first.waitFor({ state:'visible' });
-  const days = page.locator('.day-box-btn').filter({visible:true});
-  const rows = await days.evaluateAll(els => els.slice(0,4).map(el => ({
-    label:el.getAttribute('aria-label'), title:el.querySelector('.day-title')?.textContent,
-    high:el.getAttribute('data-temphiplhd'), low:el.getAttribute('data-temploplhd'),
-  })));
-  if(rows.length!==4 || !rows[0].label?.startsWith('Today,') || rows.some(r=>!r.high || !r.low)) throw Error('Weather forecast is incomplete');
-  const tomorrow = new Date(+now + 86400000);
-  const day = new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',day:'numeric'}).format(tomorrow);
-  if(!new RegExp(`\\b${day}\\b`).test(rows[1].title)) throw Error('Weather forecast has the wrong date');
-  const unit = page.getByRole('tab',{name:'Weather unit Fahrenheit'});
-  if(await unit.getAttribute('aria-selected')!=='true') throw Error('Weather source is not in Fahrenheit');
-  await first.scrollIntoViewIfNeeded();
-  await readyImages(first.locator('..'));
-  const start = await first.boundingBox(), end = await days.nth(3).boundingBox();
-  if(!start || !end || Math.abs(start.y-end.y)>4) throw Error('Weather days are not a horizontal row');
-  const bytes = await page.screenshot({clip:{x:start.x,y:start.y,width:end.x+end.width-start.x,height:Math.max(start.height,end.height)},animations:'disabled'});
-  return {bytes, details:rows};
 }
 
 async function rates(page) {
@@ -93,7 +71,11 @@ export async function captureDailyImages(now=new Date()) {
       for(let attempt=1;attempt<=3;attempt++) {
         const page=await context.newPage();
         try { result=await fn(page,now); break; }
-        catch(error) { console.warn(`${name} attempt ${attempt}: ${error.message}`); if(attempt===3) throw error; }
+        catch(error) {
+          console.warn(`${name} attempt ${attempt}: ${error.message}`);
+          console.warn((await page.locator('body').innerText({timeout:2000}).catch(()=>'' )).slice(0,500));
+          if(attempt===3) throw error;
+        }
         finally { await page.close(); }
       }
       if(result.bytes.length<1500) throw Error(`Empty ${name} capture`);

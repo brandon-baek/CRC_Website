@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { editionDate, isTodaysFortune, latestStockReport } from '../src/data/dailySchedule';
 import type { NewsItem } from '../src/data/newsFeeds';
+import { forecastDays } from './daily-capture/weather.mjs';
 
 const friday:NewsItem={sourceId:'news-radiokorea',title:'오늘의 증권소식(10월 16일)',date:'2026-10-16T21:30:00Z',url:'https://www.radiokorea.com/news/article.php?uid=123',summary:''};
 for(const date of ['2026-10-17T13:00:00Z','2026-10-18T13:00:00Z','2026-10-19T13:00:00Z']) {
@@ -19,3 +20,13 @@ assert(isTodaysFortune(fortune,new Date('2026-10-14T13:00:00Z')));
 assert(!isTodaysFortune(fortune,new Date('2026-10-15T13:00:00Z')),'do not relabel yesterday’s fortune');
 assert(!isTodaysFortune({...fortune,title:'[오늘의 운세] 11월 14일'},new Date('2026-10-14T13:00:00Z')));
 console.log('PASS: Pacific dates, weekend/holiday stock retention, original timestamps, future/stale report rejection, same-day fortune.');
+const periods=Array.from({length:8},(_,i)=>{
+  const day=14+Math.floor(i/2),night=i%2===1;
+  return {isDaytime:!night,startTime:`2026-10-${day}T${night?'18':'06'}:00:00-07:00`,endTime:`2026-10-${night?day+1:day}T${night?'06':'18'}:00:00-07:00`,temperature:night?60:80,temperatureUnit:'F',shortForecast:'Sunny'};
+});
+const forecast={properties:{updateTime:'2026-10-14T12:00:00Z',periods}};
+assert.deepEqual(forecastDays(forecast,new Date('2026-10-14T13:00:00Z')).map(d=>[d.high,d.low]),[[80,60],[80,60],[80,60],[80,60]]);
+assert.throws(()=>forecastDays(forecast,new Date('2026-10-16T13:00:00Z')),/outdated/);
+assert.throws(()=>forecastDays({properties:{...forecast.properties,periods:periods.filter(p=>p.isDaytime)}},new Date('2026-10-14T13:00:00Z')),/missing temperatures/);
+assert.throws(()=>forecastDays({properties:{...forecast.properties,periods:periods.map(p=>({...p,temperatureUnit:'C'}))}},new Date('2026-10-14T13:00:00Z')),/missing temperatures/);
+console.log('PASS: four-day source forecast, matching overnight lows, stale/missing/Celsius data rejected.');

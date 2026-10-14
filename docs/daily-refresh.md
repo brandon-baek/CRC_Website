@@ -5,7 +5,8 @@ PDT in summer). GitHub schedules are best effort; the source capture and Cloudfl
 build take additional time. 06:20 and 07:20 runs retry a missing edition or fortune.
 Manual runs and changes to the collector also refresh the package.
 
-The collector captures the first four days of Bing's Los Angeles forecast in °F,
+The collector renders four days of official NWS Los Angeles forecast data in °F.
+Bing does not reliably return its weather box to unattended servers. It captures
 USD/KRW from the Wise widget used by Korea Times, and the three official California
 Lottery cards. The rate is a reference conversion rate, not a bank cash rate.
 Original source URLs, observed values, and capture timestamps are recorded in the
