@@ -1,0 +1,1 @@
+{"name":"crc-daily-capture","private":true,"type":"module","dependencies":{"crc-website":"file:../..","playwright":"1.64.1"}}

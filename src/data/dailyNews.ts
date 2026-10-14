@@ -2,6 +2,8 @@ import { fetchFeed, googleNews, newsSources, parseFeed, type NewsItem, type News
 import { deduplicateNews } from './newsDuplicates';
 import { fetchKoreatownPress } from './koreatownPress';
 import { fetchRadioKorea } from './radioKorea';
+import savedEdition from './dailyEdition.json';
+import { editionDate, isTodaysFortune, latestStockReport } from './dailySchedule';
 import { US_COMMUNITY_TERMS } from './newsLocality';
 import { retainedNews } from './newsHistory';
 import fallback from './dailyFallback.json';
@@ -23,14 +25,25 @@ const englishSources: NewsSource[] = newsSources.filter(s => s.id === 'news-la')
   excludeKeywords:/^Opinion\b|^Editorial\b|campaign endorsement/i,
 }));
 
-let pending: Promise<{items:NewsItem[];fortune:NewsItem|null;stocks:NewsItem|null}>;
-export function fetchDailyNews() { return pending ??= gather(); }
-async function gather() {
+export interface DailyNews { items:NewsItem[]; fortune:NewsItem|null; stocks:NewsItem|null; generatedAt?:string; editionDate?:string; liveItemCount?:number }
+let pending: Promise<DailyNews>;
+// Ordinary site builds must not mix a new headline list with yesterday's images.
+export function fetchDailyNews(): Promise<DailyNews> {
+  const saved = savedEdition as DailyNews | null;
+  return pending ??= saved?.generatedAt ? Promise.resolve({...saved, items:saved.items.filter(item=>!isExcludedNews(item))}) : collectDailyNews();
+}
+export async function collectDailyNews(now = new Date(), saved:DailyNews|null = savedEdition) {
   const sources = [...dailySources, ...englishSources];
   let previous: NewsItem[]=retainedNews(fallback,sources);
+  let previousStocks: NewsItem[] = saved?.stocks ? [saved.stocks] : [];
+  if(saved) previous = [...retainedNews(saved,sources), ...previous];
   try {
     const response=await fetch('https://crcnow.org/daily-feed.json',{signal:AbortSignal.timeout(8000)});
-    if(response.ok) previous=[...retainedNews(await response.json(),sources),...previous];
+    if(response.ok) {
+      const data = await response.json();
+      previous=[...retainedNews(data,sources),...previous];
+      if(data.stocks) previousStocks.push(data.stocks);
+    }
   } catch { /* A first preview has no saved bulletin. */ }
   const groups=await Promise.all(sources.map(async source=> {
     const [documents,direct]=await Promise.all([
@@ -39,20 +52,22 @@ async function gather() {
     ]);
     return [...direct,...documents.flatMap(xml=>xml?parseFeed(xml,source,100):[])];
   }));
-  const cutoff=Date.now()-7*86400000;
-  const candidates=[...groups.flat(),...previous].filter(item=> !isExcludedNews(item) && item.date && Date.parse(item.date)>=cutoff && Date.parse(item.date)<=Date.now()+3600000);
+  const cutoff=+now-7*86400000;
+  const candidates=[...groups.flat(),...previous].filter(item=> !isExcludedNews(item) && item.date && Date.parse(item.date)>=cutoff && Date.parse(item.date)<=+now);
   const items=(await deduplicateNews(candidates,sources)).sort((a,b)=>(b.date??'').localeCompare(a.date??''));
   const latestLink=async(id:string,query:string)=> {
     const source=newsSources.find(s=>s.id===id)!;
-    const xml=await fetchFeed(googleNews(`site:${source.publisherDomain} ${query} when:7d`,'ko','US'));
-    const rows=xml?parseFeed(xml,{...source,keywords:new RegExp(query),requiredKeywords:undefined,excludeKeywords:undefined},30).sort((a,b)=>(b.date??'').localeCompare(a.date??'')):[];
+    const linkSource={...source,keywords:new RegExp(query),requiredKeywords:undefined,excludeKeywords:undefined};
+    const [xml,direct]=await Promise.all([
+      fetchFeed(googleNews(`site:${source.publisherDomain} ${query} when:7d`,'ko','US')),
+      id==='news-radiokorea'?fetchRadioKorea(linkSource,fetchFeed):Promise.resolve([]),
+    ]);
+    const rows=[...direct,...(xml?parseFeed(xml,linkSource,30):[])].sort((a,b)=>(b.date??'').localeCompare(a.date??''));
     if(id==='news-koreadaily') {
-      const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'numeric',day:'numeric'}).formatToParts(new Date());
-      const month=parts.find(p=>p.type==='month')!.value,day=parts.find(p=>p.type==='day')!.value;
-      return rows.find(item=>new RegExp(`${month}월\\s*${day}일`).test(item.title))??null;
+      return rows.find(item=>isTodaysFortune(item,now))??null;
     }
-    return rows[0]??null;
+    return latestStockReport([...rows,...previousStocks],now);
   };
   const [fortune,stocks]=await Promise.all([latestLink('news-koreadaily','오늘의 운세'),latestLink('news-radiokorea','증권소식')]);
-  return {items,fortune,stocks};
+  return {items,fortune,stocks,generatedAt:now.toISOString(),editionDate:editionDate(now),liveItemCount:groups.flat().length};
 }

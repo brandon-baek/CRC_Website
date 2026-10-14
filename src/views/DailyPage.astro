@@ -1,17 +1,20 @@
 ---
 import Base from '../layouts/Base.astro';
 import { fetchDailyNews } from '../data/dailyNews';
-import { dailyImages } from '../data/dailyImages';
+import { dailyImages as initialImages } from '../data/dailyImages';
+import savedEdition from '../data/dailyEdition.json';
 import type { Locale } from '../i18n';
 import '../styles/daily.css';
 interface Props {locale:Locale}
 const {locale}=Astro.props;
 const ko=locale==='ko';
-const {items:all,fortune,stocks}=await fetchDailyNews();
+const {items:all,fortune,stocks,generatedAt}=await fetchDailyNews();
+const dailyImages=(savedEdition as {images?:typeof initialImages & {cropped?:boolean}}|null)?.images ?? initialImages;
+const cropped='cropped' in dailyImages && dailyImages.cropped;
 const items=all.filter(item=>ko?item.sourceId!=='daily-la':item.sourceId==='daily-la').slice(0,40);
 const title=ko?'오늘의 생활정보':'Daily News';
 const dateFormat=new Intl.DateTimeFormat(ko?'ko-KR':'en-US',{month:'long',day:'numeric',timeZone:'America/Los_Angeles'});
-const latest=items.find(item=>item.date)?.date;
+const latest=generatedAt ?? items.find(item=>item.date)?.date;
 const links=[{item:fortune,title:'오늘의 운세'},{item:stocks,title:'오늘의 증권소식'}];
 const quickDate=(item:NonNullable<typeof fortune>)=>item===fortune?item.title.match(/\d+월\s*\d+일/)?.[0]??(item.date?dateFormat.format(new Date(item.date)):''):(item.date?dateFormat.format(new Date(item.date)):'');
 ---
@@ -21,7 +24,7 @@ const quickDate=(item:NonNullable<typeof fortune>)=>item===fortune?item.title.ma
     <div class="daily-layout">
       <aside class="daily-tools">
         {ko&&<div class="daily-quick-links">{links.map(({item,title})=>item&&<a href={item.url} target="_blank" rel="noopener noreferrer"><strong>{title}</strong><span class="quick-date">{quickDate(item)}</span><span aria-hidden="true">↗</span></a>)}</div>}
-        <div class="daily-image-grid">
+        <div class:list={['daily-image-grid',{'daily-images-cropped':cropped}]}>
           <a class="daily-weather" href="https://www.bing.com/search?q=los+angeles+weather" target="_blank" rel="noopener noreferrer"><img src={dailyImages.weather} alt={ko?'로스앤젤레스 4일 날씨, 화씨':'Los Angeles four-day forecast, °F'} /></a>
           <a class="daily-rates" href="https://www.koreatimes.com/" target="_blank" rel="noopener noreferrer"><img src={dailyImages.rates} alt={ko?'미국 달러 1달러의 한국 원화 환율':'Korean won per one US dollar'} /></a>
           <a class="daily-lottery" href="https://www.calottery.com/" target="_blank" rel="noopener noreferrer"><img src={dailyImages.lottery} alt={ko?'파워볼, 메가밀리언, 슈퍼로또 잭팟과 추첨일':'Powerball, Mega Millions and SuperLotto Plus jackpots and draw dates'} /></a>

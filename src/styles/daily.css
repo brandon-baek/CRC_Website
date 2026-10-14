@@ -15,6 +15,9 @@
 .daily-weather img { width:124.924012%; max-width:none; }
 .daily-rates { aspect-ratio:333/142; }
 .daily-rates img { transform:translateY(-14.457831%); }
+.daily-images-cropped .daily-weather,.daily-images-cropped .daily-rates { aspect-ratio:auto; }
+.daily-images-cropped .daily-weather img { width:100%; }
+.daily-images-cropped .daily-rates img { transform:none; }
 .daily-image-date { display:block; text-align:right; font-size:11px; color:#485d70; margin-top:.4rem; }
 .daily-stories ol { list-style:none; margin:0; padding:0; }
 .daily-stories li { padding:1rem .3rem; border-bottom:1px solid #dbe2dc; text-align:center; }
