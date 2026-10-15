@@ -17,7 +17,7 @@ const sources = newsSources.filter((source) => items.some((item) => item.sourceI
 const availableTopics = newsTopics.filter((topic) => items.some((item) => newsTopic(item.title).id === topic.id));
 const featured = featuredNews(items);
 const images = await Promise.all(featured.map((item) => featuredArticleImage(item, sourceById.get(item.sourceId)!)));
-const moreHeadlines = items.filter((item) => !featured.includes(item)).slice(0, 4);
+const moreHeadlines = items.filter((item) => !featured.includes(item)).slice(0, 3);
 const dateFormat = new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 const formatDate = (iso: string) => dateFormat.format(new Date(iso));
 const sourceName = (item: typeof items[number]) => item.publisher ?? sourceById.get(item.sourceId)?.label[locale];
