@@ -21,7 +21,9 @@ const kept=await reporterNews(items,[source],async item=>{
  if(item===items[3])throw Error('network failure');
  return item===items[0]?ld({name:'Kim',jobTitle:'Reporter'}):item===items[1]?ld({name:'Lee',jobTitle:'CEO'}):null;
 });
-assert.deepEqual(kept,[items[0]]);
+assert.deepEqual(kept,[items[0],items[2],items[3]]);
+const excluded=['메디케어, 제대로 알자','이웃케어 발의안 44 한인 의료서비스 타격','[보험 가이드] 메디케어 어드밴티지 vs 메디갭'].map(title=>({...items[2],title}));
+assert.deepEqual(await reporterNews(excluded,[source],async()=>null),[]);
 assert(isExcludedNews({...items[0],title:'메디케어, 제대로 알자'}));
 assert(isExcludedNews({...items[0],url:'https://www1.koreatimes.com/article/20261014/1633888?tracking=x'}));
 console.log('PASS: author roles, coauthors, reporter quotes, absent metadata, lookup failures and removed article.');

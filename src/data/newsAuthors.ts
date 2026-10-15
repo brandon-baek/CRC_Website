@@ -59,7 +59,7 @@ export function articleAuthorDecision(html:string): AuthorDecision {
 
 type Inspect = (item:NewsItem,source:NewsSource)=>Promise<string|null>;
 const decisions=new Map<string,Promise<AuthorDecision>>();
-/** A missing byline or failed lookup is held out, never silently approved. */
+/** Unknown authors are allowed; identified commercial authors remain excluded. */
 export async function reporterNews(items:NewsItem[],sources:NewsSource[],inspect:Inspect=articlePage):Promise<NewsItem[]> {
   const sourceById=new Map(sources.map(s=>[s.id,s]));
   const allowed:boolean[]=new Array(items.length).fill(false);
@@ -76,7 +76,7 @@ export async function reporterNews(items:NewsItem[],sources:NewsSource[],inspect
       decision=inspect(item,source).then(html=>html?articleAuthorDecision(html):'unverified' as AuthorDecision).catch(()=>'unverified' as AuthorDecision);
       if(inspect===articlePage)decisions.set(key,decision);
     }
-    allowed[index]=await decision==='reporter';
+    allowed[index]=(await decision)!=='commercial';
   }};
   await Promise.all(Array.from({length:4},worker));
   return items.filter((_,i)=>allowed[i]);
