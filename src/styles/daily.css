@@ -25,6 +25,8 @@
 .daily-stories li:first-child { padding-top:.35rem; }
 .daily-stories a { display:block; color:#0f5132; font-size:20px; font-weight:600; line-height:1.65; text-decoration:underline; text-underline-offset:4px; overflow-wrap:anywhere; }
 .daily-stories li:nth-child(even) a { color:#1e4280; }
+.daily-people { margin-top:1.75rem; }
+.daily-people h2 { font-size:20px; color:#17252a; padding-bottom:.65rem; margin:0 0 .75rem; border-bottom:2px solid #0f5132; }
 @media(max-width:800px) {
  .daily-layout { grid-template-columns:1fr; gap:1.5rem; }
  .daily-tools { max-width:480px; width:100%; margin:auto; }

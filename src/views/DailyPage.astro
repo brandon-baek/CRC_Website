@@ -8,7 +8,7 @@ import '../styles/daily.css';
 interface Props {locale:Locale}
 const {locale}=Astro.props;
 const ko=locale==='ko';
-const {items:all,fortune,stocks,generatedAt}=await fetchDailyNews();
+const {items:all,fortune,stocks,sportsEntertainment:people=[],generatedAt}=await fetchDailyNews();
 const dailyImages=(savedEdition as {images?:typeof initialImages & {cropped?:boolean}}|null)?.images ?? initialImages;
 const cropped='cropped' in dailyImages && dailyImages.cropped;
 const items=all.filter(item=>ko?item.sourceId!=='daily-la':item.sourceId==='daily-la').slice(0,40);
@@ -33,6 +33,10 @@ const quickDate=(item:NonNullable<typeof fortune>)=>item===fortune?item.title.ma
       </aside>
       <div class="daily-stories">
         {items.length?<ol>{items.map((item,index)=><li><a style={`color:${index%2?'#1e4280':'#0f5132'}`} href={item.url} target="_blank" rel="noopener noreferrer" lang={locale}>{item.title}</a></li>)}</ol>:<p>{ko?'새로운 생활 소식을 준비하고 있습니다.':'New local stories are being collected.'}</p>}
+        {ko&&people.length>0&&<section class="daily-people" aria-labelledby="daily-people-title">
+          <h2 id="daily-people-title">스포츠/연예</h2>
+          <ol>{people.map((item,index)=><li><a style={`color:${index%2?'#1e4280':'#0f5132'}`} href={item.url} target="_blank" rel="noopener noreferrer" lang="ko">{item.title}</a></li>)}</ol>
+        </section>}
       </div>
     </div>
   </div></section>

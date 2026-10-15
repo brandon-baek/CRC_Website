@@ -17,6 +17,7 @@ on:
       - 'scripts/daily-window.mjs'
       - 'scripts/daily-capture/**'
       - 'src/data/dailySchedule.ts'
+      - 'src/data/sportsEntertainment.ts'
 permissions:
   contents: write
 concurrency:
@@ -58,6 +59,8 @@ jobs:
         run: node node_modules/tsx/dist/cli.mjs scripts/refresh-daily.ts
       - name: Validate schedule and stock-report handling
         run: node node_modules/tsx/dist/cli.mjs scripts/test-daily-schedule.ts
+      - name: Validate sports and entertainment selection
+        run: node node_modules/tsx/dist/cli.mjs scripts/test-sports-entertainment.ts
       - name: Validate the website before publishing
         if: steps.edition.outputs.mode != 'hold'
         run: npm run build
