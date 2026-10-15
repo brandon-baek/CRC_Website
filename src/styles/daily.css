@@ -2,6 +2,7 @@
 .daily-heading { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; border-bottom:2px solid #0f5132; padding-bottom:.8rem; margin-bottom:1.5rem; }
 .daily-heading h1 { font-size:clamp(1.5rem,3vw,2rem); }
 .daily-heading time,.daily-quick-links .quick-date { font-size:13px; color:#485d70; white-space:nowrap; margin-left:0; }
+.daily-heading time { font-size:16px; }
 .daily-layout { display:grid; grid-template-columns:minmax(300px,360px) minmax(0,1fr); gap:2.5rem; align-items:start; }
 .daily-tools { min-width:0; }
 .daily-quick-links { margin-bottom:1.1rem; }
