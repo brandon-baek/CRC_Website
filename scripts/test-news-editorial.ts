@@ -17,3 +17,15 @@ for(const title of ['Social Security office offers benefits help','Rice prices r
 const saved=[story('ICE 이민단속국 미국시민권자 체포'),story('한인 영주권 신청 절차 안내')];
 assert.deepEqual(saved.filter(item=>!isExcludedNews(item)),[saved[1]]);
 console.log('PASS: Korean/English ICE coverage, enforcement names and URLs, saved articles; benefits and unrelated words retained.');
+
+const removedTitle='이웃케어클리닉 "주민발의안 44로 한인 환자들, 피해 떠안을 수도"';
+const removedUrl='https://koreatownpress.org/news/town/neighbor-care-clinic-prop-44-patient-risk';
+assert(isExcludedNews(story(removedTitle,removedUrl)));
+assert(isExcludedNews(story('Updated headline',removedUrl+'/?utm_source=news#article')));
+assert(isExcludedNews(story('Updated headline',removedUrl.replace('https://','http://www.'))));
+assert(isExcludedNews(story('이웃케어클리닉 “주민발의안 44로 한인 환자들 피해 떠안을 수도”','https://news.google.com/rss/articles/example')));
+assert(!isExcludedNews(story('이웃케어클리닉 무료 건강검진 안내','https://koreatownpress.org/news/town/free-health-screening')));
+assert(!isExcludedNews(story('이웃케어클리닉 메디케어 혜택 신청 안내')));
+const cached=[story(removedTitle,removedUrl),story('가주 주택보험 가입자 보호 강화')];
+assert.deepEqual(cached.filter(item=>!isExcludedNews(item)),[cached[1]]);
+console.log('PASS: removed clinic article stays excluded by URL and normalized title; unrelated clinic services retained.');
