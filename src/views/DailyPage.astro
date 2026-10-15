@@ -16,7 +16,7 @@ const title=ko?'오늘의 생활정보':'Daily News';
 const dateFormat=new Intl.DateTimeFormat(ko?'ko-KR':'en-US',{month:'long',day:'numeric',timeZone:'America/Los_Angeles'});
 const latest=generatedAt ?? items.find(item=>item.date)?.date;
 const links=[{item:fortune,title:'오늘의 운세'},{item:stocks,title:'오늘의 증권소식'}];
-const quickDate=(item:NonNullable<typeof fortune>)=>item===fortune?item.title.match(/\d+월\s*\d+일/)?.[0]??(item.date?dateFormat.format(new Date(item.date)):''):(item.date?dateFormat.format(new Date(item.date)):'');
+const quickDate=(item:NonNullable<typeof fortune>)=>item.title.match(/\d+월\s*\d+일/)?.[0]??(item.date?dateFormat.format(new Date(item.date)):'');
 ---
 <Base locale={locale} path="/daily" title={title} description={ko?'미국·한인사회의 경제, 사회, 생활 소식을 모았습니다.':'Local economy, community and everyday living news.'}>
   <section class="section daily-page"><div class="container">
