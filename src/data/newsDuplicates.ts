@@ -100,7 +100,7 @@ async function resolveArticle(item: NewsItem, domain: string): Promise<string | 
 }
 
 export type ImageCheck = (item: NewsItem, source: NewsSource) => Promise<boolean | null>;
-async function articlePage(item: NewsItem, source: NewsSource): Promise<string | null> {
+export async function articlePage(item: NewsItem, source: NewsSource): Promise<string | null> {
   try {
     const domain = source.publisherDomain ?? new URL(source.homepage).hostname;
     if (!source.publisherDomain && source.publisherPerItem) return null;

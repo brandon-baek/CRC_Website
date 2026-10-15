@@ -7,6 +7,7 @@ import fallbackNews from './newsFallback.json';
 import { retainedNews } from './newsHistory';
 import { US_COMMUNITY_TERMS } from './newsLocality';
 import { isExcludedNews } from './newsEditorial';
+import { reporterNews } from './newsAuthors';
 
 /**
  * Fraud and cyber-risk news, gathered from trusted feeds at BUILD TIME and baked into
@@ -521,7 +522,7 @@ async function gatherNews(perSource: number): Promise<NewsFeedResult> {
   );
 
   const candidates = results.flatMap((result) => result.status === 'fulfilled' ? result.value : []);
-  const items = await deduplicateNews(candidates.filter(item => !isExcludedNews(item)), newsSources);
+  const items = await reporterNews(await deduplicateNews(candidates.filter(item => !isExcludedNews(item)), newsSources), newsSources);
   // A source whose only story lost a duplicate comparison must not leave an empty tab.
   const retainedSources = new Set(items.map((item) => item.sourceId));
   const liveSources = newsSources.filter((source) => retainedSources.has(source.id));

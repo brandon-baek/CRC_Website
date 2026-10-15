@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { articleAuthorDecision, reporterNews } from '../src/data/newsAuthors';
+import { isExcludedNews } from '../src/data/newsEditorial';
+import type { NewsItem, NewsSource } from '../src/data/newsFeeds';
+const ld=(author:unknown)=>`<script type="application/ld+json">${JSON.stringify({'@type':'NewsArticle',author})}</script>`;
+assert.equal(articleAuthorDecision(ld({name:'정소영',jobTitle:'유니티 보험 부사장'})),'commercial');
+assert.equal(articleAuthorDecision('<div class="byline">정소영 유니티 보험 부사장</div>'),'commercial');
+for(const jobTitle of ['부동산 브로커','보험 에이전트','회사 대표','사업가','Business owner','CEO','Realtor'])assert.equal(articleAuthorDecision(ld({name:'Kim',jobTitle})),'commercial');
+assert.equal(articleAuthorDecision(ld({name:'Kim',jobTitle:'Reporter'})+'<article>A broker said rates rose.</article>'),'reporter');
+assert.equal(articleAuthorDecision('<span class="byline">김민수 기자</span><aside>홍길동 보험 대표 광고</aside>'),'reporter');
+assert.equal(articleAuthorDecision(ld({name:'Kim',url:'https://koreatownpress.org/reporter/kim'})),'reporter');
+assert.equal(articleAuthorDecision(ld([{name:'Kim',jobTitle:'Reporter'},{name:'Lee',jobTitle:'Insurance agent'}])),'commercial');
+assert.equal(articleAuthorDecision(ld({name:'Kim'})),'unverified');
+assert.equal(articleAuthorDecision('<h1>Access denied</h1>'),'unverified');
+assert.equal(articleAuthorDecision('<h1>Advice</h1><div itemprop="articleBody">Body</div><aside><span class="byline">김민수 기자</span></aside>'),'unverified');
+assert.equal(articleAuthorDecision(ld({name:'Unknown'})+ld({name:'Related reporter',jobTitle:'Reporter'})),'unverified');
+assert.equal(articleAuthorDecision('<script type="application/ld+json">bad</script>'),'unverified');
+const source={id:'test',lang:'ko'} as NewsSource;
+const items=['Staff report','Business column','Unknown author','Lookup failed'].map((title,i)=>({sourceId:'test',title,url:`https://example.com/${i}`,summary:'',date:null} as NewsItem));
+const kept=await reporterNews(items,[source],async item=>{
+ if(item===items[3])throw Error('network failure');
+ return item===items[0]?ld({name:'Kim',jobTitle:'Reporter'}):item===items[1]?ld({name:'Lee',jobTitle:'CEO'}):null;
+});
+assert.deepEqual(kept,[items[0]]);
+assert(isExcludedNews({...items[0],title:'메디케어, 제대로 알자'}));
+assert(isExcludedNews({...items[0],url:'https://www1.koreatimes.com/article/20261014/1633888?tracking=x'}));
+console.log('PASS: author roles, coauthors, reporter quotes, absent metadata, lookup failures and removed article.');

@@ -9,7 +9,8 @@ import { US_COMMUNITY_TERMS } from './newsLocality';
 import { retainedNews } from './newsHistory';
 import fallback from './dailyFallback.json';
 import { isExcludedNews } from './newsEditorial';
-import { collectPeopleNews, selectPeopleNews } from './sportsEntertainment';
+import { reporterNews } from './newsAuthors';
+import { collectPeopleNews, selectPeopleNews, peopleSources } from './sportsEntertainment';
 import peopleSeed from './sportsEntertainmentSeed.json';
 
 export const DAILY_TOPICS = /경제|물가|금리|고용|일자리|주택|렌트|임대|보험|의료|병원|건강|메디|연금|소셜|은퇴|세금|세액|환불|리콜|소비자|전기|수도|공과금|교통|도로|차선|버스|메트로|공항|항공|산불|폭염|강풍|날씨|해변|상어|안전|경보|주의|지원|혜택|신청|이민|영주권|시민권|공연|콘서트|문화|박물관|도서관|사기|피싱|해킹|스캠|주가|증시|장학|학자금|학비|파산/i;
@@ -35,14 +36,15 @@ export function fetchDailyNews(): Promise<DailyNews> {
   const saved = savedEdition as DailyNews | null;
   if (!pending) {
     if (saved?.generatedAt) {
-      const items=saved.items.filter(item=>!isExcludedNews(item));
+      pending=reporterNews(saved.items,[...dailySources,...englishSources]).then(async items=>{
       const mainKorean=items.filter(item=>item.sourceId!=='daily-la').slice(0,40);
       // Use the displayed edition's time, not build time: evenings stay frozen.
       // One-time launch data contains only this section's verified articles.
       // It is tied to this exact edition and retires after the next refresh.
       const candidates=saved.sportsEntertainment??(saved.generatedAt===peopleSeed.editionGeneratedAt?peopleSeed.items:[]);
-      const sportsEntertainment=selectPeopleNews(candidates,new Date(saved.generatedAt),mainKorean);
-      pending=Promise.resolve({...saved,items,sportsEntertainment});
+      const sportsEntertainment=selectPeopleNews(await reporterNews(candidates,peopleSources),new Date(saved.generatedAt),mainKorean);
+      return {...saved,items,sportsEntertainment};
+      });
     } else pending=collectDailyNews().then(data=>({...data,sportsEntertainment:selectPeopleNews(data.sportsEntertainment??[],new Date(data.generatedAt!),data.items.filter(item=>item.sourceId!=='daily-la').slice(0,40))}));
   }
   return pending;
@@ -75,7 +77,7 @@ export async function collectDailyNews(now = new Date(), saved:DailyNews|null = 
   }));
   const cutoff=+now-7*86400000;
   const candidates=[...groups.flat(),...previous].filter(item=> !isExcludedNews(item) && item.date && Date.parse(item.date)>=cutoff && Date.parse(item.date)<=+now);
-  const items=(await deduplicateNews(candidates,sources)).sort((a,b)=>(b.date??'').localeCompare(a.date??''));
+  const items=await reporterNews((await deduplicateNews(candidates,sources)).sort((a,b)=>(b.date??'').localeCompare(a.date??'')),sources);
   const latestLink=async(id:string,query:string)=> {
     const source=newsSources.find(s=>s.id===id)!;
     const linkSource={...source,keywords:new RegExp(query),requiredKeywords:undefined,excludeKeywords:undefined};

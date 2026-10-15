@@ -3,6 +3,7 @@ import { allowedKoreanPublishers } from './newsPublishers';
 import { retainedNews } from './newsHistory';
 import { sameStory } from './newsDuplicates';
 import { isExcludedNews } from './newsEditorial';
+import { reporterNews } from './newsAuthors';
 
 export type PeopleCategory = 'sports' | 'entertainment';
 export type PeopleNewsItem = NewsItem & { category: PeopleCategory };
@@ -122,5 +123,5 @@ export async function collectPeopleNews(now: Date, previous: NewsItem[] = []): P
     return documents.flatMap(xml => xml ? parseFeed(xml, source, 100) : []);
   }));
   // Keep the candidate pool overnight so selection can balance both categories.
-  return eligiblePeopleNews([...groups.flat(), ...previous], now).slice(0, 200);
+  return eligiblePeopleNews(await reporterNews(eligiblePeopleNews([...groups.flat(), ...previous],now).slice(0,200),peopleSources), now);
 }

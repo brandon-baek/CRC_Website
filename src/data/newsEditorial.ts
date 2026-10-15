@@ -17,10 +17,14 @@ const COMMERCIAL_BYLINE = /(?:글|필자|기고|칼럼|문의)\s*[:：][^\n]{0,6
 // Specific editorial removals apply to both new feeds and saved editions.
 // Keep unrelated clinic services and healthcare information eligible.
 const REMOVED_ARTICLE_URLS = new Set([
+  'https://www1.koreatimes.com/article/20261014/1633888',
+  'https://koreatimes.com/article/20261014/1633888',
+  'https://la.koreatimes.com/article/20261014/1633888',
   'https://koreatownpress.org/news/town/neighbor-care-clinic-prop-44-patient-risk',
 ]);
 const normalizeTitle = (title: string) => title.normalize('NFKC').replace(/[\p{P}\p{S}\s]/gu, '').toLowerCase();
 const REMOVED_ARTICLE_TITLES = new Set([
+  normalizeTitle('메디케어, 제대로 알자'),
   normalizeTitle('이웃케어클리닉 "주민발의안 44로 한인 환자들, 피해 떠안을 수도"'),
   normalizeTitle('이웃케어 “발의안 44, 한인 의료서비스 타격”'),
   normalizeTitle('[알뜰정보] 엠제이보험 마크 정 대표…2027 메디케어·메디캘 특별 세미나'),
