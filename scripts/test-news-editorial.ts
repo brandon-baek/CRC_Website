@@ -29,3 +29,38 @@ assert(!isExcludedNews(story('이웃케어클리닉 메디케어 혜택 신청 �
 const cached=[story(removedTitle,removedUrl),story('가주 주택보험 가입자 보호 강화')];
 assert.deepEqual(cached.filter(item=>!isExcludedNews(item)),[cached[1]]);
 console.log('PASS: removed clinic article stays excluded by URL and normalized title; unrelated clinic services retained.');
+
+// Rewritten headlines and different publishers must not revive the same political story.
+for (const title of [
+ '이웃케어 “발의안 44, 한인 의료서비스 타격”',
+ '주민 발의안 44가 메디케어에 미치는 영향',
+ 'California’s Prop 45 aims to speed construction projects',
+ 'Health clinic warns about Proposition 44',
+ 'LA mayor election: candidates debate healthcare',
+ '공화당 후보 지지 선언',
+ '오마르 의원 이민서류 조작 의혹',
+ '[알뜰정보] 엠제이보험 마크 정 대표…2027 메디케어·메디캘 특별 세미나',
+ '[부동산 가이드] OC 부동산, 금리·보험 변수↑',
+ '[보험 가이드] 메디케어 어드밴티지 vs 메디갭',
+ '【보험 가이드】 내년 메디케어 가입 안내',
+ 'ABC보험 무료 세미나 개최',
+ 'Sponsored content: choosing a Medicare plan',
+]) assert(isExcludedNews(story(title,'https://news.google.com/rss/articles/another-publisher')),title);
+assert(isExcludedNews(story('한인 의료서비스 영향','https://example.com/story','발의안 44 반대 캠페인')));
+assert(isExcludedNews(story('주택 구매 정보','https://example.com/story','글: 홍길동 부동산 에이전트')));
+assert(isExcludedNews(story('Medicare options','https://example.com/story','By Jane Kim, insurance agent')));
+// Independent reporting stays eligible even when it quotes a business/agent.
+for (const title of [
+ '메디케어 어드밴티지 vs 메디갭',
+ 'OC 부동산, 금리·보험 변수 증가',
+ '메디케어 가입 기간과 변경 사항',
+ '가주 주택보험 가입자 보호 강화',
+ '보험 에이전트 사기 피해 주의',
+ '부동산 브로커 사기 혐의 기소',
+ '은행 수수료 환불 받는 방법',
+ 'New Medicare benefits explained by our health reporter',
+]) assert(!isExcludedNews(story(title,'https://example.com/report','김민수 기자 취재')),title);
+assert(!isExcludedNews(story('OC housing costs rise','https://example.com/report','A reporter interviews a real estate agent about rising insurance costs.')));
+const mixedEdition=[story('이웃케어 발의안 44 의료서비스 타격'),story('[보험 가이드] 혜택 안내'),story('메디케어 가입 기간 안내')];
+assert.deepEqual(mixedEdition.filter(item=>!isExcludedNews(item)),[mixedEdition[2]]);
+console.log('PASS: political variants and commercial columns removed from saved/fresh articles; independent consumer reporting retained.');
