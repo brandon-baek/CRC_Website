@@ -15,6 +15,11 @@ const BUSINESS_PROMOTION = /(?:보험|부동산|융자|중개|브로커|에이�
 const COMMERCIAL_BYLINE = /(?:글|필자|기고|칼럼|문의)\s*[:：][^\n]{0,60}(?:보험|부동산|브로커|에이전트|공인회계사)|\bby\s+[^\n]{0,60},\s*(?:realtor|real\s+estate\s+(?:agent|broker)|insurance\s+agent)\b/i;
 const VOTING = /개표|유권자|투표권|투표\s*(?:자격|제한|소송|등록)|\b(?:voters?|voting|vote\s*count(?:ing)?)\b/i;
 
+// Exclude promotion of outside education/admissions/career programs across all
+// publishers. Topic alone is insufficient: retain ordinary education reporting.
+const EDUCATION_SERVICE = /인턴십|인턴쉽|대입|대학\s*입학|입시|학자금|장학금|진학|진로|청소년|학생|멘토링|멘토십|교육\s*프로그램|\b(?:internships?|college\s+admissions?|financial\s+aid|scholarships?|students?|youth|mentoring|mentorship|career\s+(?:coaching|counseling))\b/i;
+const PROGRAM_PROMOTION = /참가자\s*모집|참가\s*신청|수강생|교육생|등록\s*접수|신청자\s*모집|프로그램.{0,30}(?:모집|접수|개최|개설)|(?:세미나|설명회|워크숍|워크샵|캠프|박람회).{0,30}(?:개최|연다|신청|참가|접수)|(?:무료|특별).{0,15}(?:세미나|설명회|워크숍|상담)|(?:성공|합격)\s*전략\s*배운다|\b(?:register\s+(?:now|for)|sign\s+up|enroll(?:ment)?|join\s+our|now\s+accepting\s+applications|(?:free|upcoming)\s+(?:seminar|workshop|webinar)|(?:seminar|workshop|webinar|camp)\s+(?:registration|hosted|offered))\b/i;
+
 // Specific editorial removals apply to both new feeds and saved editions.
 // Keep unrelated clinic services and healthcare information eligible.
 const REMOVED_ARTICLE_URLS = new Set([
@@ -42,6 +47,7 @@ const REMOVED_ARTICLE_TITLES = new Set([
 export function isExcludedNews(item: Pick<NewsItem, 'title' | 'summary' | 'url'>): boolean {
   if (REMOVED_ARTICLE_TITLES.has(normalizeTitle(item.title))) return true;
   const text = (item.title + ' ' + (item.summary ?? '')).normalize('NFKC');
+  if (EDUCATION_SERVICE.test(text) && PROGRAM_PROMOTION.test(text)) return true;
   if (ENFORCEMENT.test(text) || ENGLISH_ENFORCEMENT.test(text)) return true;
   if (POLITICS.test(text) || VOTING.test(text) || BUSINESS_COLUMNS.test(text) || BUSINESS_PROMOTION.test(text) || COMMERCIAL_BYLINE.test(text)) return true;
   try {

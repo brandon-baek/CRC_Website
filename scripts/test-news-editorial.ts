@@ -72,3 +72,15 @@ assert(!isExcludedNews(story('OC housing costs rise','https://example.com/report
 const mixedEdition=[story('이웃케어 발의안 44 의료서비스 타격'),story('[보험 가이드] 혜택 안내'),story('메디케어 가입 기간 안내')];
 assert.deepEqual(mixedEdition.filter(item=>!isExcludedNews(item)),[mixedEdition[2]]);
 console.log('PASS: political variants and commercial columns removed from saved/fresh articles; independent consumer reporting retained.');
+
+// Outside programs are excluded regardless of publisher; informational reporting remains.
+for (const host of ['www.koreadaily.com','la.koreatimes.com','www.radiokorea.com','koreatownpress.org']) {
+ for (const title of ['한인 학생 대입 무료 세미나','청소년 인턴십 프로그램 참가자 모집','대학 진학 설명회 개최','청소년 멘토링 프로그램 신청자 모집','College admissions: register for our workshop']) {
+  assert(isExcludedNews(story(title,`https://${host}/example`)),title);
+ }
+}
+assert(isExcludedNews(story('한인 교육 안내','https://example.com/news','학생 진로 캠프 참가 신청 안내')));
+for (const title of ['대학 입학 지원 마감일 변경','연방 학자금 신청 절차 안내','한인 학생 장학금 제도 변경','인턴십 사기 피해 주의','College admissions requirements change']) {
+ assert(!isExcludedNews(story(title)),title);
+}
+console.log('PASS: outside education program promotions excluded across publishers; informational education news retained.');
