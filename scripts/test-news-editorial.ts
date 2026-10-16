@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { isExcludedNews } from '../src/data/newsEditorial.ts';
 const story=(title:string,url='https://example.com/story',summary='')=>({title,url,summary});
+assert(isExcludedNews(story('법무부, CA주에 소송 비시민권 의심 2만명 개표 제한 요청')));
+assert(isExcludedNews(story('Updated headline','https://koreatownpress.org/news/usa/doj-california-noncitizen-voter-lawsuit?source=feed')));
+assert(isExcludedNews(story('California voter eligibility lawsuit')));
+assert(!isExcludedNews(story('[LA 하지정맥외과] 다리 건강의 첫걸음… 올바른 혈액순환 관리가 중요','https://example.com/health','혈액순환 관리와 다리 건강 정보. 문의 (213) 555-0100')));
 for(const title of [
  'ICE 이민단속국 미국시민권자 500명이상 체포구금',
  '강경화 주미대사 이민단속 한인피해 최소화',

@@ -13,10 +13,12 @@ const POLITICS = /(?:주민\s*)?발의안|주민\s*투표|선거|대선|총선|�
 const BUSINESS_COLUMNS = /[\[【〈<]\s*(?:보험|부동산|융자|재정|재테크|세무)\s*(?:가이드|칼럼|컬럼|상담)[\]】〉>]|\b(?:sponsored\s+(?:content|post|article)|advertorial|paid\s+(?:content|advertisement))\b/i;
 const BUSINESS_PROMOTION = /(?:보험|부동산|융자|중개|브로커|에이전트|재정|투자|업체|기업|회사).{0,60}(?:특별\s*세미나|무료\s*세미나|설명회|상담회|고객\s*모집|고객\s*감사|프로모션)|(?:특별|무료)\s*세미나.{0,60}(?:보험|부동산|메디케어|메디캘)|\[(?:알뜰정보|업소탐방|업체탐방|비즈니스탐방|업소소개|광고|협찬)\]|\b(?:grand\s+opening|customer\s+appreciation|promotional\s+offer)\b/i;
 const COMMERCIAL_BYLINE = /(?:글|필자|기고|칼럼|문의)\s*[:：][^\n]{0,60}(?:보험|부동산|브로커|에이전트|공인회계사)|\bby\s+[^\n]{0,60},\s*(?:realtor|real\s+estate\s+(?:agent|broker)|insurance\s+agent)\b/i;
+const VOTING = /개표|유권자|투표권|투표\s*(?:자격|제한|소송|등록)|\b(?:voters?|voting|vote\s*count(?:ing)?)\b/i;
 
 // Specific editorial removals apply to both new feeds and saved editions.
 // Keep unrelated clinic services and healthcare information eligible.
 const REMOVED_ARTICLE_URLS = new Set([
+  'https://koreatownpress.org/news/usa/doj-california-noncitizen-voter-lawsuit',
   'https://www1.koreatimes.com/article/20261014/1633888',
   'https://koreatimes.com/article/20261014/1633888',
   'https://la.koreatimes.com/article/20261014/1633888',
@@ -24,6 +26,7 @@ const REMOVED_ARTICLE_URLS = new Set([
 ]);
 const normalizeTitle = (title: string) => title.normalize('NFKC').replace(/[\p{P}\p{S}\s]/gu, '').toLowerCase();
 const REMOVED_ARTICLE_TITLES = new Set([
+  normalizeTitle('법무부, CA주에 소송 비시민권 의심 2만명 개표 제한 요청'),
   normalizeTitle('메디케어, 제대로 알자'),
   normalizeTitle('이웃케어클리닉 "주민발의안 44로 한인 환자들, 피해 떠안을 수도"'),
   normalizeTitle('이웃케어 “발의안 44, 한인 의료서비스 타격”'),
@@ -36,7 +39,7 @@ export function isExcludedNews(item: Pick<NewsItem, 'title' | 'summary' | 'url'>
   if (REMOVED_ARTICLE_TITLES.has(normalizeTitle(item.title))) return true;
   const text = (item.title + ' ' + (item.summary ?? '')).normalize('NFKC');
   if (ENFORCEMENT.test(text) || ENGLISH_ENFORCEMENT.test(text)) return true;
-  if (POLITICS.test(text) || BUSINESS_COLUMNS.test(text) || BUSINESS_PROMOTION.test(text) || COMMERCIAL_BYLINE.test(text)) return true;
+  if (POLITICS.test(text) || VOTING.test(text) || BUSINESS_COLUMNS.test(text) || BUSINESS_PROMOTION.test(text) || COMMERCIAL_BYLINE.test(text)) return true;
   try {
     const url = new URL(item.url);
     const canonical = `https://${url.hostname.replace(/^www\./, '')}${url.pathname.replace(/\/$/, '')}`;
