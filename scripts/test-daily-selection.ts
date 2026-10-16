@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { dailySelection } from '../src/data/dailySelection';
+import type { NewsItem } from '../src/data/newsFeeds';
+const now=new Date('2026-10-16T18:00:00Z');
+const story=(date:string,i=0)=>({sourceId:'news-koreatimes',title:String(i),url:`https://example.com/${i}`,date,summary:''} as NewsItem);
+const fresh=Array.from({length:45},(_,i)=>story(`2026-10-16T17:${String(i).padStart(2,'0')}:00Z`,i));
+const old=Array.from({length:50},(_,i)=>story('2026-10-16T06:59:00Z',100+i));
+const selected=dailySelection([...old,...fresh,story('2026-10-17T00:00:00Z'),story('2026-10-01T00:00:00Z')],now,true);
+assert.equal(selected.fresh.length,45);
+assert.equal(selected.older.length,40);
+assert.equal(selected.items[0].title,'44');
+assert(selected.items.every((item,i,rows)=>i===0||Date.parse(rows[i-1].date!)>=Date.parse(item.date!)));
+assert.equal(dailySelection(fresh,now,false).items.length,0);
+assert.equal(dailySelection([story('2026-10-16T07:00:00Z')],now,true).fresh.length,1);
+console.log('PASS: fresh news has no 40-item cap; older news follows, dates use LA midnight, future/stale stories excluded.');

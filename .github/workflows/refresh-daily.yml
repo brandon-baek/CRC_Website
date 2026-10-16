@@ -17,6 +17,8 @@ on:
       - 'scripts/daily-window.mjs'
       - 'scripts/daily-capture/**'
       - 'src/data/dailySchedule.ts'
+      - 'src/data/dailyNews.ts'
+      - 'src/data/dailySelection.ts'
       - 'src/data/sportsEntertainment.ts'
 permissions:
   contents: write
@@ -58,7 +60,9 @@ jobs:
           DAILY_MODE: ${{ steps.edition.outputs.mode }}
         run: node node_modules/tsx/dist/cli.mjs scripts/refresh-daily.ts
       - name: Validate schedule and stock-report handling
-        run: node node_modules/tsx/dist/cli.mjs scripts/test-daily-schedule.ts
+        run: |
+          node node_modules/tsx/dist/cli.mjs scripts/test-daily-schedule.ts
+          node node_modules/tsx/dist/cli.mjs scripts/test-daily-selection.ts
       - name: Validate sports and entertainment selection
         run: node node_modules/tsx/dist/cli.mjs scripts/test-sports-entertainment.ts
       - name: Validate editorial exclusions and reporter authorship
