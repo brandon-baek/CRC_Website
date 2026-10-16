@@ -12,6 +12,7 @@ assert.equal(parseDirectArticle(metadata,'https://www.koreadaily.com/article/202
 const kt=parseDirectArticle('<meta property="og:title" content="건강 정보 - 미주 한국일보"><span class="upload_date">2026-10-16 (금) 12:00:00</span>','http://la.koreatimes.com/article/20261015/123',{...source,id:'news-koreatimes'});
 assert.equal(kt?.publicationDay,'2026-10-16');
 assert.equal(kt?.date,'2026-10-16');
+assert.equal(dailySelection([story('건강 정보','2026-10-16T06:00:00Z'),kt!],new Date('2026-10-16T15:00:00Z'),true).items[0],kt);
 assert.equal(parseDirectArticle('<h1>Missing date</h1>','https://example.com',source),null);
 for(const title of ['어바인 충돌사고 운전자 체포','남가주 휘발유 가격 하락','한인 유학생 지원 안내','한국행 항공편 수하물 규정 변경','한국 병원 방문 시 건강보험 안내'])assert(eligibleDaily(story(title)),title);
 for(const title of ['주민발의안 44 반대','한인회장 선거','ABC 보험 무료 세미나','10월 16일 모닝뉴스 헤드라인'])assert(!eligibleDaily(story(title)),title);

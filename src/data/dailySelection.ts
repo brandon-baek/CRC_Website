@@ -16,6 +16,8 @@ export function dailySelection(items: NewsItem[], now: Date, korean: boolean) {
     if(item.firstPublishedEdition)return item.firstPublishedEdition===today;
     const day = item.publicationDay ?? editionDate(published);
     return day === today || (day === yesterday && Number(hour.format(published)) >= 17);
-  }).sort((a,b) => (korean?dailyPriority(a)-dailyPriority(b):0) || Date.parse(b.date!) - Date.parse(a.date!));
+  }).sort((a,b) => (korean?dailyPriority(a)-dailyPriority(b):0)
+    || (b.publicationDay??editionDate(new Date(b.date!))).localeCompare(a.publicationDay??editionDate(new Date(a.date!)))
+    || (b.publicationDay?0:Date.parse(b.date!))-(a.publicationDay?0:Date.parse(a.date!)));
   return { items: rows.slice(0,40) };
 }
