@@ -17,12 +17,13 @@ const {items}=dailySelection(all,new Date(generatedAt!),ko);
 const title=ko?'오늘의 생활정보':'Daily News';
 const dateFormat=new Intl.DateTimeFormat(ko?'ko-KR':'en-US',{month:'long',day:'numeric',timeZone:'America/Los_Angeles'});
 const latest=generatedAt ?? items.find(item=>item.date)?.date;
+const weekdayFormat=new Intl.DateTimeFormat('ko-KR',{weekday:'long',timeZone:'America/Los_Angeles'});
 const links=[{item:fortune,title:'오늘의 운세'},{item:stocks,title:'오늘의 증권소식'}];
 const quickDate=(item:NonNullable<typeof fortune>)=>item.title.match(/\d+월\s*\d+일/)?.[0]??(item.date?dateFormat.format(new Date(item.date)):'');
 ---
 <Base locale={locale} path="/daily" title={title} description={ko?'미국·한인사회의 경제, 사회, 생활 소식을 모았습니다.':'Local economy, community and everyday living news.'}>
   <section class="section daily-page"><div class="container">
-    <header class="daily-heading"><h1>{title}</h1>{latest&&<time datetime={latest}>{dateFormat.format(new Date(latest))}</time>}</header>
+    <header class="daily-heading"><h1>{title}</h1>{latest&&<time datetime={latest}>{dateFormat.format(new Date(latest))}{ko&&` ${weekdayFormat.format(new Date(latest))}`}</time>}</header>
     <div class="daily-layout">
       <aside class="daily-tools">
         {ko&&<div class="daily-quick-links">{links.map(({item,title})=>item&&<a href={item.url} target="_blank" rel="noopener noreferrer"><strong>{title}</strong><span class="quick-date">{quickDate(item)}</span><span aria-hidden="true">↗</span></a>)}</div>}
