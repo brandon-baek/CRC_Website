@@ -86,6 +86,10 @@ export interface NewsItem {
   date: string | null;
   /** The outlet, when the feed carries many. Shown instead of the feed label. */
   publisher?: string;
+  /** Publisher calendar date when its clock has no documented timezone. */
+  publicationDay?: string;
+  /** First CRC edition in which this article was displayed. */
+  firstPublishedEdition?: string;
 }
 
 /**

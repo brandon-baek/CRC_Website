@@ -1,6 +1,7 @@
 import { writeFile,readFile } from 'node:fs/promises';
 import { collectDailyNews } from '../src/data/dailyNews';
 import { refreshMode } from './daily-window.mjs';
+import { prepareDailyPublication } from '../src/data/dailyPublication';
 
 const now=new Date();
 const saved=JSON.parse(await readFile('src/data/dailyEdition.json','utf8'));
@@ -20,6 +21,7 @@ if(mode==='hold') {
     const {captureDailyImages}=await import('./daily-capture/capture.mjs');
     visuals=await captureDailyImages(now);
   }
-  await writeFile('src/data/dailyEdition.json',JSON.stringify({...news,timeZone:'America/Los_Angeles',...visuals})+'\n');
+  const published=prepareDailyPublication(news,saved,now);
+  await writeFile('src/data/dailyEdition.json',JSON.stringify({...published,timeZone:'America/Los_Angeles',...visuals})+'\n');
   console.log(`${mode} update ready: ${news.editionDate}; ${news.items.length} stories; stock report ${news.stocks?.date??'unavailable'}`);
 }

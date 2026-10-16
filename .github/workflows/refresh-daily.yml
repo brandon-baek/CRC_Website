@@ -19,6 +19,9 @@ on:
       - 'src/data/dailySchedule.ts'
       - 'src/data/dailyNews.ts'
       - 'src/data/dailySelection.ts'
+      - 'src/data/directDaily.ts'
+      - 'src/data/dailyEditorial.ts'
+      - 'src/data/dailyPublication.ts'
       - 'src/data/sportsEntertainment.ts'
 permissions:
   contents: write
@@ -63,6 +66,7 @@ jobs:
         run: |
           node node_modules/tsx/dist/cli.mjs scripts/test-daily-schedule.ts
           node node_modules/tsx/dist/cli.mjs scripts/test-daily-selection.ts
+          node node_modules/tsx/dist/cli.mjs scripts/test-direct-daily.ts
       - name: Validate sports and entertainment selection
         run: node node_modules/tsx/dist/cli.mjs scripts/test-sports-entertainment.ts
       - name: Validate editorial exclusions and reporter authorship

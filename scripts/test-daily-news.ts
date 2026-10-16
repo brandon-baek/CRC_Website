@@ -4,8 +4,9 @@ import { DAILY_TOPICS, DAILY_EXCLUDES, dailySources } from '../src/data/dailyNew
 import { newsSources } from '../src/data/newsFeeds.ts';
 const article=(path:string,date='2026-10-14T11:39:00.000Z')=>`<article><a href="${path}"><h3>아마존 프라임 가입자들, 최고 200달러까지 환불</h3></a><time data-content-field="datePublished" datetime="${date}"></time></article>`;
 assert.equal(parseKoreatownPress(article('/news/usa/amazon-refund'))[0].date,'2026-10-14T11:39:00.000Z');
-for(const path of ['/news/korea/test','/news/world/test','/opinion/test','/news/press-release/test','https://evil.example/news/usa/test'])assert.equal(parseKoreatownPress(article(path)).length,0);
+for(const path of ['/news/world/test','/opinion/test','/news/press-release/test','https://evil.example/news/usa/test'])assert.equal(parseKoreatownPress(article(path)).length,0);
 assert.equal(parseKoreatownPress(article('/news/usa/test','2026-10-14T11:39:00')).length,0,'no guessed timezone');
+assert.equal(parseKoreatownPress(article('/news/korea/test')).length,1);
 assert.equal(dailySources.length,4);
 const kp=newsSources.find(s=>s.id==='news-koreatownpress')!;
 assert(kp.keywords!.test('Bank of America, 12억달러 벌금 부과받아'));

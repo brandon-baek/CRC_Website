@@ -10,6 +10,10 @@ const text = (s:string) => s.replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;/g,' 
 /** Inspect author fields only; quoting a broker in a reporter's story is allowed. */
 export function articleAuthorDecision(html:string): AuthorDecision {
   const evidence:string[]=[];
+  // Korea Times' primary byline sits just below tit_arti, before the article body.
+  const ktHeader=html.split(/id=["']tit_arti["']/)[1]?.slice(0,2000);
+  const ktWriter=ktHeader?.match(/<span\b[^>]*class=["']writer["'][^>]*>([\s\S]*?)<\/span>\s*(?:기자)?\s*<\/span>/)?.[1];
+  if(ktWriter)evidence.push(text(ktWriter));
   let reporterProfile=false;
   let primaryArticleSeen=false;
   for(const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {

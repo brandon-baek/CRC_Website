@@ -5,6 +5,7 @@ import type { NewsItem, NewsSource } from '../src/data/newsFeeds';
 const ld=(author:unknown)=>`<script type="application/ld+json">${JSON.stringify({'@type':'NewsArticle',author})}</script>`;
 assert.equal(articleAuthorDecision(ld({name:'정소영',jobTitle:'유니티 보험 부사장'})),'commercial');
 assert.equal(articleAuthorDecision('<div class="byline">정소영 유니티 보험 부사장</div>'),'commercial');
+assert.equal(articleAuthorDecision('<div id="tit_arti">Headline</div><span class="writer"><span>강민희 금융그룹 부사장</span></span>'),'commercial');
 for(const jobTitle of ['부동산 브로커','보험 에이전트','회사 대표','사업가','Business owner','CEO','Realtor'])assert.equal(articleAuthorDecision(ld({name:'Kim',jobTitle})),'commercial');
 assert.equal(articleAuthorDecision(ld({name:'Kim',jobTitle:'Reporter'})+'<article>A broker said rates rose.</article>'),'reporter');
 assert.equal(articleAuthorDecision('<span class="byline">김민수 기자</span><aside>홍길동 보험 대표 광고</aside>'),'reporter');

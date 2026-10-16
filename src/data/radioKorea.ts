@@ -2,6 +2,8 @@ import type { NewsItem, NewsSource } from './newsFeeds';
 
 const ORIGIN = 'https://www.radiokorea.com';
 const LISTS = [
+  `${ORIGIN}/news/all.php`,
+  `${ORIGIN}/news/recent.php`,
   `${ORIGIN}/news/`,
   ...[1, 2, 3].map((page) => `${ORIGIN}/news/news.php?type=local&page=${page}`),
   `${ORIGIN}/news/news.php?type=immigration`,
@@ -77,7 +79,7 @@ export async function fetchRadioKorea(
     }
   }
   // Bound article requests and use four workers, so refreshes do not hammer the publisher.
-  const queue = [...candidates.values()].sort((a, b) => Number(new URL(b.url).searchParams.get('uid')) - Number(new URL(a.url).searchParams.get('uid'))).slice(0, 24);
+  const queue = [...candidates.values()].sort((a, b) => Number(new URL(b.url).searchParams.get('uid')) - Number(new URL(a.url).searchParams.get('uid'))).slice(0, 100);
   const items: NewsItem[] = [];
   await Promise.all(Array.from({ length: 4 }, async () => {
     while (queue.length) {

@@ -6,7 +6,7 @@ export function plainText(value: string): string {
     .replace(/&#(\d+);/g, (_, n) => +n <= 0x10ffff ? String.fromCodePoint(+n) : '').replace(/\s+/g, ' ').trim();
 }
 
-/** Only local/U.S. article sections; never Korea, world, opinion or press releases. */
+/** Collect newsroom sections; the daily relevance filter handles Korea-related usefulness. */
 export function parseKoreatownPress(html: string): NewsItem[] {
   const items = new Map<string, NewsItem>();
   for (const block of html.match(/<article\b[\s\S]*?<\/article>/gi) ?? []) {
@@ -17,7 +17,7 @@ export function parseKoreatownPress(html: string): NewsItem[] {
     try {
       const url = new URL(href, origin);
       const date = Date.parse(published);
-      if (url.origin !== origin || !/^\/news\/(?:local|usa|town|immigration)\/[^/]+\/?$/.test(url.pathname) || !Number.isFinite(date)) continue;
+      if (url.origin !== origin || !/^\/news\/(?:local|usa|town|immigration|korea)\/[^/]+\/?$/.test(url.pathname) || !Number.isFinite(date)) continue;
       const title = plainText(heading);
       if (title) items.set(url.href, { sourceId: 'news-koreatownpress', publisher: '코리아타운프레스', title, url: url.href, date: new Date(date).toISOString(), summary: '' });
     } catch { /* Ignore malformed publisher markup. */ }
@@ -27,7 +27,7 @@ export function parseKoreatownPress(html: string): NewsItem[] {
 
 let pending: Promise<NewsItem[]> | undefined;
 export function fetchKoreatownPress(source: NewsSource, read: (url: string) => Promise<string | null>): Promise<NewsItem[]> {
-  pending ??= Promise.all([origin+'/', origin+'/news/local', origin+'/news/usa', origin+'/news/town'].map(read))
+  pending ??= Promise.all([origin+'/', origin+'/news/town', origin+'/news/local', origin+'/news/usa', origin+'/news/immigration',origin+'/news/korea'].map(read))
     .then(pages => pages.flatMap(html => html ? parseKoreatownPress(html) : []));
   return pending.then(items => items.filter(item => (!source.keywords || source.keywords.test(item.title)) && !source.excludeKeywords?.test(item.title)));
 }
