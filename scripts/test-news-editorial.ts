@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { isExcludedNews } from '../src/data/newsEditorial.ts';
 const story=(title:string,url='https://example.com/story',summary='')=>({title,url,summary});
+assert(isExcludedNews(story('여름 인턴십 성공 전략 배운다','https://news.google.com/rss/articles/syndicated')));
+for (const host of ['la.koreatimes.com','koreatimes.com','www1.koreatimes.com']) {
+ assert(isExcludedNews(story('Updated program headline',`http://${host}/article/20261016/1634139?source=feed`)));
+}
 assert(isExcludedNews(story('법무부, CA주에 소송 비시민권 의심 2만명 개표 제한 요청')));
 assert(isExcludedNews(story('Updated headline','https://koreatownpress.org/news/usa/doj-california-noncitizen-voter-lawsuit?source=feed')));
 assert(isExcludedNews(story('California voter eligibility lawsuit')));

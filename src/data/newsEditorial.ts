@@ -18,6 +18,9 @@ const VOTING = /개표|유권자|투표권|투표\s*(?:자격|제한|소송|등�
 // Specific editorial removals apply to both new feeds and saved editions.
 // Keep unrelated clinic services and healthcare information eligible.
 const REMOVED_ARTICLE_URLS = new Set([
+  'https://la.koreatimes.com/article/20261016/1634139',
+  'https://koreatimes.com/article/20261016/1634139',
+  'https://www1.koreatimes.com/article/20261016/1634139',
   'https://koreatownpress.org/news/usa/doj-california-noncitizen-voter-lawsuit',
   'https://www1.koreatimes.com/article/20261014/1633888',
   'https://koreatimes.com/article/20261014/1633888',
@@ -26,6 +29,7 @@ const REMOVED_ARTICLE_URLS = new Set([
 ]);
 const normalizeTitle = (title: string) => title.normalize('NFKC').replace(/[\p{P}\p{S}\s]/gu, '').toLowerCase();
 const REMOVED_ARTICLE_TITLES = new Set([
+  normalizeTitle('여름 인턴십 성공 전략 배운다'),
   normalizeTitle('법무부, CA주에 소송 비시민권 의심 2만명 개표 제한 요청'),
   normalizeTitle('메디케어, 제대로 알자'),
   normalizeTitle('이웃케어클리닉 "주민발의안 44로 한인 환자들, 피해 떠안을 수도"'),
