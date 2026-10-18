@@ -4,7 +4,7 @@ import { fetchKoreatownPress } from './koreatownPress';
 import { fetchRadioKorea } from './radioKorea';
 import savedEdition from './dailyEdition.json';
 import heldEdition from './dailyPending.json';
-import { editionDate, isTodaysFortune, latestStockReport } from './dailySchedule';
+import { editionDate, latestFortune, latestStockReport } from './dailySchedule';
 import { US_COMMUNITY_TERMS } from './newsLocality';
 import { retainedNews } from './newsHistory';
 import fallback from './dailyFallback.json';
@@ -94,7 +94,7 @@ export async function collectDailyNews(now = new Date(), saved:DailyNews|null = 
     ]);
     const rows=[...direct,...(xml?parseFeed(xml,linkSource,30):[])].sort((a,b)=>(b.date??'').localeCompare(a.date??''));
     if(id==='news-koreadaily') {
-      return [...rows,...previousFortunes].find(item=>isTodaysFortune(item,now))??null;
+      return latestFortune([...rows,...previousFortunes],now);
     }
     return latestStockReport([...rows,...previousStocks],now);
   };

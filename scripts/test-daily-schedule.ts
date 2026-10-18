@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { editionDate, isTodaysFortune, latestStockReport } from '../src/data/dailySchedule';
+import { editionDate, isTodaysFortune, latestStockReport, latestFortune } from '../src/data/dailySchedule';
 import type { NewsItem } from '../src/data/newsFeeds';
 import { forecastDays } from './daily-capture/weather.mjs';
 import { refreshMode,canPublishEdition,isPublishingWindow } from './daily-window.mjs';
@@ -49,3 +49,14 @@ assert.equal(isPublishingWindow(new Date('2026-11-03T01:00:00Z')),false,'winter 
 assert.equal(isPublishingWindow(new Date('2026-11-01T08:30:00Z')),false,'first fall-back 1:30am');
 assert.equal(isPublishingWindow(new Date('2026-11-01T09:30:00Z')),false,'second fall-back 1:30am');
 console.log('PASS: 6am opening, daytime updates, 5pm freeze, overnight hold, next-day release, delayed job guard, DST.');
+
+const fortuneFriday={...fortune,title:'[오늘의 운세] 10월 16일',date:'2026-10-15T15:02:00Z',url:'https://www.koreadaily.com/article/friday'};
+const fortuneMonday={...fortuneFriday,title:'[오늘의 운세] 10월 19일',date:'2026-10-18T15:02:00Z'};
+for(const date of ['2026-10-17T13:00:00Z','2026-10-18T23:00:00Z','2026-10-19T13:00:00Z']) {
+ assert.equal(latestFortune([fortuneFriday],new Date(date)),fortuneFriday);
+}
+assert.equal(latestFortune([fortuneMonday,fortuneFriday],new Date('2026-10-18T23:00:00Z')),fortuneFriday,'early Monday post is not Sunday fortune');
+assert.equal(latestFortune([fortuneMonday,fortuneFriday],new Date('2026-10-19T13:00:00Z')),fortuneMonday);
+assert.equal(latestFortune([fortuneFriday],new Date('2026-11-20T13:00:00Z')),null);
+assert.equal(latestFortune([{...fortuneFriday,url:'https://evil.example/'}],new Date('2026-10-17T13:00:00Z')),null);
+console.log('PASS: latest fortune retention, original date, replacement, future-day and stale rejection.');
