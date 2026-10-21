@@ -14,7 +14,7 @@ if(!news.liveItemCount || !news.items.some(item=>item.sourceId==='daily-la') || 
 await writeFile('src/data/dailyPending.json',JSON.stringify(news)+'\n');
 await writeFile('.daily-refresh-plan.json',JSON.stringify({mode,generatedAt:news.generatedAt})+'\n');
 if(mode==='hold') {
-  console.log('Outside 6am-5pm Pacific: discoveries saved; displayed edition unchanged.');
+  console.log('Outside 5:15am-5pm Pacific: discoveries saved; displayed edition unchanged.');
 } else {
   let visuals={images:saved?.images,sourceChecks:saved?.sourceChecks};
   if(mode==='full') {

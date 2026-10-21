@@ -1,0 +1,10 @@
+{
+  "name": "crc-daily-scheduler",
+  "main": "index.mjs",
+  "compatibility_date": "2026-10-21",
+  "workers_dev": false,
+  "triggers": { "crons": ["* * * * *"] },
+  "vars": { "ENABLED": "false" },
+  "kv_namespaces": [{ "binding": "STATE", "id": "REPLACE_WITH_APPROVED_KV_NAMESPACE_ID" }],
+  "observability": { "enabled": true }
+}
