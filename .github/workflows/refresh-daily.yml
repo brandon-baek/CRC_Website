@@ -1,11 +1,11 @@
 name: Daily bulletin and daytime news
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '15,30,45 5 * * *'
       timezone: America/Los_Angeles
     - cron: '7,37 6-16 * * *'
       timezone: America/Los_Angeles
-    - cron: '7 0-5,17-23 * * *'
+    - cron: '7 0-4,17-23 * * *'
       timezone: America/Los_Angeles
   workflow_dispatch:
   push:
@@ -62,6 +62,8 @@ jobs:
         env:
           DAILY_MODE: ${{ steps.edition.outputs.mode }}
         run: node node_modules/tsx/dist/cli.mjs scripts/refresh-daily.ts
+      - name: Validate independent scheduler (mocked; no dispatches)
+        run: node scripts/test-daily-scheduler.mjs
       - name: Validate schedule and stock-report handling
         run: |
           node node_modules/tsx/dist/cli.mjs scripts/test-daily-schedule.ts

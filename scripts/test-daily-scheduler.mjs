@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import { due, freshEdition, runScheduler } from '../workers/daily-scheduler/index.mjs';
+const at=iso=>new Date(iso);
+const morning=at('2026-10-21T12:15:00Z'); // 5:15 PDT.
+assert.equal(due(at('2026-10-21T12:14:00Z')),null);
+assert.equal(due(morning),'morning');
+assert.equal(due(at('2026-11-02T13:15:00Z')),'morning','5:15 PST');
+assert.equal(due(at('2026-10-21T13:00:00Z')),'morning','deadline check');
+assert.equal(due(at('2026-10-21T13:07:00Z')),'daytime');
+assert.equal(due(at('2026-10-21T23:37:00Z')),'daytime');
+assert.equal(due(at('2026-10-22T00:07:00Z')),'overnight');
+assert.equal(due(at('2026-10-21T18:08:00Z')),null);
+const feed={editionDate:'2026-10-21',generatedAt:'2026-10-21T12:15:00Z',imagesCapturedAt:'2026-10-21T12:15:00Z',items:[{sourceId:'daily-la'},{sourceId:'news-radiokorea'}]};
+assert(freshEdition(feed,at('2026-10-21T12:20:00Z')));
+for(const bad of [{...feed,editionDate:'2026-10-20'},{...feed,imagesCapturedAt:'2026-10-20T12:15:00Z'},{...feed,generatedAt:'2026-10-21T15:00:00Z'},{...feed,items:[]},{...feed,imagesCapturedAt:null}]) assert(!freshEdition(bad,at('2026-10-21T12:20:00Z')));
+function env() { const state=new Map(); return {ENABLED:'true',GITHUB_DISPATCH_TOKEN:'mock-token',STATE:{get:async k=>state.get(k),put:async(k,v)=>state.set(k,v)}}; }
+let calls=[];
+const mock=(live=null,busy=false,dispatchStatus=204)=>async(url,options)=>{
+  calls.push({url,options});
+  if(url.startsWith('https://crcnow.org/')) return Response.json(live);
+  if(url.includes('/dispatches')) return new Response(null,{status:dispatchStatus});
+  return Response.json({workflow_runs:busy?[{head_branch:'main',status:'in_progress'}]:[]});
+};
+assert.equal(await runScheduler({ENABLED:'false'},morning,()=>{throw Error('must not call network');}),'disabled');
+let e=env(); calls=[];
+assert.equal(await runScheduler(e,morning,mock()),'dispatched');
+assert.equal(calls.filter(c=>c.options.method==='POST').length,1);
+assert.equal(JSON.parse(calls.find(c=>c.options.method==='POST').options.body).ref,'main');
+assert.equal(await runScheduler(e,morning,mock()),'duplicate');
+e=env(); calls=[];
+assert.equal(await runScheduler(e,at('2026-10-21T12:20:00Z'),mock(feed)),'verified');
+assert(!calls.some(c=>c.options.method==='POST'),'live success stops retries');
+e=env(); calls=[];
+assert.equal(await runScheduler(e,morning,mock(null,true)),'busy');
+assert(!calls.some(c=>c.options.method==='POST'));
+e=env();
+await assert.rejects(runScheduler(e,morning,mock(null,false,403)),/Dispatch daily workflow/);
+assert.equal(await runScheduler(e,morning,mock()),'dispatched','failed dispatch can retry same slot');
+e=env(); e.ALERT_WEBHOOK_URL='https://alerts.example/'; calls=[];
+const alertMock=async(url,options)=>url===e.ALERT_WEBHOOK_URL ? (calls.push({url,options}),new Response(null,{status:204})) : mock()(url,options);
+await runScheduler(e,at('2026-10-21T13:00:00Z'),alertMock);
+await runScheduler(e,at('2026-10-21T13:05:00Z'),alertMock);
+assert.equal(calls.filter(c=>c.url===e.ALERT_WEBHOOK_URL).length,1,'alert once per date');
+console.log('PASS: PDT/PST schedule, early preparation, deadline, freeze, live bilingual/image freshness, disabled mode, duplicate suppression, active-job guard, dispatch failure retry and deadline alert. All requests mocked.');
