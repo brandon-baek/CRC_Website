@@ -17,3 +17,9 @@ The bulletin retains a validated seven-day snapshot if sources fail, with origin
 ## Checks
 
 Run the existing `scripts/test-news-*.ts`, `scripts/test-radio-korea.ts` and new `scripts/test-daily-news.ts` with tsx, then `npm run build`. Review `/ko/daily`, `/daily`, `/ko/news` at desktop and mobile widths. The optional local `probe-daily.ts` is diagnostic only and is not needed for deployment.
+
+## Daily news headline location rule
+
+The main lists on /daily and /ko/daily exclude headlines explicitly naming an out-of-state location (for example New Jersey, New York, Chicago or Texas). They do not require a California mention. General informative stories remain eligible under the original editorial rules; an out-of-state location in the summary alone does not remove a story. A headline naming both California and another state is excluded conservatively. This is a headline-based heuristic: a story outside California can remain if its headline omits its location.
+
+The same predicate applies to fresh, saved, held, fallback and live-feed candidates and ordinary builds of the published snapshot. The separate sports/entertainment block, fortune, stock report, utility images, fraud-news page, and update schedule retain their existing rules. Validate with scripts/test-daily-locality.ts and the existing regression suite.
