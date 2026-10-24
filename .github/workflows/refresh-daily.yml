@@ -69,6 +69,7 @@ jobs:
           node node_modules/tsx/dist/cli.mjs scripts/test-daily-schedule.ts
           node node_modules/tsx/dist/cli.mjs scripts/test-daily-selection.ts
           node node_modules/tsx/dist/cli.mjs scripts/test-direct-daily.ts
+          node node_modules/tsx/dist/cli.mjs scripts/test-daily-locality.ts
       - name: Validate sports and entertainment selection
         run: node node_modules/tsx/dist/cli.mjs scripts/test-sports-entertainment.ts
       - name: Validate editorial exclusions and reporter authorship

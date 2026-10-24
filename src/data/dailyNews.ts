@@ -5,7 +5,7 @@ import { fetchRadioKorea } from './radioKorea';
 import savedEdition from './dailyEdition.json';
 import heldEdition from './dailyPending.json';
 import { editionDate, latestFortune, latestStockReport } from './dailySchedule';
-import { US_COMMUNITY_TERMS } from './newsLocality';
+import { isAllowedDailyHeadline } from './dailyLocality';
 import { retainedNews } from './newsHistory';
 import fallback from './dailyFallback.json';
 import { isExcludedNews } from './newsEditorial';
@@ -37,13 +37,16 @@ const englishSources: NewsSource[] = newsSources.filter(s => s.id === 'news-la')
 }));
 
 export interface DailyNews { items:NewsItem[]; fortune:NewsItem|null; stocks:NewsItem|null; sportsEntertainment?:NewsItem[]; generatedAt?:string; editionDate?:string; liveItemCount?:number; publishedHistory?:Record<string,string>; collectionCounts?:Record<string,number> }
+export function eligibleDailyItem(item:NewsItem):boolean {
+  return isAllowedDailyHeadline(item) && (item.sourceId==='daily-la' ? !isExcludedNews(item) : eligibleDaily(item));
+}
 let pending: Promise<DailyNews>;
 // Ordinary builds only display the published edition; held stories stay out of the page.
 export function fetchDailyNews(): Promise<DailyNews> {
   const saved = savedEdition as DailyNews | null;
   if (!pending) {
     if (saved?.generatedAt) {
-      pending=reporterNews(saved.items.filter(item=>item.sourceId==='daily-la'||eligibleDaily(item)),[...dailySources,...englishSources]).then(async items=>{
+      pending=reporterNews(saved.items.filter(eligibleDailyItem),[...dailySources,...englishSources]).then(async items=>{
       const mainKorean=dailySelection(items,new Date(saved.generatedAt!),true).items;
       // Use the displayed edition's time, not build time: evenings stay frozen.
       // One-time launch data contains only this section's verified articles.
@@ -83,7 +86,7 @@ export async function collectDailyNews(now = new Date(), saved:DailyNews|null = 
     return [...direct,...documents.flatMap(xml=>xml?parseFeed(xml,source,100):[])];
   }));
   const cutoff=+now-7*86400000;
-  const candidates=[...groups.flat(),...previous].filter(item=> !rejectedDirectArticle(item) && !isExcludedNews(item) && (item.sourceId==='daily-la'||eligibleDaily(item)) && item.date && Date.parse(item.date)>=cutoff && Date.parse(item.date)<=+now);
+  const candidates=[...groups.flat(),...previous].filter(item=> !rejectedDirectArticle(item) && !isExcludedNews(item) && eligibleDailyItem(item) && item.date && Date.parse(item.date)>=cutoff && Date.parse(item.date)<=+now);
   const items=await reporterNews((await deduplicateNews(candidates,sources)).sort((a,b)=>(b.date??'').localeCompare(a.date??'')),sources,inspectDailyArticle);
   const latestLink=async(id:string,query:string)=> {
     const source=newsSources.find(s=>s.id===id)!;

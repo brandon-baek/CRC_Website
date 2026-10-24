@@ -1,6 +1,7 @@
 import type { NewsItem } from './newsFeeds';
 import { US_COMMUNITY_TERMS } from './newsLocality';
 import { isExcludedNews } from './newsEditorial';
+import { isAllowedDailyHeadline } from './dailyLocality';
 
 const KOREAN_AMERICAN=/한인|미주|재미|교포|동포|한인타운|코리아타운|Korean.American/i;
 const US_LOCAL=/남가주|북가주|말리부|어바인|오리건|맨해튼|샌타|산타|샌디|샌프|라스베|브렌트우드|할리우드|헐리우드|벤투라|리버사이드|샌버나디노|패서디나|풀러턴|버뱅크|헌팅턴|롱비치|미시건|위스콘신|애리조나|메릴랜드|펜실베이니아|뉴잉글랜드|노스캐롤라이나|사우스캐롤라이나|보스턴|뉴욕|캐나다|미국인|미국행|미국산|달러|USC|UCLA|TSA|FDA|코스트코|소셜시큐리티/i;
@@ -17,6 +18,7 @@ export function dailyPriority(item:NewsItem):number {
   return 2;
 }
 export function eligibleDaily(item:NewsItem):boolean {
+  if(!isAllowedDailyHeadline(item))return false;
   if(/보러\s*오세요|실질적\s*기여\s*약속|외식협.*세미나|봄\s*마켓\s*준비|의료.*시대\s*연다|센터메디컬그룹.*행사|단체.*교류\s*확대|풀러턴.*횡성군|지속.*위로\s*전할/.test(item.title))return false;
   if(isExcludedNews(item)||ANNOUNCEMENTS.test(item.title)||NON_DAILY.test(item.title)||PROMOTIONS.test(item.title+' '+item.summary))return false;
   // Health information is eligible without a U.S. place name; a domestic Korean
