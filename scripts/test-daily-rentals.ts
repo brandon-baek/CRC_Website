@@ -1,0 +1,41 @@
+import {isRecruitmentAd} from '../src/data/dailyEditorial';
+import {eligibleDailyItem} from '../src/data/dailyNews';
+import assert from 'node:assert/strict';
+import { isRentalNews, applyDailyRentalPolicy } from '../src/data/dailyRentals';
+import { dailySelection } from '../src/data/dailySelection';
+import { prepareDailyPublication } from '../src/data/dailyPublication';
+import type { NewsItem } from '../src/data/newsFeeds';
+const sunday=new Date('2026-11-01T17:00:00Z'); // Sunday 9am PST, after DST ends.
+const monday=new Date('2026-11-02T17:00:00Z');
+const story=(title:string,date=sunday.toISOString(),sourceId='news-radiokorea',summary=''):NewsItem=>({title,date,sourceId,summary,url:'https://example.com/'+encodeURIComponent(title)});
+for(const title of ['JCWL PLAZA 리스 기회','프라임 리테일 리스 공간','LA 한인타운 Studio Apt. 중단기 렌트','한인타운 서민 임대주택 노후화 심각','한인타운근처 2BR, 2BA 콘도 리스','LA apartment rentals','Tenant eviction protections','Roommate wanted','Lease available','월세 지원 신청','한인타운 중심 넓고 위치 좋은 Studio apt','한타LA 인기많은 콘도 2배드 2배쓰 2파킹']) assert(isRentalNews(story(title)),title);
+assert(isRentalNews(story('LA 주택 정보',sunday.toISOString(),'news-radiokorea','장기 임대 매물 안내')),'summary also checked');
+for(const title of ['LA 독감 예방 안내','크리스마스 안전 정보','리스본 여행 안전 안내','Parents receive benefits'])assert(!isRentalNews(story(title)),title);
+const rental=story('LA 아파트 렌트'),news=story('LA 독감 예방 안내');
+assert.deepEqual(applyDailyRentalPolicy([rental],monday),[],'no rentals on weekdays');
+assert.deepEqual(applyDailyRentalPolicy([rental],sunday),[rental],'Sunday fallback');
+assert.deepEqual(applyDailyRentalPolicy([rental,news],sunday),[news],'any regular news suppresses rentals on Sunday');
+assert.deepEqual(dailySelection([rental],sunday,true).items,[rental]);
+assert.deepEqual(dailySelection([rental,news],sunday,true).items,[news]);
+assert.equal(dailySelection([story('LA 아파트 렌트',monday.toISOString())],monday,true).items.length,0);
+const english=story('LA health alert',sunday.toISOString(),'daily-la');
+assert.equal(dailySelection([rental,english],sunday,true).items.length,0,'English news also prevents fallback');
+const stale=story('LA 지난주 소식','2026-10-28T17:00:00Z');
+assert.deepEqual(dailySelection([rental,stale],sunday,true).items,[rental],'stale news does not block Sunday fallback');
+const savedRental={...rental,firstPublishedEdition:'2026-11-02',date:monday.toISOString()};
+assert.equal(dailySelection([savedRental],monday,true).items.length,0,'saved edition marker cannot bypass rule');
+assert.equal(applyDailyRentalPolicy([rental],new Date('2026-11-02T07:59:59Z')).length,1,'Sunday until Pacific midnight');
+assert.equal(applyDailyRentalPolicy([rental],new Date('2026-11-02T08:00:00Z')).length,0,'Monday after Pacific midnight');
+assert.equal(applyDailyRentalPolicy([rental],new Date('2026-03-08T16:00:00Z')).length,1,'spring DST Sunday');
+const edition=(items:NewsItem[],now:Date)=>({items,fortune:null,stocks:null,editionDate:now.toISOString().slice(0,10),generatedAt:now.toISOString()});
+assert.equal(prepareDailyPublication(edition([story('LA 아파트 렌트',monday.toISOString())],monday),null,monday).items.length,0,'publication cannot backfill weekday rentals');
+assert.deepEqual(prepareDailyPublication(edition([rental,news],sunday),null,sunday).items.map(item=>item.title),[news.title]);
+assert.deepEqual(prepareDailyPublication(edition([rental],sunday),null,sunday).items.map(item=>item.title),[rental.title]);
+console.log('PASS: rental/lease listings and housing news, summary detection, false positives, weekday exclusion, Sunday empty-news fallback, both languages, stale/saved items, publication guards and Pacific DST boundaries.');
+for(const title of ['직원 모집 프런트 데스크 리셉셔니스트 시급 $25–$30 풀타임 LA 코리아타운','✅ 구인 미 육군 — 200개 이상 직업 분야, 경력 없어도 지원 가능 한인 모병관 직접 상담','LA 회사 사원 모집','LA 채용 공고','Now hiring: front desk receptionist','Help wanted: full-time cashier']) {
+ assert(isRecruitmentAd(story(title)),title);
+ assert(!eligibleDailyItem(story(title)),title);
+ assert(!eligibleDailyItem({...story(title),sourceId:'daily-la'}),'English source must also reject recruiting ads');
+}
+for(const title of ['LA 고용 증가와 임금 상승','미국 구인 건수 감소','한인 고용시장 동향','대학생 장학금 신청 안내','일자리 지원 정책 변경']) assert(!isRecruitmentAd(story(title)),title);
+console.log('PASS: receptionist and military recruiting ads excluded in both languages; employment, wage and benefit news retained.');
