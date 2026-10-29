@@ -9,3 +9,7 @@ The current edition contains current-day and held overnight stories. At the firs
 Korea Times' unlabelled clock is not treated as a verified timezone. Its displayed date is stored as `publicationDay` and an ISO date-only `date`; it must not be presented as a precise timestamp. Other sources with explicit timezones retain their original timestamps. Publication dates are never rewritten to make an article appear new.
 
 Run `scripts/test-direct-daily.ts`, `scripts/test-daily-selection.ts`, `scripts/test-news-authors.ts` and `scripts/test-news-editorial.ts`. `collectionCounts` records pre-filter per-source candidate counts (including duplicates), not displayed-story counts. No AI API is used by the collection scripts.
+
+## Editorial matrix: organization and foundation news
+
+Exclude 단체·재단 소식 across all four Korean American publishers, including renaming, chapter updates, leadership changes, meetings, ceremonies, fundraising, donations, and organizational publicity. Reporter authorship does not override this exclusion. 광복회 미서남부지회 / 해외 독립유공자 미주총회 announcements are excluded from both saved editions and future collections. Public-interest reporting is not excluded solely because it mentions a foundation.

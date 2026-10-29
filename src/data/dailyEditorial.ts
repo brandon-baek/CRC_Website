@@ -1,3 +1,4 @@
+import { isOrganizationNews } from './organizationNews';
 import type { NewsItem } from './newsFeeds';
 import { US_COMMUNITY_TERMS } from './newsLocality';
 import { isExcludedNews } from './newsEditorial';
@@ -23,7 +24,7 @@ export function isRecruitmentAd(item:Pick<NewsItem,'title'|'summary'>):boolean {
   return /직원\s*모집|사원\s*모집|인재\s*모집|함께\s*일할|채용\s*(?:공고|광고|문의|상담)|\[\s*구인\s*\]|(?:^|[✅✔\s])구인\s+(?!난|시장|동향|건수|감소|증가)|모병관.*(?:직접\s*)?상담|\b(?:now hiring|help wanted|we are hiring|we're hiring|job openings|apply now for (?:a |the )?job)\b/i.test(text);
 }
 export function eligibleDaily(item:NewsItem):boolean {
-  if(isRecruitmentAd(item))return false;
+  if(isRecruitmentAd(item)||isOrganizationNews(item))return false;
   if(!isAllowedDailyHeadline(item))return false;
   if(/보러\s*오세요|실질적\s*기여\s*약속|외식협.*세미나|봄\s*마켓\s*준비|의료.*시대\s*연다|센터메디컬그룹.*행사|단체.*교류\s*확대|풀러턴.*횡성군|지속.*위로\s*전할/.test(item.title))return false;
   if(isExcludedNews(item)||ANNOUNCEMENTS.test(item.title)||NON_DAILY.test(item.title)||PROMOTIONS.test(item.title+' '+item.summary))return false;
