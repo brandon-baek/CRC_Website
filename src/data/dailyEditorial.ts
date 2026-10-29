@@ -35,6 +35,9 @@ export function eligibleDaily(item:NewsItem):boolean {
 
 /** Known local incidents with heavily rewritten syndicated headlines. */
 export function dailyEvent(item:NewsItem):string|null {
+  // One quarterly U.S. GDP bulletin, including forecasts and results, per user request.
+  const quarter=item.title.match(/([1-4])\s*분기/);
+  if(quarter&&/미국|美|미\s|U\.?S\.?/i.test(item.title)&&/GDP|국내총생산/i.test(item.title))return 'us-gdp-q'+quarter[1];
   if(/말리부/.test(item.title)&&/산불/.test(item.title))return 'malibu-fire';
   if(/오리건/.test(item.title)&&/초등/.test(item.title)&&/총격|총기/.test(item.title))return 'oregon-school-shooting';
   if(/남가주|샌타애나|산타애나/.test(item.title)&&/강풍/.test(item.title)&&/적색경보|산불.*위험/.test(item.title))return 'socal-wind-fire-warning';

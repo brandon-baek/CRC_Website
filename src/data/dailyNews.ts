@@ -12,6 +12,7 @@ import { isExcludedNews } from './newsEditorial';
 import { reporterNews } from './newsAuthors';
 import { collectPeopleNews, selectPeopleNews, peopleSources } from './sportsEntertainment';
 import peopleSeed from './sportsEntertainmentSeed.json';
+import { withManualDaily } from './manualDaily';
 import { dailySelection } from './dailySelection';
 import { fetchDirectDaily, inspectDailyArticle, rejectedDirectArticle } from './directDaily';
 import { eligibleDaily, isRecruitmentAd } from './dailyEditorial';
@@ -48,7 +49,8 @@ export function fetchDailyNews(): Promise<DailyNews> {
     if (saved?.generatedAt) {
       pending=reporterNews(saved.items.filter(eligibleDailyItem),[...dailySources,...englishSources]).then(async candidatesItems=>{
       const editionTime=new Date(saved.generatedAt!);
-      const items=[...dailySelection(candidatesItems,editionTime,true).items,...dailySelection(candidatesItems,editionTime,false).items];
+      const editionItems=withManualDaily(candidatesItems,editionDate(editionTime));
+      const items=[...dailySelection(editionItems,editionTime,true).items,...dailySelection(editionItems,editionTime,false).items];
       const mainKorean=dailySelection(items,new Date(saved.generatedAt!),true).items;
       // Use the displayed edition's time, not build time: evenings stay frozen.
       // One-time launch data contains only this section's verified articles.
@@ -104,5 +106,5 @@ export async function collectDailyNews(now = new Date(), saved:DailyNews|null = 
     return latestStockReport([...rows,...previousStocks],now);
   };
   const [fortune,stocks,sportsEntertainment]=await Promise.all([latestLink('news-koreadaily','오늘의 운세'),latestLink('news-radiokorea','증권소식'),collectPeopleNews(now,previousPeople)]);
-  return {items,fortune,stocks,sportsEntertainment,generatedAt:now.toISOString(),editionDate:editionDate(now),liveItemCount:groups.flat().length,collectionCounts:Object.fromEntries(sources.map((source,i)=>[source.id,groups[i].length]))};
+  return {items:withManualDaily(items,editionDate(now)),fortune,stocks,sportsEntertainment,generatedAt:now.toISOString(),editionDate:editionDate(now),liveItemCount:groups.flat().length,collectionCounts:Object.fromEntries(sources.map((source,i)=>[source.id,groups[i].length]))};
 }
