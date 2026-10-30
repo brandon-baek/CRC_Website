@@ -1,4 +1,5 @@
 import { isOrganizationNews } from './organizationNews';
+import { sameStory } from './newsDuplicates';
 import type { NewsItem } from './newsFeeds';
 import { US_COMMUNITY_TERMS } from './newsLocality';
 import { isExcludedNews } from './newsEditorial';
@@ -45,5 +46,12 @@ export function dailyEvent(item:NewsItem):string|null {
 }
 export function deduplicateDailyEvents(rows:NewsItem[]):NewsItem[] {
   const sorted=[...rows].sort((a,b)=>Date.parse(a.date!)-Date.parse(b.date!));
-  return sorted.filter((item,index)=>!dailyEvent(item)||!sorted.slice(0,index).some(prior=>dailyEvent(prior)===dailyEvent(item)&&Math.abs(Date.parse(item.date!)-Date.parse(prior.date!))<48*3600000));
+  const winners:NewsItem[]=[];
+  for(const item of sorted) {
+    if(winners.some(prior=>(prior.sourceId==='daily-la')===(item.sourceId==='daily-la')
+      && (sameStory(prior,item)||(dailyEvent(item)&&dailyEvent(prior)===dailyEvent(item)
+      &&Math.abs(Date.parse(item.date!)-Date.parse(prior.date!))<48*3600000))))continue;
+    winners.push(item);
+  }
+  return winners;
 }

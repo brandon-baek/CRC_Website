@@ -137,8 +137,21 @@ export async function featuredArticleImage(item: NewsItem, source: NewsSource): 
  * Different amounts remain distinct. Large rewrites need an editorial override;
  * broad topic matches would incorrectly hide separate incidents.
  */
+
+/** A rewritten obituary can identify the same person without sharing most headline words. */
+function sameObituary(a:string,b:string):boolean {
+  const death=/별세|사망|숨졌|숨져|타계|세상.{0,4}떠|하늘나라/;
+  if(!death.test(a)||!death.test(b))return false;
+  const names=(title:string)=>[...title.matchAll(/(?:배우|가수|감독|코미디언|방송인|소설가|작가|교수)\s+([가-힣]{2,8}(?:\s+[가-힣]{2,8})?)/g)]
+    .map(m=>m[1].replace(/\s+(?:별세|사망|타계|치매|투병|향년).*$/,'').replace(/[은는이가]$/,''))
+    .filter(name=>name.replace(/\s/g,'').length>=3 && !/프로페서|하늘나라/.test(name));
+  const x=headlineKey(a),y=headlineKey(b);
+  return names(a).some(name=>y.includes(headlineKey(name)))||names(b).some(name=>x.includes(headlineKey(name)));
+}
+
 export function sameStory(a: NewsItem, b: NewsItem): boolean {
   if (a.url === b.url) return true;
+  if(a.date&&b.date&&Math.abs(Date.parse(a.date)-Date.parse(b.date))<3*86400000&&sameObituary(a.title,b.title))return true;
   const x = headlineKey(a.title), y = headlineKey(b.title);
   const eventKey = (title:string) => {
     // Narrow recurring events whose Korean headlines routinely use different names.

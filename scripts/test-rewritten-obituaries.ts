@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {sameStory,deduplicateNews} from '../src/data/newsDuplicates';
+const row=(title:string,date='2026-10-29T21:26:10Z')=>({sourceId:'news-koreadaily',title,date,url:'https://example.com/'+encodeURIComponent(title),summary:''});
+const early=row("'엑스맨' 프로페서X 하늘나라로…배우 패트릭 스튜어트 별세");
+const late=row('‘엑스맨’ 프로페서X 패트릭 스튜어트, 치매 투병 끝에 별세','2026-10-29T22:22:49Z');
+assert(sameStory(early,late));assert(sameStory(late,early));
+assert.deepEqual(await deduplicateNews([late,early],[]),[early]);
+assert(!sameStory(early,row('엑스맨 배우 휴 잭맨 별세')));
+assert(!sameStory(early,row('배우 패트릭 스튜어트 새 영화 출연')));
+assert(!sameStory(early,row('패트릭 스튜어트 별세 1주기 추모','2027-10-29T21:00:00Z')));
+console.log('PASS: rewritten same-person death reports collapse to earliest; different people, events and anniversaries remain separate.');
